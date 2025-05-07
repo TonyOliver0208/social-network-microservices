@@ -8,6 +8,12 @@ class APIError extends Error {
   }
 }
 
+const throwValidationError = (message) => {
+  const error = new Error(message);
+  error.name = "ValidationError";
+  throw error;
+};
+
 const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
@@ -45,6 +51,7 @@ const globalErrorHandler = (err, req, res, next) => {
 
 module.exports = {
   APIError,
+  throwValidationError,
   asyncHandler,
   globalErrorHandler,
 };

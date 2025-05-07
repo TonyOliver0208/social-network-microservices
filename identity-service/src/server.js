@@ -4,7 +4,12 @@ const logger = require("./utils/logger");
 const helmet = require("helmet");
 const cors = require("cors");
 const connectToDb = require("./database/db");
-const { globalErrorHandler } = require("./middleware/errorHanlder");
+const { globalErrorHandler } = require("./middleware/errorHandler");
+const {
+  globalRateLimiter,
+  sensitiveEndpointsLimiter,
+} = require("./utils/rateLimiter");
+const routes = require("./routes/identity-service");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -20,6 +25,11 @@ app.use((req, res, next) => {
   logger.info(`Body request: ${req.body}`);
   next();
 });
+
+app.use(globalRateLimiter);
+app.use("/api/auth/register", sensitiveEndpointsLimiter);
+
+app.use("/api/auth", routes);
 
 app.use(globalErrorHandler);
 
