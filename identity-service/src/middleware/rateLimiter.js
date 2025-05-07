@@ -2,7 +2,7 @@ const redisClient = require("../database/redis");
 const { RateLimiterRedis } = require("rate-limiter-flexible");
 const { rateLimit } = require("express-rate-limit");
 const { RedisStore } = require("rate-limit-redis");
-const logger = require("./logger");
+const logger = require("../utils/logger");
 
 const globalRateLimiter = (req, res, next) => {
   const limiter = new RateLimiterRedis({

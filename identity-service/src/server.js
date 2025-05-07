@@ -8,7 +8,7 @@ const { globalErrorHandler } = require("./middleware/errorHandler");
 const {
   globalRateLimiter,
   sensitiveEndpointsLimiter,
-} = require("./utils/rateLimiter");
+} = require("./middleware/rateLimiter");
 const routes = require("./routes/identity-service");
 
 const app = express();
