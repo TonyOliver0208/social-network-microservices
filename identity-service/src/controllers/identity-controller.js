@@ -6,6 +6,7 @@ const {
 } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
 const { validateRegistration } = require("../utils/validation");
+const generateToken = require("../utils/generateToken");
 
 const registerUser = asyncHandler(async (req, res) => {
   logger.info("Registration endpoint hit...");
