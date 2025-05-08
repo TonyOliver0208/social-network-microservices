@@ -33,7 +33,7 @@ app.use(
     next();
   },
   postRoutes
-); // ask for should let this here or put it into the routes file
+);
 
 app.use(globalErrorHandler);
 

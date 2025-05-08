@@ -27,7 +27,6 @@ app.use((req, res, next) => {
 });
 
 app.use(globalRateLimiter);
-app.use("/api/auth/register", sensitiveEndpointsLimiter);
 
 app.use("/api/auth", routes);
 
