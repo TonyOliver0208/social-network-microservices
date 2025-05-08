@@ -6,6 +6,8 @@ const logger = require("./utils/logger");
 const { rateLimiter } = require("./middleware/rateLimiter");
 const identityServiceProxy = require("./proxies/identityService");
 const globalErrorHandler = require("./middleware/errorHandler");
+const postServiceProxy = require("./proxies/postService");
+const validateToken = require("./middleware/authMiddleware");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,11 +26,19 @@ app.use((req, res, next) => {
 app.use(rateLimiter);
 
 app.use("/v1/auth", identityServiceProxy);
+app.use("/v1/post", validateToken, postServiceProxy);
 
 app.use(globalErrorHandler);
 
 app.listen(PORT, () => {
   logger.info(`API gateway is running on port ${PORT}`);
+  logger.info(
+    `Identity service is running on port ${process.env.IDENTITY_SERVICE_URL}`
+  );
+  logger.info(
+    `Post service is running on port ${process.env.POST_SERVICE_URL}`
+  );
+  logger.info(`Redis Url ${process.env.REDIS_URL}`);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
