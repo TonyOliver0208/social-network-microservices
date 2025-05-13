@@ -1,14 +1,29 @@
 const redisClient = require("../utils/redis");
+const logger = require("./logger");
 
-async function invalidatePostCaches(input) {
-  const cachedKey = `post:${input}`;
+async function invalidatePostCaches(postId) {
+  try {
+    const singlePostKey = `post:${postId}`;
+    await redisClient.unlink(singlePostKey);
 
-  await redisClient.del(cachedKey);
+    const stream = await redisClient.scanStream({
+      match: "posts:*",
+      count: 100,
+    });
+    const keysToDelete = [];
 
-  const cachedKeys = await redisClient.keys("posts:*");
+    for await (const keys of stream) {
+      keysToDelete.push(...keys);
+    }
 
-  if (cachedKeys.length > 0) {
-    await redisClient.del(cachedKeys);
+    if (keysToDelete.length > 0) {
+      await redisClient.unlink(keysToDelete);
+    }
+
+    logger.info(`Invalidated caches for post ${postId}`);
+  } catch (err) {
+    logger.error(`Failed to invalidate caches for post ${postId}`, { err });
+    throw new Error("Cache invalidation failed");
   }
 }
 

@@ -9,4 +9,14 @@ const validateCreatePost = (data) => {
   return schema.validate(data);
 };
 
-module.exports = { validateCreatePost };
+const sanitizeInput = (data) => {
+  return {
+    ...data,
+    content: data.content.replace(
+      /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+      ""
+    ),
+  };
+};
+
+module.exports = { validateCreatePost, sanitizeInput };

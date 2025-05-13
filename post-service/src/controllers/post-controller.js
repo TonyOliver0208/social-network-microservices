@@ -1,25 +1,48 @@
 const {
   asyncHandler,
   throwValidationError,
+  APIError,
 } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
-const { validateCreatePost } = require("../utils/validation");
+const { validateCreatePost, sanitizeInput } = require("../utils/validation");
 const Post = require("../models/Post");
 const redisClient = require("../utils/redis");
 const invalidatePostCaches = require("../utils/invalidateCache");
+const { CACHE_TTL, DEFAULT_PAGE_LIMIT } = require("../config/constants");
+
+const withCache = async (key, ttl, fetchData) => {
+  try {
+    const cachedData = await redisClient.get(key);
+
+    if (cachedData) {
+      logger.info(`Cache hit for key ${key}`);
+      return JSON.parse(cachedData);
+    }
+
+    const data = await fetchData();
+
+    await redisClient.setex(key, ttl, JSON.stringify(data));
+
+    logger.info(`Cache set for key ${key}`);
+
+    return data;
+  } catch (err) {
+    logger.warn("Failed to cache data!");
+    return fetchData();
+  }
+};
 
 const createNewPost = asyncHandler(async (req, res) => {
-  logger.info("Create post endpoint hit...");
+  logger.info("Create post endpoint hit", { userId: req.user?.userId });
 
-  const { error } = validateCreatePost(req.body);
+  const { error, value } = validateCreatePost(req.body);
 
   if (error) {
     logger.warn("Validation error", error.details[0].message);
     throwValidationError(error.details[0].message);
   }
 
-  const { content, mediaIds } = req.body;
-
+  const { content, mediaIds } = sanitizeInput(value);
   const newPost = new Post({
     user: req.user.userId,
     content,
@@ -28,7 +51,7 @@ const createNewPost = asyncHandler(async (req, res) => {
 
   await newPost.save();
 
-  logger.info("Created a new post successfully!");
+  logger.info("Created a new post successfully", { postId: newPost._id });
 
   await invalidatePostCaches(newPost._id.toString());
 
@@ -42,65 +65,58 @@ const getAllPosts = asyncHandler(async (req, res) => {
   logger.info("Get all posts hit...");
 
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+  const limit = parseInt(req.query.limit) || DEFAULT_PAGE_LIMIT;
   const startIndex = (page - 1) * limit;
 
   const cacheKey = `posts:${page}:${limit}`;
-  const cachedPosts = await redisClient.get(cacheKey);
 
-  if (cachedPosts) {
-    return res.status(200).json(JSON.parse(cachedPosts));
-  }
+  const result = await withCache(cacheKey, CACHE_TTL.POSTS_LIST, async () => {
+    const posts = await Post.find({})
+      .sort({ createdAt: -1 })
+      .skip(startIndex)
+      .limit(limit)
+      .lean();
 
-  const posts = await Post.find({})
-    .sort({ createdAt: -1 })
-    .skip(startIndex)
-    .limit(limit);
+    const totalPosts = await Post.countDocuments();
+    const totalPages = Math.ceil(totalPosts / limit);
 
-  const totalPosts = await Post.countDocuments();
-  const totalPages = Math.ceil(totalPosts / limit);
-
-  const result = {
-    posts,
-    limit,
-    totalPages,
-    totalPosts,
-  };
-
-  await redisClient.setex(cacheKey, 300, JSON.stringify(result));
+    return {
+      posts,
+      limit,
+      totalPages,
+      totalPosts,
+      page,
+    };
+  });
 
   return res.json(result);
 });
 
 const getPost = asyncHandler(async (req, res) => {
-  logger.info("Get post endpot hit...");
+  logger.info("Get post endpoint hit", { postId: req.params.id });
 
   const id = req.params.id;
-
   const cacheKey = `post:${id}`;
-  const cachedPost = await redisClient.get(cacheKey);
 
-  if (cachedPost) {
-    return res.json(JSON.parse(cachedPost));
-  }
+  const post = await withCache(cacheKey, CACHE_TTL.SINGLE_POST, async () => {
+    const post = await Post.findById(id).lean();
 
-  const post = await Post.findById(id);
+    if (!post) {
+      logger.warn("Post not found!", { postId: id });
+      throw new APIError(404, "Post not found");
+    }
 
-  if (!post) {
-    logger.warn("Post not found!", id);
-    return res.status(404).json({
-      success: false,
-      message: "Cannot find this post! Please try again!",
-    });
-  }
-
-  await redisClient.setex(cacheKey, 3600, JSON.stringify(post));
+    return post;
+  });
 
   return res.status(200).json(post);
 });
 
 const deletePost = asyncHandler(async (req, res) => {
-  logger.info("Delete post hit...");
+  logger.info("Delete post hit...", {
+    postId: req.params.id,
+    userId: req.user?.userId,
+  });
 
   const id = req.params.id;
 
@@ -117,9 +133,8 @@ const deletePost = asyncHandler(async (req, res) => {
     });
   }
 
-  logger.info(`Delete the post successfully!`);
-
   await invalidatePostCaches(post._id.toString());
+  logger.info("Deleted post successfully", { postId: id });
 
   return res.status(200).json({
     success: true,
