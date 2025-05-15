@@ -16,17 +16,23 @@ const proxyConfigs = {
   },
 };
 
-const postServiceProxy = proxy(process.env.POST_SERVICE_URL, {
+const mediaServiceProxy = proxy(process.env.MEDIA_SERVICE_URL, {
   ...proxyConfigs,
   proxyReqOptDecorator: function (proxyReqOpts, srcReq) {
-    proxyReqOpts.headers["Content-Type"] = "application/json";
     proxyReqOpts.headers["x-user-id"] = srcReq.user.userId;
+    if (srcReq.headers["content-type"]?.startsWith("multipart/form-data")) {
+      proxyReqOpts.headers["Content-Type"] = srcReq.headers["content-type"];
+    } else {
+      proxyReqOpts.headers["Content-Type"] = "application/json";
+    }
     return proxyReqOpts;
   },
-  userResDecorator: function (proxyRes, proxyResData, userReq, userRes) {
-    logger.info(`Response received from Post service: ${proxyRes.statusCode}`);
+  userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+    logger.info(`Response received from media service: ${proxyRes.statusCode}`);
+
     return proxyResData;
   },
+  parseReqBody: false,
 });
 
-module.exports = postServiceProxy;
+module.exports = mediaServiceProxy;

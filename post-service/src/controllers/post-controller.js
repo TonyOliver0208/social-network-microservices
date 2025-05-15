@@ -9,6 +9,7 @@ const Post = require("../models/Post");
 const redisClient = require("../utils/redis");
 const invalidatePostCaches = require("../utils/invalidateCache");
 const { CACHE_TTL, DEFAULT_PAGE_LIMIT } = require("../config/constants");
+const { publishEvent } = require("../utils/rabbitmq");
 
 const withCache = async (key, ttl, fetchData) => {
   try {
@@ -127,11 +128,14 @@ const deletePost = asyncHandler(async (req, res) => {
 
   if (!post) {
     logger.warn(`Failed to delete Post`, id);
-    return res.status(400).json({
-      success: false,
-      message: "Failed to delete post! Please try again!",
-    });
+    throw new APIError(400, "Failed to delete post! Please try again!");
   }
+
+  await publishEvent("post.deleted", {
+    postId: post._id.toString(),
+    userId: req.user.userId,
+    mediaIds: post.mediaIds,
+  });
 
   await invalidatePostCaches(post._id.toString());
   logger.info("Deleted post successfully", { postId: id });

@@ -1,4 +1,4 @@
-const logger = require("../../../post-service/src/utils/logger");
+const logger = require("../utils/logger");
 const jwt = require("jsonwebtoken");
 
 const validateToken = (req, res, next) => {

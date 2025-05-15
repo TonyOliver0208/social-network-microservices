@@ -3,12 +3,12 @@ const { RedisStore } = require("rate-limit-redis");
 const redisClient = require("../utils/redis");
 const logger = require("../utils/logger");
 
-const senstiveEndPointsRateLimiter = rateLimit({
+const rateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 50,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req, res) => {
+  handler: (req, res, next) => {
     logger.warn(`Sensitive endpoint rate limit exceeded for IP: ${req.ip}`);
     res.status(429).json({
       success: false,
@@ -21,4 +21,4 @@ const senstiveEndPointsRateLimiter = rateLimit({
   }),
 });
 
-module.exports = senstiveEndPointsRateLimiter;
+module.exports = rateLimiter;

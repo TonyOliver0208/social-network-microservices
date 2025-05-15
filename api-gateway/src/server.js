@@ -8,6 +8,7 @@ const identityServiceProxy = require("./proxies/identityService");
 const globalErrorHandler = require("./middleware/errorHandler");
 const postServiceProxy = require("./proxies/postService");
 const validateToken = require("./middleware/authMiddleware");
+const mediaServiceProxy = require("./proxies/mediaService");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,7 @@ app.use(rateLimiter);
 
 app.use("/v1/auth", identityServiceProxy);
 app.use("/v1/post", validateToken, postServiceProxy);
+app.use("/v1/media", validateToken, mediaServiceProxy);
 
 app.use(globalErrorHandler);
 
@@ -37,6 +39,9 @@ app.listen(PORT, () => {
   );
   logger.info(
     `Post service is running on port ${process.env.POST_SERVICE_URL}`
+  );
+  logger.info(
+    `Media service is running on port ${process.env.MEDIA_SERVICE_URL}`
   );
   logger.info(`Redis Url ${process.env.REDIS_URL}`);
 });
