@@ -7,13 +7,14 @@ const {
   getAllMedias,
 } = require("../controllers/media-controller");
 const rateLimiter = require("../middleware/rateLimiter");
+const { MAX_FILE_SIZE } = require("../config/constants");
 
 const router = express.Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-}).single("file");
+  limits: { fileSize: MAX_FILE_SIZE, files: 10 },
+}).array("files");
 
 router.use(authenticateRequest);
 

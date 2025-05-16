@@ -2,58 +2,86 @@ const { asyncHandler, APIError } = require("../middleware/errorHandler");
 const Media = require("../models/media");
 const { uploadMediaToCloudinary } = require("../utils/cloudinary");
 const logger = require("../utils/logger");
+const {
+  MAX_FILE_SIZE,
+  ALLOWED_IMAGE_TYPES,
+  ALLOWED_VIDEO_TYPES,
+} = require("../config/constants");
 
 const uploadMedia = asyncHandler(async (req, res) => {
-  logger.info("Uploading media endpoint hit...");
+  logger.info("Uploading media endpoint hit", { userId: req.user.userId });
 
-  if (!req.file) {
-    logger.error("No file found. Please add a file and try again!");
-    throw new APIError(400, "No file found. Please add a file and try again!");
+  if (!req.files || req.files.length === 0) {
+    logger.error("No files provided");
+    throw new APIError(
+      400,
+      "No files provided. Please upload at least one file."
+    );
   }
 
-  const { originalname, mimetype, buffer } = req.file;
   const userId = req.user.userId;
+  const uploadedMedia = [];
 
-  logger.info(`File details: name=${originalname}, type=${mimetype}`);
-  logger.info("Uploading to cloudinary starting...");
+  for (const file of req.files) {
+    const { originalname, mimetype, buffer, size } = file;
 
-  const cloudinaryUploadResult = await uploadMediaToCloudinary(buffer);
-  logger.info(
-    `Cloudinary upload successfully. Public Id: - ${cloudinaryUploadResult.public_id}`
-  );
+    if (size > MAX_FILE_SIZE) {
+      logger.error(`File ${originalname} exceeds size limit`);
+      throw new APIError(400, `File ${originalname} exceeds 10MB limit`);
+    }
 
-  const newlyCreatedMedia = new Media({
-    publicId: cloudinaryUploadResult.public_id,
-    originalName: originalname,
-    mimeType: mimetype,
-    url: cloudinaryUploadResult.secure_url,
-    userId,
-  });
+    if (
+      !ALLOWED_IMAGE_TYPES.includes(mimetype) &&
+      !ALLOWED_VIDEO_TYPES.includes(mimetype)
+    ) {
+      logger.error(`Unsupported file type for ${originalname}: ${mimetype}`);
+      throw new APIError(400, `Unsupported file type for ${originalname}`);
+    }
 
-  await newlyCreatedMedia.save();
+    logger.info(`Uploading file: ${originalname}, type: ${mimetype}`);
 
-  logger.info("Media upload is successfully", newlyCreatedMedia._id);
+    const cloudinaryResult = await uploadMediaToCloudinary(buffer, {
+      resource_type: ALLOWED_VIDEO_TYPES.includes(mimetype) ? "video" : "image",
+    });
+
+    const media = new Media({
+      publicId: cloudinaryResult.public_id,
+      originalName: originalname,
+      mimeType: mimetype,
+      url: cloudinaryResult.secure_url,
+      userId,
+      resourceType: ALLOWED_VIDEO_TYPES.includes(mimetype) ? "video" : "image",
+    });
+
+    await media.save();
+
+    uploadedMedia.push({
+      mediaId: media._id,
+      url: media.url,
+      resourceType: media.resourceType,
+    });
+
+    logger.info(`Uploaded media: ${media._id}`);
+  }
 
   return res.status(201).json({
     success: true,
-    mediaId: newlyCreatedMedia._id,
-    url: newlyCreatedMedia.url,
-    message: "Media upload is successfully",
+    media: uploadedMedia,
+    message: `Uploaded ${uploadedMedia.length} media file(s) successfully`,
   });
 });
 
 const getAllMedias = asyncHandler(async (req, res) => {
-  const result = await Media.find({ userId: req.user.userId });
+  logger.info("Fetching all media", { userId: req.user.userId });
+
+  const result = await Media.find({ userId: req.user.userId }).lean();
 
   if (result.length === 0) {
-    logger.warn("Cannot find any media for this user", {
-      userId: req.user.userId,
-      mediaList: result,
-    });
-    throw new APIError(404, "Cannot find any media for this user");
+    logger.warn("No media found for user", { userId: req.user.userId });
+    throw new APIError(404, "No media found for this user");
   }
 
-  return res.status(200).json({ result });
+  return res.status(200).json({ success: true, media: result });
 });
 
 module.exports = { uploadMedia, getAllMedias };

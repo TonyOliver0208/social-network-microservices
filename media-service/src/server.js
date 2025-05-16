@@ -26,8 +26,6 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/api/media/upload", rateLimiter);
-
 app.use("/api/media", mediaRoutes);
 
 app.use(globalErrorHandler);

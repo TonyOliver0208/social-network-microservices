@@ -1,9 +1,15 @@
 const Media = require("../models/media");
 const { deleteMediaFromCloudinary } = require("../utils/cloudinary");
+const logger = require("../utils/logger");
 
 const handlePostDeleted = async (event) => {
   const { postId, mediaIds } = event;
   try {
+    if (!mediaIds || mediaIds.length === 0) {
+      logger.info(`No media to delete for post ${postId}`);
+      return;
+    }
+
     const mediasToDelete = await Media.find({ _id: { $in: mediaIds } });
 
     for (const media of mediasToDelete) {
@@ -15,9 +21,12 @@ const handlePostDeleted = async (event) => {
       );
     }
 
-    logger.info(`Processed deletion of media for post id ${postId}`);
+    logger.info(
+      `Processed deletion of ${mediasToDelete.length} media for post ${postId}`
+    );
   } catch (error) {
-    logger.error("Error occured while media deletion", error);
+    logger.error(`Error deleting media for post ${postId}`, error);
+    throw error;
   }
 };
 

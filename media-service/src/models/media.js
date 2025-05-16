@@ -23,6 +23,11 @@ const mediaSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    resourceType: {
+      type: String,
+      enum: ["image", "video"],
+      default: "image",
+    },
   },
   { timestamps: true }
 );

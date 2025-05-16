@@ -58,12 +58,13 @@ const createNewPost = asyncHandler(async (req, res) => {
 
   return res.status(201).json({
     success: true,
-    message: "Created a new post successfully!",
+    postId: newPost._id,
+    message: "Created post successfully",
   });
 });
 
 const getAllPosts = asyncHandler(async (req, res) => {
-  logger.info("Get all posts hit...");
+  logger.info("Get all posts endpoint hit", { userId: req.user?.userId });
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || DEFAULT_PAGE_LIMIT;
@@ -90,7 +91,7 @@ const getAllPosts = asyncHandler(async (req, res) => {
     };
   });
 
-  return res.json(result);
+  return res.status(200).json({ success: true, ...result });
 });
 
 const getPost = asyncHandler(async (req, res) => {
@@ -110,7 +111,7 @@ const getPost = asyncHandler(async (req, res) => {
     return post;
   });
 
-  return res.status(200).json(post);
+  return res.status(200).json({ success: true, post });
 });
 
 const deletePost = asyncHandler(async (req, res) => {
@@ -127,7 +128,7 @@ const deletePost = asyncHandler(async (req, res) => {
   });
 
   if (!post) {
-    logger.warn(`Failed to delete Post`, id);
+    logger.warn(`Failed to delete Post`, { postId: id });
     throw new APIError(400, "Failed to delete post! Please try again!");
   }
 
@@ -142,7 +143,7 @@ const deletePost = asyncHandler(async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    message: "Delete the post successfully!",
+    message: "Delete post successfully!",
   });
 });
 
