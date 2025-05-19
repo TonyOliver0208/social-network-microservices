@@ -7,12 +7,13 @@ const proxyConfigs = {
   },
   proxyErrorHandler: function (err, res, next) {
     if (err) {
-      logger.error(`Proxy error: ${err.message}`);
+      logger.error(`Proxy error for media service: ${err.message}`);
       return res.status(500).json({
         success: false,
-        message: "Internal Server error! Please try again!",
+        message: "Internal server error from search service",
       });
     }
+    next();
   },
 };
 

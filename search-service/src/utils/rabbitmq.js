@@ -17,13 +17,13 @@ const connectToRabbitMQ = async () => {
 
     await channel.assertExchange(EXCHANGE_NAME, "topic", { durable: false });
 
-    connection.on("error", (err) => {
-      logger.error("RabbitMQ connection error", err);
+    connection.on("error", (error) => {
+      logger.error("RabbitMQ connection error", error);
       connection = null;
       channel = null;
     });
 
-    connection.on("close", () => {
+    connection.on("close", (error) => {
       logger.warn("RabbitMQ connection closed, attempting to reconnect...");
       connection = null;
       channel = null;
@@ -64,6 +64,29 @@ const publishEvent = async (routingKey, msg) => {
   }
 };
 
+const consumeEvent = async (routingKey, callback) => {
+  try {
+    if (!channel) {
+      await connectToRabbitMQ();
+    }
+
+    const q = await channel.assertQueue("", { exclusive: true });
+    await channel.bindQueue(q.queue, EXCHANGE_NAME, routingKey);
+
+    await channel.consume(q.queue, function (msg) {
+      if (msg !== null) {
+        const content = JSON.parse(msg.content.toString());
+        callback(content);
+        channel.ack(msg);
+      }
+    });
+    logger.info(`Subscribed to event: ${routingKey}`);
+  } catch (error) {
+    logger.error(`Error publishing event: ${routingKey}`, error);
+    throw error;
+  }
+};
+
 process.on("SIGINT", async () => {
   if (connection) {
     await connection.close();
@@ -72,4 +95,4 @@ process.on("SIGINT", async () => {
   process.exit(0);
 });
 
-module.exports = { connectToRabbitMQ, publishEvent };
+module.exports = { connectToRabbitMQ, consumeEvent };

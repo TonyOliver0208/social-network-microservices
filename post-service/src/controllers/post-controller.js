@@ -28,8 +28,8 @@ const withCache = async (key, ttl, fetchData) => {
 
     return data;
   } catch (err) {
-    logger.warn("Failed to cache data!");
-    return fetchData();
+    logger.warn(`Failed to cache data for key: ${key} — ${err.message}`);
+    return await fetchData();
   }
 };
 
@@ -53,6 +53,13 @@ const createNewPost = asyncHandler(async (req, res) => {
   await newPost.save();
 
   logger.info("Created a new post successfully", { postId: newPost._id });
+
+  await publishEvent("post.created", {
+    postId: newPost._id.toString(),
+    userId: newPost.user.toString(),
+    content: newPost.content,
+    createdAt: newPost.createdAt,
+  });
 
   await invalidatePostCaches(newPost._id.toString());
 

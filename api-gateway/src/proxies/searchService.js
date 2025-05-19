@@ -7,7 +7,7 @@ const proxyConfigs = {
   },
   proxyErrorHandler: function (err, res, next) {
     if (err) {
-      logger.error(`Proxy error for post service: ${err.message}`);
+      logger.error(`Proxy error for search service: ${err.message}`);
       return res.status(500).json({
         success: false,
         message: "Internal server error from search service",
@@ -17,17 +17,21 @@ const proxyConfigs = {
   },
 };
 
-const postServiceProxy = proxy(process.env.POST_SERVICE_URL, {
+const searchServiceProxy = proxy(process.env.SEARCH_SERVICE_URL, {
   ...proxyConfigs,
-  proxyReqOptDecorator: function (proxyReqOpts, srcReq) {
+  proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     proxyReqOpts.headers["Content-Type"] = "application/json";
-    proxyReqOpts.headers["x-user-id"] = srcReq.user.userId;
+    proxyReqOpts.headers["x-user-id"] = srcReq.user?.userId;
+
     return proxyReqOpts;
   },
-  userResDecorator: function (proxyRes, proxyResData, userReq, userRes) {
-    logger.info(`Response received from Post service: ${proxyRes.statusCode}`);
+  userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+    logger.info(
+      `Response received from Search service: ${proxyRes.statusCode}`
+    );
+
     return proxyResData;
   },
 });
 
-module.exports = postServiceProxy;
+module.exports = searchServiceProxy;

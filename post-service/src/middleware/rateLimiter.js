@@ -5,7 +5,7 @@ const logger = require("../utils/logger");
 
 const senstiveEndPointsRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 50,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {

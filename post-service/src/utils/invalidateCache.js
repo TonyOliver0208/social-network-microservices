@@ -1,4 +1,4 @@
-const redisClient = require("../utils/redis");
+const redisClient = require("./redis");
 const logger = require("./logger");
 
 async function invalidatePostCaches(postId) {

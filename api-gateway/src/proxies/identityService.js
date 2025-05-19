@@ -2,15 +2,18 @@ const proxy = require("express-http-proxy");
 const logger = require("../utils/logger");
 
 const proxyConfigs = {
-  proxyReqPathResolver: (req) => {
+  proxyReqPathResolver: function (req) {
     return req.originalUrl.replace(/^\/v1/, "/api");
   },
   proxyErrorHandler: function (err, res, next) {
-    logger.error(`Proxy error : ${err.message}`);
-    req.status(500).json({
-      message: "Internal server error",
-      error: err.message,
-    });
+    if (err) {
+      logger.error(`Proxy error for identity service: ${err.message}`);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error from search service",
+      });
+    }
+    next();
   },
 };
 

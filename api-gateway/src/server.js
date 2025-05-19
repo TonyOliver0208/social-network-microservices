@@ -9,6 +9,7 @@ const globalErrorHandler = require("./middleware/errorHandler");
 const postServiceProxy = require("./proxies/postService");
 const validateToken = require("./middleware/authMiddleware");
 const mediaServiceProxy = require("./proxies/mediaService");
+const searchServiceProxy = require("./proxies/searchService");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +30,7 @@ app.use(rateLimiter);
 app.use("/v1/auth", identityServiceProxy);
 app.use("/v1/post", validateToken, postServiceProxy);
 app.use("/v1/media", validateToken, mediaServiceProxy);
+app.use("/v1/search", validateToken, searchServiceProxy);
 
 app.use(globalErrorHandler);
 
@@ -42,6 +44,9 @@ app.listen(PORT, () => {
   );
   logger.info(
     `Media service is running on port ${process.env.MEDIA_SERVICE_URL}`
+  );
+  logger.info(
+    `Search service is running on port ${process.env.SEARCH_SERVICE_URL}`
   );
   logger.info(`Redis Url ${process.env.REDIS_URL}`);
 });

@@ -7,7 +7,7 @@ const rateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50,
   standardHeaders: true,
-  legacyHeaders: false,
+  standardHeaders: false,
   handler: (req, res, next) => {
     logger.warn(`Sensitive endpoint rate limit exceeded for IP: ${req.ip}`);
     res.status(429).json({
