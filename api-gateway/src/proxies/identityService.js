@@ -10,7 +10,7 @@ const proxyConfigs = {
       logger.error(`Proxy error for identity service: ${err.message}`);
       return res.status(500).json({
         success: false,
-        message: "Internal server error from search service",
+        message: "Internal server error from identity service",
       });
     }
     next();
