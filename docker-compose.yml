@@ -9,17 +9,35 @@ services:
     depends_on:
       - redis
       - rabbitmq
+      - auth-service
     environment:
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://rabbitmq:5672
-      - IDENTITY_SERVICE_URL=http://identity-service:3001
-      - POST_SERVICE_URL=http://post-service:3002
-      - MEDIA_SERVICE_URL=http://media-service:3003
-      - SEARCH_SERVICE_URL=http://search-service:3004
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - USER_SERVICE_URL=http://user-service:3002
+      - QUESTION_SERVICE_URL=http://question-service:3003
+      - MEDIA_SERVICE_URL=http://media-service:3004
+      - SEARCH_SERVICE_URL=http://search-service:3005
 
-  identity-service:
-    build: ./identity-service
-    env_file: ./identity-service/.env
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "3001:3001"
+    env_file: ./auth-service/.env
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - API_GATEWAY_URL=http://api-gateway:3000
+      - USER_SERVICE_URL=http://user-service:3002
+      - CLIENT_URL=http://localhost:3001
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "3002:3002"
+    env_file: ./user-service/.env
     depends_on:
       - redis
       - rabbitmq
@@ -27,9 +45,11 @@ services:
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://rabbitmq:5672
 
-  post-service:
-    build: ./post-service
-    env_file: ./post-service/.env
+  question-service:
+    build: ./question-service
+    ports:
+      - "3003:3003"
+    env_file: ./question-service/.env
     depends_on:
       - redis
       - rabbitmq
