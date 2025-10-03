@@ -1,4 +1,105 @@
 **/node_modules/
 **/.env
 **/.DS_Store
-**/*.log
+# 🚢 Microservices .gitignore
+# Comprehensive ignore for all services
+
+# ===================================
+# NODE.JS & NPM
+# ===================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ===================================
+# BUILD OUTPUTS & COMPILED CODE
+# ===================================
+dist/
+build/
+out/
+*.tsbuildinfo
+.turbo/
+
+# ===================================
+# ENVIRONMENT & SECRETS
+# ===================================
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+
+# Keep templates
+!.env.example
+!.env.development
+
+# ===================================
+# LOGS & MONITORING
+# ===================================
+logs/
+*.log
+*.log.*
+audit.json
+*-audit.json
+
+# ===================================
+# DATABASE & CACHE
+# ===================================
+*.sqlite
+*.db
+redis-dump.rdb
+
+# ===================================
+# TESTING & COVERAGE
+# ===================================
+coverage/
+.nyc_output/
+junit.xml
+test-results/
+
+# ===================================
+# IDE & EDITOR FILES
+# ===================================
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ===================================
+# OS & SYSTEM FILES
+# ===================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ===================================
+# DOCKER & CONTAINERS
+# ===================================
+.dockerignore
+docker-compose.override.yml
+
+# ===================================
+# TEMPORARY & CACHE FILES
+# ===================================
+.tmp/
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# ===================================
+# CERTIFICATES & KEYS
+# ===================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
