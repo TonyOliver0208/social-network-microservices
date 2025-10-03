@@ -3,23 +3,20 @@ const logger = require("./logger");
 
 async function invalidateAllSearchCaches() {
   try {
-    const pattern = "search:*";
-    let cursor = "0";
-    do {
-      const [newCursor, keys] = await redisClient.scan(
-        cursor,
-        "MATCH",
-        pattern,
-        "COUNT",
-        "100"
-      );
-      cursor = newCursor;
+    const stream = redisClient.scanStream({
+      match: "search:*",
+      count: 100,
+    });
 
-      if (keys.length) {
-        await redisClient.unlink(...keys);
-        logger.info(`Invalidated ${keys.length} search cache keys`);
-      }
-    } while (cursor !== "0");
+    const keysToDelete = [];
+    for await (const keys of stream) {
+      keysToDelete.push(...keys);
+    }
+
+    if (keysToDelete.length > 0) {
+      await redisClient.unlink(keysToDelete);
+      logger.info(`Invalidated ${keysToDelete.length} search cache keys`);
+    }
   } catch (err) {
     logger.error("Failed to invalidate search caches", { err });
     throw new Error("Cache invalidation failed");
