@@ -2,20 +2,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import RefreshToken from '../models/RefreshToken';
 import AppLogger from './logger';
-
-export interface JwtPayload {
-  userId: string;
-  email: string;
-  role: string;
-  tokenType: 'access' | 'refresh';
-}
-
-export interface TokenPair {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  tokenType: string;
-}
+import { JwtPayload, TokenPair } from '../types';
 
 class JwtService {
   private accessTokenSecret: string;

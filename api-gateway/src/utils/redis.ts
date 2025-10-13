@@ -1,5 +1,6 @@
-import Redis from 'ioredis';
-import AppLogger from './logger';
+import Redis from "ioredis";
+import { env } from "@/config/environment";
+import AppLogger from "./logger";
 
 interface RedisConfig {
   url?: string;
@@ -19,23 +20,18 @@ class RedisClient {
     const config: RedisConfig = {
       retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3,
-      lazyConnect: true
+      lazyConnect: true,
     };
 
-    // Use Redis URL if provided, otherwise use individual config
-    if (process.env.REDIS_URL) {
-      this.client = new Redis(process.env.REDIS_URL, config);
+    if (env.REDIS_URL) {
+      this.client = new Redis(env.REDIS_URL, config);
     } else {
       const redisConfig = {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-        db: parseInt(process.env.REDIS_DB || '0', 10),
-        ...config
+        host: "localhost",
+        port: 6379,
+        db: 0,
+        ...config,
       };
-
-      if (process.env.REDIS_PASSWORD) {
-        redisConfig.password = process.env.REDIS_PASSWORD;
-      }
 
       this.client = new Redis(redisConfig);
     }
@@ -44,42 +40,42 @@ class RedisClient {
   }
 
   private setupEventHandlers(): void {
-    this.client.on('connect', () => {
-      AppLogger.info('Redis connected successfully', {
-        service: 'api-gateway',
-        component: 'redis-client'
+    this.client.on("connect", () => {
+      AppLogger.info("Redis connected successfully", {
+        service: "api-gateway",
+        component: "redis-client",
       });
     });
 
-    this.client.on('ready', () => {
-      AppLogger.info('Redis is ready to receive commands', {
-        service: 'api-gateway',
-        component: 'redis-client',
-        status: 'ready'
+    this.client.on("ready", () => {
+      AppLogger.info("Redis is ready to receive commands", {
+        service: "api-gateway",
+        component: "redis-client",
+        status: "ready",
       });
     });
 
-    this.client.on('error', (error: Error) => {
-      AppLogger.error('Redis connection error', {
-        service: 'api-gateway',
-        component: 'redis-client',
+    this.client.on("error", (error: Error) => {
+      AppLogger.error("Redis connection error", {
+        service: "api-gateway",
+        component: "redis-client",
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
     });
 
-    this.client.on('close', () => {
-      AppLogger.warn('Redis connection closed', {
-        service: 'api-gateway',
-        component: 'redis-client'
+    this.client.on("close", () => {
+      AppLogger.warn("Redis connection closed", {
+        service: "api-gateway",
+        component: "redis-client",
       });
     });
 
-    this.client.on('reconnecting', () => {
-      AppLogger.info('Redis reconnecting...', {
-        service: 'api-gateway',
-        component: 'redis-client',
-        status: 'reconnecting'
+    this.client.on("reconnecting", () => {
+      AppLogger.info("Redis reconnecting...", {
+        service: "api-gateway",
+        component: "redis-client",
+        status: "reconnecting",
       });
     });
   }
@@ -90,10 +86,10 @@ class RedisClient {
 
   public async disconnect(): Promise<void> {
     await this.client.disconnect();
-    AppLogger.info('Redis disconnected', {
-      service: 'api-gateway',
-      component: 'redis-client',
-      status: 'disconnected'
+    AppLogger.info("Redis disconnected", {
+      service: "api-gateway",
+      component: "redis-client",
+      status: "disconnected",
     });
   }
 

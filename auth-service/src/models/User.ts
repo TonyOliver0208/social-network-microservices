@@ -1,38 +1,5 @@
-import mongoose, { Document, Schema } from 'mongoose';
-
-// User interface extending mongoose Document
-export interface IUser extends Document {
-  _id: mongoose.Types.ObjectId;
-  email: string;
-  name: string;
-  picture?: string;
-  googleId?: string;
-  role: 'user' | 'admin' | 'moderator';
-  isEmailVerified: boolean;
-  isActive: boolean;
-  lastLoginAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  profile?: {
-    firstName?: string;
-    lastName?: string;
-    bio?: string;
-    website?: string;
-    location?: string;
-  };
-  preferences?: {
-    language: string;
-    timezone: string;
-    emailNotifications: boolean;
-    pushNotifications: boolean;
-  };
-  metadata?: {
-    signupSource: string;
-    referrer?: string;
-    ipAddress?: string;
-    userAgent?: string;
-  };
-}
+import mongoose, { Schema } from 'mongoose';
+import { IUser } from '../types';
 
 // User schema definition
 const UserSchema: Schema = new Schema({
@@ -148,8 +115,7 @@ const UserSchema: Schema = new Schema({
 });
 
 // Indexes for better performance
-UserSchema.index({ email: 1 });
-UserSchema.index({ googleId: 1 });
+// Note: email and googleId indexes are automatically created by unique: true
 UserSchema.index({ role: 1 });
 UserSchema.index({ isActive: 1 });
 UserSchema.index({ createdAt: -1 });

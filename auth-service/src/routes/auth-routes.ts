@@ -1,8 +1,15 @@
-import { Router } from 'express';
-import AuthController from '../controllers/auth-controller';
-import { asyncHandler } from '../middleware/error';
-import { authenticateToken, authenticateRefreshToken } from '../middleware/auth';
-import { loginRateLimit, refreshRateLimit, generalRateLimit } from '../middleware/rateLimiter';
+import { Router, Request, Response } from "express";
+import AuthController from "../controllers/auth-controller";
+import { asyncHandler } from "../middleware/error";
+import {
+  authenticateToken,
+  authenticateRefreshToken,
+} from "../middleware/auth";
+import {
+  loginRateLimit,
+  refreshRateLimit,
+  generalRateLimit,
+} from "../middleware/rateLimiter";
 
 const router = Router();
 
@@ -13,9 +20,9 @@ const router = Router();
  * @body    { googleToken: string }
  */
 router.post(
-  '/google',
+  "/google",
   loginRateLimit,
-  asyncHandler(AuthController.validateGoogleToken)
+  asyncHandler(AuthController.validateGoogleToken.bind(AuthController))
 );
 
 /**
@@ -25,10 +32,10 @@ router.post(
  * @body    { refreshToken: string }
  */
 router.post(
-  '/refresh',
+  "/refresh",
   refreshRateLimit,
   authenticateRefreshToken,
-  asyncHandler(AuthController.refreshToken)
+  asyncHandler(AuthController.refreshToken.bind(AuthController))
 );
 
 /**
@@ -38,10 +45,10 @@ router.post(
  * @body    { refreshToken?: string }
  */
 router.post(
-  '/logout',
+  "/logout",
   generalRateLimit,
   authenticateToken,
-  asyncHandler(AuthController.logout)
+  asyncHandler(AuthController.logout.bind(AuthController))
 );
 
 /**
@@ -50,10 +57,10 @@ router.post(
  * @access  Protected
  */
 router.post(
-  '/logout-all',
+  "/logout-all",
   generalRateLimit,
   authenticateToken,
-  asyncHandler(AuthController.logoutAll)
+  asyncHandler(AuthController.logoutAll.bind(AuthController))
 );
 
 /**
@@ -62,10 +69,10 @@ router.post(
  * @access  Protected
  */
 router.get(
-  '/me',
+  "/me",
   generalRateLimit,
   authenticateToken,
-  asyncHandler(AuthController.getCurrentUser)
+  asyncHandler(AuthController.getCurrentUser.bind(AuthController))
 );
 
 /**
@@ -73,9 +80,6 @@ router.get(
  * @desc    Health check endpoint
  * @access  Public
  */
-router.get(
-  '/health',
-  asyncHandler(AuthController.healthCheck)
-);
+router.get("/health", asyncHandler(AuthController.healthCheck.bind(AuthController)));
 
 export default router;

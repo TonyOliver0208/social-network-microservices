@@ -5,40 +5,12 @@ import User from '../models/User';
 import RefreshToken from '../models/RefreshToken';
 import jwtService from '../utils/jwt';
 import AppLogger from '../utils/logger';
-
-// Types for request/response
-interface GoogleTokenRequest extends Request {
-  body: {
-    token: string;
-    tokenType?: string;
-  };
-}
-
-interface RefreshTokenRequest extends Request {
-  body: {
-    refreshToken: string;
-  };
-}
-
-interface AuthResponse {
-  success: boolean;
-  message?: string;
-  data?: any;
-}
-
-interface JWTPayload {
-  userId: string;
-  email: string;
-  name: string;
-  role: string;
-  iss: string;
-  aud: string;
-}
-
-interface RefreshJWTPayload {
-  userId: string;
-  type: string;
-}
+import { 
+  GoogleTokenRequest, 
+  RefreshTokenRequest, 
+  AuthResponse, 
+  JwtPayload 
+} from '../types';
 
 class AuthController {
   private googleClient: OAuth2Client;
@@ -74,13 +46,33 @@ class AuthController {
           throw new Error('Google Client ID not configured');
         }
         
+        // Ensure googleClient is initialized
+        if (!this.googleClient) {
+          throw new Error('Google OAuth client not initialized');
+        }
+        
+        AppLogger.info('Validating Google token', { 
+          tokenLength: token.length,
+          clientId: clientId.substring(0, 20) + '...',
+          hasGoogleClient: !!this.googleClient
+        });
+        
         const ticket = await this.googleClient.verifyIdToken({
           idToken: token,
           audience: clientId,
         });
         googleUser = ticket.getPayload();
+        
+        AppLogger.info('Google token validation successful', {
+          email: googleUser?.email,
+          sub: googleUser?.sub
+        });
       } catch (error: any) {
-        AppLogger.warn('Google token validation failed', { error: error.message });
+        AppLogger.warn('Google token validation failed', { 
+          error: error.message,
+          stack: error.stack,
+          hasGoogleClient: !!this.googleClient
+        });
         res.status(401).json({
           success: false,
           message: 'Invalid Google token'
@@ -134,20 +126,18 @@ class AuthController {
         {
           userId: user._id.toString(),
           email: user.email,
-          name: user.name,
           role: user.role,
-          iss: 'devcoll-auth-service',
-          aud: 'devcoll-api-gateway'
-        } as JWTPayload,
+          tokenType: 'access' as const
+        } as JwtPayload,
         process.env.JWT_SECRET!,
         { expiresIn: '15m' }
-      );
-
-      const refreshTokenValue = jwt.sign(
+      );      const refreshTokenValue = jwt.sign(
         {
           userId: user._id.toString(),
-          type: 'refresh'
-        } as RefreshJWTPayload,
+          email: user.email,
+          role: user.role,
+          tokenType: 'refresh' as const
+        } as JwtPayload,
         process.env.JWT_REFRESH_SECRET!,
         { expiresIn: '7d' }
       );
@@ -209,9 +199,9 @@ class AuthController {
       }
 
       // Validate refresh token
-      let decoded: RefreshJWTPayload;
+      let decoded: JwtPayload;
       try {
-        decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as RefreshJWTPayload;
+        decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as JwtPayload;
       } catch (error) {
         res.status(401).json({
           success: false,
@@ -253,9 +243,8 @@ class AuthController {
           email: user.email,
           name: user.name,
           role: user.role,
-          iss: 'devcoll-auth-service',
-          aud: 'devcoll-api-gateway'
-        } as JWTPayload,
+          tokenType: 'access' as const
+        } as JwtPayload,
         process.env.JWT_SECRET!,
         { expiresIn: '15m' }
       );
@@ -421,12 +410,14 @@ class AuthController {
     }
   }
 
+
+
   /**
    * Health check endpoint
    */
   async healthCheck(req: Request, res: Response): Promise<void> {
     try {
-      // Check database connection
+      // Check database connection by counting users
       const userCount = await User.countDocuments();
       
       res.json({

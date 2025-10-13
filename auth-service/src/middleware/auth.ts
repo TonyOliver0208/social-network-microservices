@@ -1,23 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
-import jwtService from '../utils/jwt';
+import jwt from 'jsonwebtoken';
+import { env } from '../config/environment';
 import AppLogger from '../utils/logger';
-
-interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-    role: string;
-  };
-}
+import { AuthenticatedRequest } from '../types';
 
 /**
- * Middleware to authenticate JWT tokens
+ * JWT token validation middleware
  */
-export const authenticateToken = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -25,196 +15,111 @@ export const authenticateToken = async (
     if (!token) {
       res.status(401).json({
         success: false,
-        message: 'Access token required'
+        message: 'Access token required',
+        error: 'MISSING_TOKEN'
       });
       return;
     }
 
-    const payload = jwtService.verifyAccessToken(token);
-    
-    req.user = {
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role
-    };
+    jwt.verify(token, env.JWT_ACCESS_SECRET, (err, decoded) => {
+      if (err) {
+        AppLogger.warn('Invalid access token:', {
+          error: err.message,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        });
 
-    next();
-  } catch (error: any) {
-    AppLogger.warn('Token authentication failed:', {
-      error: error.message,
-      ip: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-
-    if (error.message === 'Access token expired') {
-      res.status(401).json({
-        success: false,
-        message: 'Token expired',
-        code: 'TOKEN_EXPIRED'
-      });
-      return;
-    }
-
-    res.status(401).json({
-      success: false,
-      message: 'Invalid token',
-      code: 'INVALID_TOKEN'
-    });
-  }
-};
-
-/**
- * Middleware to authenticate optional JWT tokens (for endpoints that work with or without auth)
- */
-export const authenticateOptional = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token) {
-      try {
-        const payload = jwtService.verifyAccessToken(token);
-        req.user = {
-          userId: payload.userId,
-          email: payload.email,
-          role: payload.role
-        };
-      } catch (error) {
-        // Log but don't fail - optional authentication
-        AppLogger.debug('Optional authentication failed:', { error });
+        res.status(403).json({
+          success: false,
+          message: 'Invalid or expired access token',
+          error: 'INVALID_TOKEN'
+        });
+        return;
       }
-    }
 
-    next();
+      if (decoded && typeof decoded === 'object') {
+        req.user = decoded as AuthenticatedRequest['user'];
+      }
+      next();
+    });
   } catch (error) {
-    // Optional authentication should never fail the request
-    AppLogger.error('Unexpected error in optional auth:', { error });
-    next();
+    AppLogger.error('Authentication middleware error:', { error: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({
+      success: false,
+      message: 'Authentication error',
+      error: 'AUTH_ERROR'
+    });
   }
-};
+}
 
 /**
- * Middleware to check if user has required role
+ * Refresh token validation middleware
  */
-export const requireRole = (requiredRole: string) => {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-    if (!req.user) {
-      res.status(401).json({
-        success: false,
-        message: 'Authentication required'
-      });
-      return;
-    }
-
-    if (req.user.role !== requiredRole && req.user.role !== 'admin') {
-      res.status(403).json({
-        success: false,
-        message: 'Insufficient permissions'
-      });
-      return;
-    }
-
-    next();
-  };
-};
-
-/**
- * Middleware to check if user has any of the required roles
- */
-export const requireAnyRole = (requiredRoles: string[]) => {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-    if (!req.user) {
-      res.status(401).json({
-        success: false,
-        message: 'Authentication required'
-      });
-      return;
-    }
-
-    const hasRole = requiredRoles.includes(req.user.role) || req.user.role === 'admin';
-    
-    if (!hasRole) {
-      res.status(403).json({
-        success: false,
-        message: 'Insufficient permissions'
-      });
-      return;
-    }
-
-    next();
-  };
-};
-
-/**
- * Middleware to verify refresh token specifically
- */
-export const authenticateRefreshToken = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export function authenticateRefreshToken(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
   try {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-      res.status(400).json({
-        success: false,
-        message: 'Refresh token required'
-      });
-      return;
-    }
-
-    // Verify token signature and structure
-    const payload = jwtService.verifyRefreshToken(refreshToken);
-    
-    // Verify token exists in database and is not revoked
-    const isValid = await jwtService.validateRefreshTokenInDB(refreshToken);
-    
-    if (!isValid) {
       res.status(401).json({
         success: false,
-        message: 'Invalid or revoked refresh token'
+        message: 'Refresh token required',
+        error: 'MISSING_REFRESH_TOKEN'
       });
       return;
     }
 
-    req.user = {
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role
-    };
+    jwt.verify(refreshToken, env.JWT_REFRESH_SECRET, (err: jwt.VerifyErrors | null, decoded: any) => {
+      if (err) {
+        AppLogger.warn('Invalid refresh token:', {
+          error: err.message,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        });
 
-    next();
-  } catch (error: any) {
-    AppLogger.warn('Refresh token authentication failed:', {
-      error: error.message,
-      ip: req.ip
+        res.status(403).json({
+          success: false,
+          message: 'Invalid or expired refresh token',
+          error: 'INVALID_REFRESH_TOKEN'
+        });
+        return;
+      }
+
+      if (decoded && typeof decoded === 'object') {
+        req.user = decoded as AuthenticatedRequest['user'];
+      }
+      next();
     });
-
-    if (error.message === 'Refresh token expired') {
-      res.status(401).json({
-        success: false,
-        message: 'Refresh token expired',
-        code: 'REFRESH_TOKEN_EXPIRED'
-      });
-      return;
-    }
-
-    res.status(401).json({
+  } catch (error) {
+    AppLogger.error('Refresh token middleware error:', { error: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({
       success: false,
-      message: 'Invalid refresh token'
+      message: 'Authentication error',
+      error: 'AUTH_ERROR'
     });
   }
-};
+}
+
+/**
+ * Optional authentication middleware - doesn't fail if no token
+ */
+export function optionalAuth(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return next();
+  }
+
+  jwt.verify(token, env.JWT_ACCESS_SECRET, (err, decoded) => {
+    if (!err && decoded) {
+      req.user = decoded as AuthenticatedRequest['user'];
+    }
+    next();
+  });
+}
 
 export default {
   authenticateToken,
-  authenticateOptional,
-  requireRole,
-  requireAnyRole,
-  authenticateRefreshToken
+  authenticateRefreshToken,
+  optionalAuth
 };

@@ -9,14 +9,12 @@ export const databaseConfig = {
   uri: env.MONGODB_URI,
   options: {
     maxPoolSize: 10, // Maintain up to 10 socket connections
-    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+    serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds (increased)
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-    bufferCommands: false, // Disable mongoose buffering
-    bufferMaxEntries: 0, // Disable mongoose buffering
-    retryWrites: true, // Retry failed writes
-    w: 'majority' as const, // Write concern
     connectTimeoutMS: 10000, // How long a connection can take to be opened before timing out
     maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+    retryWrites: true, // Retry failed writes
+    w: 'majority' as const, // Write concern
   } as ConnectOptions,
   
   // Connection pool settings

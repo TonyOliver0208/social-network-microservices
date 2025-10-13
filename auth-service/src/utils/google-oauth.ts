@@ -1,12 +1,6 @@
 import { OAuth2Client } from 'google-auth-library';
 import AppLogger from './logger';
-
-export interface GoogleUserInfo {
-  id: string;
-  email: string;
-  name: string;
-  picture: string;
-}
+import { GoogleUserInfo } from '../types';
 
 class GoogleOAuthService {
   private client: OAuth2Client;
@@ -43,7 +37,7 @@ class GoogleOAuthService {
         picture: payload.picture || ''
       };
     } catch (error) {
-      AppLogger.error('Google token verification failed:', { error });
+      AppLogger.error('Google token verification failed:', { error: error instanceof Error ? error.message : String(error) });
       throw new Error('Invalid Google token');
     }
   }

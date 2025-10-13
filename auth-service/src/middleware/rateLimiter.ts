@@ -1,72 +1,132 @@
-import { Request, Response, NextFunction } from 'express';
-import AppLogger from '../utils/logger';
+import { Request, Response } from "express";
+import { rateLimit } from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
+import clientRedis from "../utils/redis";
+import AppLogger from "../utils/logger";
+import { rateLimitConfig, rateLimitEnv } from "../config/rateLimiter";
 
-interface RateLimitEntry {
-  count: number;
-  resetTime: number;
+/**
+ * Create rate limiter handler for consistent error responses
+ */
+function createRateLimitHandler(type: "general" | "strict" | "ultra") {
+  return (req: Request, res: Response) => {
+    const requestId = (req.headers["x-request-id"] as string) || "unknown";
+    const config = rateLimitConfig[type === "ultra" ? "ultraStrict" : type];
+
+    AppLogger.warn(`Rate limit exceeded - ${type}`, {
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      url: req.url,
+      method: req.method,
+      requestId,
+      type,
+      windowMs: config.windowMs,
+      maxRequests: config.max,
+    });
+
+    res.status(429).json({
+      success: false,
+      message: "Too many requests, please try again later.",
+      error: "Rate limit exceeded",
+      retryAfter: `${Math.ceil(config.windowMs / 60000)} minutes`,
+      timestamp: new Date().toISOString(),
+      requestId,
+    });
+  };
 }
 
-const store: { [key: string]: RateLimitEntry } = {};
+/**
+ * Generate key for rate limiting (IP or IP:UserID)
+ * Updated to be IPv6 compatible
+ */
+function generateKey(req: Request): string {
+  const userId = req.headers["x-user-id"] as string;
+  // Simplified IP handling for IPv6 compatibility
+  const ip = req.ip || "unknown";
 
-export const createRateLimiter = (windowMs: number, maxRequests: number, message?: string) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    try {
-      const key = req.ip || 'unknown';
-      const now = Date.now();
-      const resetTime = now + windowMs;
+  return userId ? `${ip}:${userId}` : ip;
+}
 
-      let entry = store[key];
+/**
+ * General rate limiter for most API endpoints
+ */
+export const rateLimiter = rateLimit({
+  ...rateLimitConfig.general,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: createRateLimitHandler("general"),
 
-      if (!entry || entry.resetTime <= now) {
-        entry = { count: 1, resetTime };
-        store[key] = entry;
-      } else {
-        entry.count++;
-      }
+  store: new RedisStore({
+    // @ts-ignore - Redis client compatibility
+    sendCommand: (...args: string[]) => clientRedis.call(...args),
+    prefix: rateLimitConfig.general.prefix,
+  }),
 
-      const remaining = Math.max(0, maxRequests - entry.count);
+  skip: (req: Request) => {
+    // Skip health checks in production
+    const skipPaths = ["/health", "/metrics", "/status"];
+    return (
+      rateLimitEnv.NODE_ENV === "production" && skipPaths.includes(req.path)
+    );
+  },
+});
 
-      res.set({
-        'X-RateLimit-Limit': maxRequests.toString(),
-        'X-RateLimit-Remaining': remaining.toString(),
-        'X-RateLimit-Reset': Math.ceil(entry.resetTime / 1000).toString()
-      });
+/**
+ * Strict rate limiter for auth endpoints
+ */
+export const strictRateLimiter = rateLimit({
+  ...rateLimitConfig.strict,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: createRateLimitHandler("strict"),
 
-      if (entry.count > maxRequests) {
-        AppLogger.warn('Rate limit exceeded:', {
-          ip: req.ip,
-          path: req.path,
-          count: entry.count,
-          limit: maxRequests
-        });
+  store: new RedisStore({
+    // @ts-ignore - Redis client compatibility
+    sendCommand: (...args: string[]) => clientRedis.call(...args),
+    prefix: rateLimitConfig.strict.prefix,
+  }),
+});
 
-        res.status(429).json({
-          success: false,
-          message: message || 'Too many requests, please try again later',
-          code: 'RATE_LIMIT_EXCEEDED'
-        });
-        return;
-      }
+/**
+ * Login rate limiter - stricter for authentication
+ */
+export const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 login attempts per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: createRateLimitHandler("strict"),
 
-      next();
-    } catch (error) {
-      AppLogger.error('Rate limiter error:', { error });
-      next();
-    }
-  };
-};
+  store: new RedisStore({
+    // @ts-ignore - Redis client compatibility
+    sendCommand: (...args: string[]) => clientRedis.call(...args),
+    prefix: "auth_rl:login:",
+  }),
+});
 
-// Import config for consistent rate limiting
-const { config } = require('../config');
+/**
+ * Refresh token rate limiter
+ */
+export const refreshRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 refresh attempts per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: createRateLimitHandler("strict"),
 
-// Common rate limiters
-export const generalRateLimit = createRateLimiter(config.rateLimit.windowMs, config.rateLimit.max); 
-export const loginRateLimit = createRateLimiter(15 * 60 * 1000, 10); // 10 login attempts per 15 minutes
-export const refreshRateLimit = createRateLimiter(60 * 1000, 5); // 5 refresh attempts per minute
+  store: new RedisStore({
+    // @ts-ignore - Redis client compatibility
+    sendCommand: (...args: string[]) => clientRedis.call(...args),
+    prefix: "auth_rl:refresh:",
+  }),
+});
 
-export default {
-  createRateLimiter,
-  generalRateLimit,
-  loginRateLimit,
-  refreshRateLimit
-};
+/**
+ * General rate limiter alias
+ */
+export const generalRateLimit = rateLimiter;
+
+/**
+ * Default export - use general rate limiter
+ */
+export default rateLimiter;

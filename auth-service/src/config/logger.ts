@@ -1,8 +1,21 @@
 import winston from "winston";
-import "winston-daily-rotate-file";
+import DailyRotateFile from "winston-daily-rotate-file";
+import fs from "fs";
 import path from "path";
 
-const logDir = path.join(process.cwd(), "logs");
+if (!fs.existsSync("logs")) fs.mkdirSync("logs");
+
+function getAppVersion(): string {
+  try {
+    const packageJsonPath = path.join(process.cwd(), "package.json");
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    return packageJson.version || "1.0.0";
+  } catch (error) {
+    return (
+      process.env.npm_package_version || process.env.APP_VERSION || "1.0.0"
+    );
+  }
+}
 
 const levels = {
   error: 0,
@@ -24,9 +37,11 @@ winston.addColors(colors);
 const formatDev = winston.format.combine(
   winston.format.colorize({ all: true }),
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  winston.format.printf(
-    (info) => `${info.timestamp} [${info.level}]: ${info.message}`
-  )
+  winston.format.printf((info) => {
+    const { timestamp, level, message, service, ...meta } = info;
+    const metaString = Object.keys(meta).length > 0 ? JSON.stringify(meta, null, 2) : '';
+    return `${timestamp} [${level}]: ${message} ${metaString}`;
+  })
 );
 
 const formatProd = winston.format.combine(
@@ -35,7 +50,7 @@ const formatProd = winston.format.combine(
   winston.format.json()
 );
 
-const dailyRotateFile = new (winston.transports as any).DailyRotateFile({
+const dailyRotateFile = new DailyRotateFile({
   filename: "logs/%DATE%-combined.log",
   datePattern: "YYYY-MM-DD",
   zippedArchive: true,
@@ -43,28 +58,19 @@ const dailyRotateFile = new (winston.transports as any).DailyRotateFile({
   maxFiles: "14d",
 });
 
-const dailyRotateError = new (winston.transports as any).DailyRotateFile({
-  filename: "logs/%DATE%-error.log",
-  datePattern: "YYYY-MM-DD",
-  zippedArchive: true,
-  maxSize: "20m",
-  maxFiles: "30d",
-  level: "error",
-});
-
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
   levels,
+  level: process.env.LOG_LEVEL || "info",
   format: process.env.NODE_ENV === "production" ? formatProd : formatDev,
-  defaultMeta: { 
-    service: process.env.SERVICE_NAME || "auth-service",
-    version: process.env.npm_package_version || "1.0.0",
-    environment: process.env.NODE_ENV || "development"
+  defaultMeta: {
+    service: "api-gateway",
+    version: getAppVersion(),
+    environment: process.env.NODE_ENV || "development",
   },
   transports: [
     new winston.transports.Console(),
     dailyRotateFile,
-    dailyRotateError,
+    new winston.transports.File({ filename: "logs/error.log", level: "error" }),
   ],
   exceptionHandlers: [
     new winston.transports.File({ filename: "logs/exceptions.log" }),
