@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client-post"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  authorId  String
+  mediaUrls String[] @default([])
+  privacy   Privacy  @default(PUBLIC)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments Comment[]
+  likes    Like[]
+  
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id       String @id @default(uuid())
+  content  String @db.Text
+  postId   String
+  authorId String
+  parentId String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model Like {
+  id       String @id @default(uuid())
+  postId   String
+  userId   String
+  
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("likes")
+}
+
+enum Privacy {
+  PUBLIC
+  FRIENDS
+  PRIVATE
+}

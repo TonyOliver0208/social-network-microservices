@@ -1,0 +1,39 @@
+{
+  "name": "devcoll-microservices",
+  "version": "1.0.0",
+  "description": "DevColl Social Network Microservices with NestJS, Prisma, PostgreSQL, MongoDB",
+  "author": "DevColl Team",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "install:all": "npm install && cd apps/api-gateway && npm install && cd ../auth-service && npm install && cd ../user-service && npm install && cd ../post-service && npm install && cd ../media-service && npm install && cd ../search-service && npm install",
+    "dev:gateway": "cd apps/api-gateway && npm run start:dev",
+    "dev:auth": "cd apps/auth-service && npm run start:dev",
+    "dev:user": "cd apps/user-service && npm run start:dev",
+    "dev:post": "cd apps/post-service && npm run start:dev",
+    "dev:media": "cd apps/media-service && npm run start:dev",
+    "dev:search": "cd apps/search-service && npm run start:dev",
+    "build:all": "npm run build:gateway && npm run build:auth && npm run build:user && npm run build:post && npm run build:media && npm run build:search",
+    "build:gateway": "cd apps/api-gateway && npm run build",
+    "build:auth": "cd apps/auth-service && npm run build",
+    "build:user": "cd apps/user-service && npm run build",
+    "build:post": "cd apps/post-service && npm run build",
+    "build:media": "cd apps/media-service && npm run build",
+    "build:search": "cd apps/search-service && npm run build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "prisma:generate": "cd apps/auth-service && npx prisma generate && cd ../user-service && npx prisma generate && cd ../post-service && npx prisma generate",
+    "prisma:migrate": "npm run prisma:migrate:auth && npm run prisma:migrate:user && npm run prisma:migrate:post",
+    "prisma:migrate:auth": "cd apps/auth-service && npx prisma migrate dev",
+    "prisma:migrate:user": "cd apps/user-service && npx prisma migrate dev",
+    "prisma:migrate:post": "cd apps/post-service && npx prisma migrate dev",
+    "prisma:studio:auth": "cd apps/auth-service && npx prisma studio",
+    "prisma:studio:user": "cd apps/user-service && npx prisma studio",
+    "prisma:studio:post": "cd apps/post-service && npx prisma studio"
+  },
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ]
+}

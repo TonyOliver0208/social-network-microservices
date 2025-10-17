@@ -1,0 +1,52 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("USER_DATABASE_URL")
+}
+
+model Profile {
+  id        String    @id @default(uuid())
+  userId    String    @unique
+  fullName  String?
+  bio       String?   @db.Text
+  avatar    String?
+  coverImage String?
+  website   String?
+  location  String?
+  birthDate DateTime?
+  isPrivate Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("profiles")
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+model UserStats {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  followersCount Int      @default(0)
+  followingCount Int      @default(0)
+  postsCount     Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@map("user_stats")
+}

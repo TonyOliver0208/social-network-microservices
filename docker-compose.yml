@@ -1,94 +1,294 @@
 version: '3.8'
 
 services:
-  api-gateway:
-    build: ./api-gateway
+  # ==================== DATABASES ====================
+  postgres-auth:
+    image: postgres:15-alpine
+    container_name: devcoll-postgres-auth
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: devcoll_auth
     ports:
-      - "3000:3000"
-    env_file: ./api-gateway/.env
-    depends_on:
-      - redis
-      - rabbitmq
-      - auth-service
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://rabbitmq:5672
-      - AUTH_SERVICE_URL=http://auth-service:3001
-      - USER_SERVICE_URL=http://user-service:3002
-      - QUESTION_SERVICE_URL=http://question-service:3003
-      - MEDIA_SERVICE_URL=http://media-service:3004
-      - SEARCH_SERVICE_URL=http://search-service:3005
+      - "5432:5432"
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data
+    networks:
+      - devcoll-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  auth-service:
-    build: ./auth-service
+  postgres-user:
+    image: postgres:15-alpine
+    container_name: devcoll-postgres-user
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: devcoll_user
     ports:
-      - "3001:3001"
-    env_file: ./auth-service/.env
-    depends_on:
-      - redis
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - API_GATEWAY_URL=http://api-gateway:3000
-      - USER_SERVICE_URL=http://user-service:3002
-      - CLIENT_URL=http://localhost:3001
+      - "5433:5432"
+    volumes:
+      - postgres-user-data:/var/lib/postgresql/data
+    networks:
+      - devcoll-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  user-service:
-    build: ./user-service
+  postgres-post:
+    image: postgres:15-alpine
+    container_name: devcoll-postgres-post
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: devcoll_post
     ports:
-      - "3002:3002"
-    env_file: ./user-service/.env
-    depends_on:
-      - redis
-      - rabbitmq
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - "5434:5432"
+    volumes:
+      - postgres-post-data:/var/lib/postgresql/data
+    networks:
+      - devcoll-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  question-service:
-    build: ./question-service
+  mongodb:
+    image: mongo:7
+    container_name: devcoll-mongodb
     ports:
-      - "3003:3003"
-    env_file: ./question-service/.env
-    depends_on:
-      - redis
-      - rabbitmq
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - devcoll-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  media-service:
-    build: ./media-service
-    env_file: ./media-service/.env
-    depends_on:
-      - redis
-      - rabbitmq
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://rabbitmq:5672
-
-  search-service:
-    build: ./search-service
-    env_file: ./search-service/.env
-    depends_on:
-      - redis
-      - rabbitmq
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://rabbitmq:5672
-
+  # ==================== CACHE & MESSAGE QUEUE ====================
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
+    container_name: devcoll-redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - devcoll-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3.12-management-alpine
+    container_name: devcoll-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     ports:
       - "5672:5672"
       - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - devcoll-network
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      test: rabbitmq-diagnostics -q ping
       interval: 30s
       timeout: 10s
       retries: 5
+
+  # ==================== MICROSERVICES ====================
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: devcoll-api-gateway
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - API_GATEWAY_PORT=3000
+      - AUTH_SERVICE_HOST=auth-service
+      - USER_SERVICE_HOST=user-service
+      - POST_SERVICE_HOST=post-service
+      - MEDIA_SERVICE_HOST=media-service
+      - SEARCH_SERVICE_HOST=search-service
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      post-service:
+        condition: service_started
+      media-service:
+        condition: service_started
+      search-service:
+        condition: service_started
+    networks:
+      - devcoll-network
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/auth-service/Dockerfile
+    container_name: devcoll-auth-service
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - AUTH_SERVICE_PORT=3001
+      - AUTH_DATABASE_URL=postgresql://postgres:password@postgres-auth:5432/devcoll_auth?schema=public
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - USER_SERVICE_HOST=user-service
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - devcoll-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: .
+      dockerfile: apps/user-service/Dockerfile
+    container_name: devcoll-user-service
+    ports:
+      - "3002:3002"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - USER_SERVICE_PORT=3002
+      - USER_DATABASE_URL=postgresql://postgres:password@postgres-user:5432/devcoll_user?schema=public
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - devcoll-network
+    restart: unless-stopped
+
+  post-service:
+    build:
+      context: .
+      dockerfile: apps/post-service/Dockerfile
+    container_name: devcoll-post-service
+    ports:
+      - "3003:3003"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - POST_SERVICE_PORT=3003
+      - POST_DATABASE_URL=postgresql://postgres:password@postgres-post:5432/devcoll_post?schema=public
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - MEDIA_SERVICE_HOST=media-service
+      - USER_SERVICE_HOST=user-service
+    depends_on:
+      postgres-post:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - devcoll-network
+    restart: unless-stopped
+
+  media-service:
+    build:
+      context: .
+      dockerfile: apps/media-service/Dockerfile
+    container_name: devcoll-media-service
+    ports:
+      - "3004:3004"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - MEDIA_SERVICE_PORT=3004
+      - MEDIA_MONGODB_URI=mongodb://mongodb:27017/devcoll_media
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - devcoll-network
+    restart: unless-stopped
+
+  search-service:
+    build:
+      context: .
+      dockerfile: apps/search-service/Dockerfile
+    container_name: devcoll-search-service
+    ports:
+      - "3005:3005"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - SEARCH_SERVICE_PORT=3005
+      - SEARCH_MONGODB_URI=mongodb://mongodb:27017/devcoll_search
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - devcoll-network
+    restart: unless-stopped
+
+networks:
+  devcoll-network:
+    driver: bridge
+
+volumes:
+  postgres-auth-data:
+  postgres-user-data:
+  postgres-post-data:
+  mongodb-data:
+  redis-data:
+  rabbitmq-data:
