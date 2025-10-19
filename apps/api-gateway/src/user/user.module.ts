@@ -3,6 +3,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { UserController } from './user.controller';
 import { SERVICES } from '@app/common';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -10,10 +11,18 @@ import { SERVICES } from '@app/common';
       {
         name: SERVICES.USER_SERVICE,
         useFactory: (configService: ConfigService) => ({
-          transport: Transport.TCP,
+          transport: Transport.GRPC,
           options: {
-            host: configService.get<string>('USER_SERVICE_HOST', 'localhost'),
-            port: configService.get<number>('USER_SERVICE_PORT', 3002),
+            url: configService.get<string>('USER_SERVICE_URL', 'localhost:50052'),
+            package: 'user',
+            protoPath: join(__dirname, '../../../../proto/user.proto'),
+            loader: {
+              keepCase: true,
+              longs: String,
+              enums: String,
+              defaults: true,
+              oneofs: true,
+            },
           },
         }),
         inject: [ConfigService],

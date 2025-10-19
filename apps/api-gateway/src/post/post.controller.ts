@@ -7,24 +7,32 @@ import {
   Param,
   Body,
   Query,
-  Inject,
   UseGuards,
   HttpException,
   HttpStatus,
+  Inject,
+  OnModuleInit,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientGrpc } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { firstValueFrom } from 'rxjs';
-import { SERVICES, MESSAGES, CurrentUser, JwtAuthGuard, PaginationDto } from '@app/common';
+import { lastValueFrom } from 'rxjs';
+import { SERVICES, CurrentUser, JwtAuthGuard, PaginationDto } from '@app/common';
 import { CreatePostDto, UpdatePostDto, CreateCommentDto } from './dto';
+import { PostService, POSTSERVICE_SERVICE_NAME } from '@app/proto/post';
 
 @ApiTags('posts')
 @Controller('posts')
-export class PostController {
+export class PostController implements OnModuleInit {
+  private postService: PostService;
+
   constructor(
     @Inject(SERVICES.POST_SERVICE)
-    private readonly postClient: ClientProxy,
+    private readonly client: ClientGrpc,
   ) {}
+
+  onModuleInit() {
+    this.postService = this.client.getService<PostService>(POSTSERVICE_SERVICE_NAME);
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -35,13 +43,12 @@ export class PostController {
     @Body() createPostDto: CreatePostDto,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.POST_CREATE, {
+      return await lastValueFrom(
+        this.postService.CreatePost({
           userId,
-          createPostDto,
+          ...createPostDto,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to create post',
@@ -61,13 +68,13 @@ export class PostController {
     @Query() pagination: PaginationDto,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.POST_GET_FEED, {
+      return await lastValueFrom(
+        this.postService.GetFeed({
           userId,
-          pagination,
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get feed',
@@ -83,17 +90,17 @@ export class PostController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getUserPosts(
-    @Param('userId') userId: string,
+    @Param('userId') targetUserId: string,
     @Query() pagination: PaginationDto,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.POST_GET_USER_POSTS, {
-          userId,
-          pagination,
+      return await lastValueFrom(
+        this.postService.GetUserPosts({
+          userId: targetUserId,
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get user posts',
@@ -111,13 +118,11 @@ export class PostController {
     @CurrentUser('userId') userId: string,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.POST_GET, {
-          postId,
-          userId,
+      return await lastValueFrom(
+        this.postService.GetPostById({
+          id: postId,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Post not found',
@@ -136,14 +141,13 @@ export class PostController {
     @Body() updatePostDto: UpdatePostDto,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.POST_UPDATE, {
-          postId,
+      return await lastValueFrom(
+        this.postService.UpdatePost({
+          id: postId,
           userId,
-          updatePostDto,
+          ...updatePostDto,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to update post',
@@ -161,13 +165,12 @@ export class PostController {
     @CurrentUser('userId') userId: string,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.POST_DELETE, {
-          postId,
+      return await lastValueFrom(
+        this.postService.DeletePost({
+          id: postId,
           userId,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to delete post',
@@ -185,13 +188,12 @@ export class PostController {
     @CurrentUser('userId') userId: string,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.POST_LIKE, {
+      return await lastValueFrom(
+        this.postService.LikePost({
           postId,
           userId,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to like post',
@@ -209,43 +211,16 @@ export class PostController {
     @CurrentUser('userId') userId: string,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.POST_UNLIKE, {
+      return await lastValueFrom(
+        this.postService.UnlikePost({
           postId,
           userId,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to unlike post',
         error.status || HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  @Get(':id/likes')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get post likes' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  async getPostLikes(
-    @Param('id') postId: string,
-    @Query() pagination: PaginationDto,
-  ) {
-    try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.POST_GET_LIKES, {
-          postId,
-          pagination,
-        }),
-      );
-      return result;
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Failed to get likes',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -260,14 +235,13 @@ export class PostController {
     @Body() createCommentDto: CreateCommentDto,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.COMMENT_CREATE, {
+      return await lastValueFrom(
+        this.postService.CreateComment({
           postId,
           userId,
-          createCommentDto,
+          ...createCommentDto,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to create comment',
@@ -287,43 +261,17 @@ export class PostController {
     @Query() pagination: PaginationDto,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.COMMENT_GET_POST_COMMENTS, {
+      return await lastValueFrom(
+        this.postService.GetComments({
           postId,
-          pagination,
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get comments',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Patch('comments/:id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update comment' })
-  async updateComment(
-    @Param('id') commentId: string,
-    @CurrentUser('userId') userId: string,
-    @Body('content') content: string,
-  ) {
-    try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.COMMENT_UPDATE, {
-          commentId,
-          userId,
-          content,
-        }),
-      );
-      return result;
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Failed to update comment',
-        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -337,13 +285,12 @@ export class PostController {
     @CurrentUser('userId') userId: string,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.postClient.send(MESSAGES.COMMENT_DELETE, {
-          commentId,
+      return await lastValueFrom(
+        this.postService.DeleteComment({
+          id: commentId,
           userId,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to delete comment',

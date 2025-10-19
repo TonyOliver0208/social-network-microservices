@@ -1,0 +1,107 @@
+export declare const EVENTS: {
+    USER_CREATED: string;
+    USER_UPDATED: string;
+    USER_DELETED: string;
+    USER_FOLLOWED: string;
+    USER_UNFOLLOWED: string;
+    USER_REGISTERED: string;
+    USER_LOGGED_IN: string;
+    PASSWORD_RESET: string;
+    POST_CREATED: string;
+    POST_UPDATED: string;
+    POST_DELETED: string;
+    POST_LIKED: string;
+    POST_UNLIKED: string;
+    COMMENT_CREATED: string;
+    COMMENT_UPDATED: string;
+    COMMENT_DELETED: string;
+    MEDIA_UPLOADED: string;
+    MEDIA_DELETED: string;
+    SEARCH_INDEX_UPDATE: string;
+    SEARCH_INDEX_DELETE: string;
+};
+export declare const MESSAGES: {
+    AUTH_VALIDATE_TOKEN: string;
+    AUTH_REGISTER: string;
+    AUTH_LOGIN: string;
+    AUTH_REFRESH_TOKEN: string;
+    AUTH_LOGOUT: string;
+    AUTH_RESET_PASSWORD: string;
+    USER_FIND_BY_ID: string;
+    USER_FIND_BY_EMAIL: string;
+    USER_UPDATE_PROFILE: string;
+    USER_GET_PROFILE: string;
+    USER_FOLLOW: string;
+    USER_UNFOLLOW: string;
+    USER_GET_FOLLOWERS: string;
+    USER_GET_FOLLOWING: string;
+    USER_SEARCH: string;
+    POST_CREATE: string;
+    POST_GET: string;
+    POST_UPDATE: string;
+    POST_DELETE: string;
+    POST_FIND_BY_ID: string;
+    POST_GET_FEED: string;
+    POST_GET_USER_POSTS: string;
+    POST_LIKE: string;
+    POST_UNLIKE: string;
+    POST_GET_LIKES: string;
+    COMMENT_CREATE: string;
+    COMMENT_UPDATE: string;
+    COMMENT_DELETE: string;
+    COMMENT_GET_BY_POST: string;
+    COMMENT_GET_POST_COMMENTS: string;
+    MEDIA_UPLOAD: string;
+    MEDIA_DELETE: string;
+    MEDIA_FIND_BY_ID: string;
+    MEDIA_GET_USER_MEDIA: string;
+    SEARCH_POSTS: string;
+    SEARCH_USERS: string;
+    SEARCH_INDEX_POST: string;
+    SEARCH_REMOVE_POST: string;
+};
+export declare const SERVICES: {
+    API_GATEWAY: string;
+    AUTH_SERVICE: string;
+    USER_SERVICE: string;
+    POST_SERVICE: string;
+    MEDIA_SERVICE: string;
+    SEARCH_SERVICE: string;
+};
+export declare const QUEUES: {
+    AUTH: string;
+    USER: string;
+    POST: string;
+    MEDIA: string;
+    SEARCH: string;
+};
+export declare const CACHE_KEYS: {
+    USER_PROFILE: (userId: string) => string;
+    POST: (postId: string) => string;
+    POST_FEED: (userId: string, page: number) => string;
+    USER_FEED: (userId: string) => string;
+    USER_POSTS: (userId: string, page: number) => string;
+    SEARCH_RESULTS: (query: string) => string;
+    USER_FOLLOWERS: (userId: string) => string;
+    USER_FOLLOWING: (userId: string) => string;
+};
+export declare const CACHE_TTL: {
+    SHORT: number;
+    MEDIUM: number;
+    LONG: number;
+    VERY_LONG: number;
+};
+export declare const UPLOAD: {
+    MAX_FILE_SIZE: number;
+    ALLOWED_IMAGE_TYPES: string[];
+    ALLOWED_VIDEO_TYPES: string[];
+};
+export declare const PAGINATION: {
+    DEFAULT_PAGE: number;
+    DEFAULT_LIMIT: number;
+    MAX_LIMIT: number;
+};
+export declare const RATE_LIMIT: {
+    WINDOW_MS: number;
+    MAX_REQUESTS: number;
+};

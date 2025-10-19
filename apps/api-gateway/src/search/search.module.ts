@@ -3,6 +3,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { SearchController } from './search.controller';
 import { SERVICES } from '@app/common';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -10,10 +11,18 @@ import { SERVICES } from '@app/common';
       {
         name: SERVICES.SEARCH_SERVICE,
         useFactory: (configService: ConfigService) => ({
-          transport: Transport.TCP,
+          transport: Transport.GRPC,
           options: {
-            host: configService.get<string>('SEARCH_SERVICE_HOST', 'localhost'),
-            port: configService.get<number>('SEARCH_SERVICE_PORT', 3005),
+            url: configService.get<string>('SEARCH_SERVICE_URL', 'localhost:50055'),
+            package: 'search',
+            protoPath: join(__dirname, '../../../../proto/search.proto'),
+            loader: {
+              keepCase: true,
+              longs: String,
+              enums: String,
+              defaults: true,
+              oneofs: true,
+            },
           },
         }),
         inject: [ConfigService],

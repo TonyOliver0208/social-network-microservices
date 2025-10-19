@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package search;
+
+service SearchService {
+  rpc SearchUsers (SearchUsersRequest) returns (SearchUsersResponse);
+  rpc SearchPosts (SearchPostsRequest) returns (SearchPostsResponse);
+  rpc SearchAll (SearchAllRequest) returns (SearchAllResponse);
+  rpc IndexUser (IndexUserRequest) returns (IndexResponse);
+  rpc IndexPost (IndexPostRequest) returns (IndexResponse);
+  rpc RemoveUserIndex (RemoveUserIndexRequest) returns (IndexResponse);
+  rpc RemovePostIndex (RemovePostIndexRequest) returns (IndexResponse);
+}
+
+message SearchUsersRequest {
+  string query = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message SearchUsersResponse {
+  repeated UserResult users = 1;
+  int32 total = 2;
+}
+
+message UserResult {
+  string id = 1;
+  string username = 2;
+  string firstName = 3;
+  string lastName = 4;
+  string avatar = 5;
+  string bio = 6;
+}
+
+message SearchPostsRequest {
+  string query = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message SearchPostsResponse {
+  repeated PostResult posts = 1;
+  int32 total = 2;
+}
+
+message PostResult {
+  string id = 1;
+  string userId = 2;
+  string content = 3;
+  string createdAt = 4;
+}
+
+message SearchAllRequest {
+  string query = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message SearchAllResponse {
+  repeated UserResult users = 1;
+  repeated PostResult posts = 2;
+  int32 totalUsers = 3;
+  int32 totalPosts = 4;
+}
+
+message IndexUserRequest {
+  string id = 1;
+  string username = 2;
+  string firstName = 3;
+  string lastName = 4;
+  string bio = 5;
+}
+
+message IndexPostRequest {
+  string id = 1;
+  string userId = 2;
+  string content = 3;
+}
+
+message RemoveUserIndexRequest {
+  string id = 1;
+}
+
+message RemovePostIndexRequest {
+  string id = 1;
+}
+
+message IndexResponse {
+  bool success = 1;
+}

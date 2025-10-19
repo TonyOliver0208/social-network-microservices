@@ -21,7 +21,9 @@
     "resolveJsonModule": true,
     "paths": {
       "@app/common": ["libs/common/src"],
-      "@app/common/*": ["libs/common/src/*"]
+      "@app/common/*": ["libs/common/src/*"],
+      "@app/proto": ["generated"],
+      "@app/proto/*": ["generated/*"]
     }
   },
   "exclude": ["node_modules", "dist"]

@@ -9,20 +9,28 @@ import {
   HttpException,
   HttpStatus,
   Inject,
+  OnModuleInit,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientGrpc } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { firstValueFrom } from 'rxjs';
-import { SERVICES, MESSAGES, CurrentUser, JwtAuthGuard } from '@app/common';
+import { lastValueFrom } from 'rxjs';
+import { SERVICES, CurrentUser, JwtAuthGuard } from '@app/common';
+import { MediaService, MEDIASERVICE_SERVICE_NAME } from '@app/proto/media';
 
 @ApiTags('media')
 @Controller('media')
-export class MediaController {
+export class MediaController implements OnModuleInit {
+  private mediaService: MediaService;
+
   constructor(
     @Inject(SERVICES.MEDIA_SERVICE)
-    private readonly mediaClient: ClientProxy,
+    private readonly client: ClientGrpc,
   ) {}
+
+  onModuleInit() {
+    this.mediaService = this.client.getService<MediaService>(MEDIASERVICE_SERVICE_NAME);
+  }
 
   @Post('upload')
   @UseGuards(JwtAuthGuard)
@@ -50,18 +58,15 @@ export class MediaController {
     }
 
     try {
-      const result = await firstValueFrom(
-        this.mediaClient.send(MESSAGES.MEDIA_UPLOAD, {
+      return await lastValueFrom(
+        this.mediaService.UploadMedia({
           userId,
-          file: {
-            buffer: file.buffer,
-            originalname: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size,
-          },
+          file: file.buffer,
+          filename: file.originalname,
+          mimetype: file.mimetype,
+          type: file.mimetype.startsWith('image/') ? 'image' : 'video',
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to upload media',
@@ -79,13 +84,12 @@ export class MediaController {
     @CurrentUser('userId') userId: string,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.mediaClient.send(MESSAGES.MEDIA_DELETE, {
-          mediaId,
+      return await lastValueFrom(
+        this.mediaService.DeleteMedia({
+          id: mediaId,
           userId,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to delete media',

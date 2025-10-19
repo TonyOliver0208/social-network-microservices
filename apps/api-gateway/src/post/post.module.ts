@@ -3,6 +3,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { PostController } from './post.controller';
 import { SERVICES } from '@app/common';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -10,10 +11,18 @@ import { SERVICES } from '@app/common';
       {
         name: SERVICES.POST_SERVICE,
         useFactory: (configService: ConfigService) => ({
-          transport: Transport.TCP,
+          transport: Transport.GRPC,
           options: {
-            host: configService.get<string>('POST_SERVICE_HOST', 'localhost'),
-            port: configService.get<number>('POST_SERVICE_PORT', 3003),
+            url: configService.get<string>('POST_SERVICE_URL', 'localhost:50053'),
+            package: 'post',
+            protoPath: join(__dirname, '../../../../proto/post.proto'),
+            loader: {
+              keepCase: true,
+              longs: String,
+              enums: String,
+              defaults: true,
+              oneofs: true,
+            },
           },
         }),
         inject: [ConfigService],

@@ -6,19 +6,27 @@ import {
   HttpException,
   HttpStatus,
   Inject,
+  OnModuleInit,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientGrpc } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { firstValueFrom } from 'rxjs';
-import { SERVICES, MESSAGES, JwtAuthGuard, PaginationDto } from '@app/common';
+import { lastValueFrom } from 'rxjs';
+import { SERVICES, JwtAuthGuard, PaginationDto } from '@app/common';
+import { SearchService, SEARCHSERVICE_SERVICE_NAME } from '@app/proto/search';
 
 @ApiTags('search')
 @Controller('search')
-export class SearchController {
+export class SearchController implements OnModuleInit {
+  private searchService: SearchService;
+
   constructor(
     @Inject(SERVICES.SEARCH_SERVICE)
-    private readonly searchClient: ClientProxy,
+    private readonly client: ClientGrpc,
   ) {}
+
+  onModuleInit() {
+    this.searchService = this.client.getService<SearchService>(SEARCHSERVICE_SERVICE_NAME);
+  }
 
   @Get('posts')
   @UseGuards(JwtAuthGuard)
@@ -36,13 +44,13 @@ export class SearchController {
     }
 
     try {
-      const result = await firstValueFrom(
-        this.searchClient.send(MESSAGES.SEARCH_POSTS, {
+      return await lastValueFrom(
+        this.searchService.SearchPosts({
           query,
-          ...pagination,
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Search failed',
@@ -67,13 +75,13 @@ export class SearchController {
     }
 
     try {
-      const result = await firstValueFrom(
-        this.searchClient.send(MESSAGES.SEARCH_USERS, {
+      return await lastValueFrom(
+        this.searchService.SearchUsers({
           query,
-          ...pagination,
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Search failed',

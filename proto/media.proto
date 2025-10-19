@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package media;
+
+service MediaService {
+  rpc UploadMedia (UploadMediaRequest) returns (MediaResponse);
+  rpc GetMedia (GetMediaRequest) returns (MediaResponse);
+  rpc DeleteMedia (DeleteMediaRequest) returns (DeleteMediaResponse);
+  rpc GetUserMedia (GetUserMediaRequest) returns (MediaListResponse);
+}
+
+message UploadMediaRequest {
+  string userId = 1;
+  bytes file = 2;
+  string filename = 3;
+  string mimetype = 4;
+  string type = 5; // image, video
+}
+
+message MediaResponse {
+  string id = 1;
+  string userId = 2;
+  string url = 3;
+  string filename = 4;
+  string mimetype = 5;
+  string type = 6;
+  int64 size = 7;
+  string createdAt = 8;
+}
+
+message GetMediaRequest {
+  string id = 1;
+}
+
+message DeleteMediaRequest {
+  string id = 1;
+  string userId = 2;
+}
+
+message DeleteMediaResponse {
+  bool success = 1;
+}
+
+message GetUserMediaRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message MediaListResponse {
+  repeated MediaResponse media = 1;
+  int32 total = 2;
+}

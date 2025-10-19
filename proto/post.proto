@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package post;
+
+service PostService {
+  rpc CreatePost (CreatePostRequest) returns (PostResponse);
+  rpc GetPostById (GetPostByIdRequest) returns (PostResponse);
+  rpc UpdatePost (UpdatePostRequest) returns (PostResponse);
+  rpc DeletePost (DeletePostRequest) returns (DeletePostResponse);
+  rpc GetUserPosts (GetUserPostsRequest) returns (PostsListResponse);
+  rpc GetFeed (GetFeedRequest) returns (PostsListResponse);
+  rpc LikePost (LikePostRequest) returns (LikeResponse);
+  rpc UnlikePost (UnlikePostRequest) returns (LikeResponse);
+  rpc CreateComment (CreateCommentRequest) returns (CommentResponse);
+  rpc GetComments (GetCommentsRequest) returns (CommentsListResponse);
+  rpc DeleteComment (DeleteCommentRequest) returns (DeleteCommentResponse);
+}
+
+message CreatePostRequest {
+  string userId = 1;
+  string content = 2;
+  repeated string mediaUrls = 3;
+  optional string visibility = 4;
+}
+
+message GetPostByIdRequest {
+  string id = 1;
+}
+
+message UpdatePostRequest {
+  string id = 1;
+  string userId = 2;
+  optional string content = 3;
+  repeated string mediaUrls = 4;
+}
+
+message DeletePostRequest {
+  string id = 1;
+  string userId = 2;
+}
+
+message PostResponse {
+  string id = 1;
+  string userId = 2;
+  string content = 3;
+  repeated string mediaUrls = 4;
+  int32 likesCount = 5;
+  int32 commentsCount = 6;
+  string visibility = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+}
+
+message DeletePostResponse {
+  bool success = 1;
+}
+
+message GetUserPostsRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetFeedRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message PostsListResponse {
+  repeated PostResponse posts = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message LikePostRequest {
+  string postId = 1;
+  string userId = 2;
+}
+
+message UnlikePostRequest {
+  string postId = 1;
+  string userId = 2;
+}
+
+message LikeResponse {
+  bool success = 1;
+  int32 likesCount = 2;
+}
+
+message CreateCommentRequest {
+  string postId = 1;
+  string userId = 2;
+  string content = 3;
+}
+
+message CommentResponse {
+  string id = 1;
+  string postId = 2;
+  string userId = 3;
+  string content = 4;
+  string createdAt = 5;
+}
+
+message GetCommentsRequest {
+  string postId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message CommentsListResponse {
+  repeated CommentResponse comments = 1;
+  int32 total = 2;
+}
+
+message DeleteCommentRequest {
+  string id = 1;
+  string userId = 2;
+}
+
+message DeleteCommentResponse {
+  bool success = 1;
+}

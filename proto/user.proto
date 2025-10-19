@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package user;
+
+service UserService {
+  rpc GetUserById (GetUserByIdRequest) returns (UserResponse);
+  rpc GetUserByEmail (GetUserByEmailRequest) returns (UserResponse);
+  rpc UpdateProfile (UpdateProfileRequest) returns (UserResponse);
+  rpc GetProfile (GetProfileRequest) returns (UserResponse);
+  rpc FollowUser (FollowUserRequest) returns (FollowResponse);
+  rpc UnfollowUser (UnfollowUserRequest) returns (FollowResponse);
+  rpc GetFollowers (GetFollowersRequest) returns (UsersListResponse);
+  rpc GetFollowing (GetFollowingRequest) returns (UsersListResponse);
+}
+
+message GetUserByIdRequest {
+  string id = 1;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message UpdateProfileRequest {
+  string id = 1;
+  optional string username = 2;
+  optional string firstName = 3;
+  optional string lastName = 4;
+  optional string bio = 5;
+  optional string avatar = 6;
+  optional string coverImage = 7;
+}
+
+message GetProfileRequest {
+  string id = 1;
+}
+
+message UserResponse {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  string firstName = 4;
+  string lastName = 5;
+  optional string bio = 6;
+  optional string avatar = 7;
+  optional string coverImage = 8;
+  int32 followersCount = 9;
+  int32 followingCount = 10;
+  string createdAt = 11;
+}
+
+message FollowUserRequest {
+  string followerId = 1;
+  string followingId = 2;
+}
+
+message UnfollowUserRequest {
+  string followerId = 1;
+  string followingId = 2;
+}
+
+message FollowResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetFollowersRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetFollowingRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message UsersListResponse {
+  repeated UserResponse users = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}

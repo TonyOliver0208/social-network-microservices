@@ -11,20 +11,28 @@ import {
   UseGuards,
   HttpException,
   HttpStatus,
+  OnModuleInit,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientGrpc } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { firstValueFrom } from 'rxjs';
-import { SERVICES, MESSAGES, CurrentUser, JwtAuthGuard, PaginationDto } from '@app/common';
+import { lastValueFrom } from 'rxjs';
+import { SERVICES, CurrentUser, JwtAuthGuard, PaginationDto } from '@app/common';
 import { UpdateProfileDto } from './dto';
+import { UserService, USERSERVICE_SERVICE_NAME } from '@app/proto/user';
 
 @ApiTags('users')
 @Controller('users')
-export class UserController {
+export class UserController implements OnModuleInit {
+  private userService: UserService;
+
   constructor(
     @Inject(SERVICES.USER_SERVICE)
-    private readonly userClient: ClientProxy,
+    private readonly client: ClientGrpc,
   ) {}
+
+  onModuleInit() {
+    this.userService = this.client.getService<UserService>(USERSERVICE_SERVICE_NAME);
+  }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
@@ -32,10 +40,7 @@ export class UserController {
   @ApiOperation({ summary: 'Get user profile' })
   async getProfile(@Param('id') userId: string) {
     try {
-      const result = await firstValueFrom(
-        this.userClient.send(MESSAGES.USER_GET_PROFILE, { userId }),
-      );
-      return result;
+      return await lastValueFrom(this.userService.GetUserById({ id: userId }));
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get profile',
@@ -53,13 +58,12 @@ export class UserController {
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.userClient.send(MESSAGES.USER_UPDATE_PROFILE, {
-          userId,
-          data: updateProfileDto,
+      return await lastValueFrom(
+        this.userService.UpdateProfile({
+          id: userId,
+          ...updateProfileDto,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to update profile',
@@ -77,13 +81,12 @@ export class UserController {
     @Param('id') followingId: string,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.userClient.send(MESSAGES.USER_FOLLOW, {
+      return await lastValueFrom(
+        this.userService.FollowUser({
           followerId,
           followingId,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to follow user',
@@ -101,13 +104,12 @@ export class UserController {
     @Param('id') followingId: string,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.userClient.send(MESSAGES.USER_UNFOLLOW, {
+      return await lastValueFrom(
+        this.userService.UnfollowUser({
           followerId,
           followingId,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to unfollow user',
@@ -127,13 +129,13 @@ export class UserController {
     @Query() pagination: PaginationDto,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.userClient.send(MESSAGES.USER_GET_FOLLOWERS, {
+      return await lastValueFrom(
+        this.userService.GetFollowers({
           userId,
-          ...pagination,
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get followers',
@@ -153,43 +155,16 @@ export class UserController {
     @Query() pagination: PaginationDto,
   ) {
     try {
-      const result = await firstValueFrom(
-        this.userClient.send(MESSAGES.USER_GET_FOLLOWING, {
+      return await lastValueFrom(
+        this.userService.GetFollowing({
           userId,
-          ...pagination,
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
         }),
       );
-      return result;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get following',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Get('search')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Search users' })
-  @ApiQuery({ name: 'q', required: true, type: String })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  async searchUsers(
-    @Query('q') query: string,
-    @Query() pagination: PaginationDto,
-  ) {
-    try {
-      const result = await firstValueFrom(
-        this.userClient.send(MESSAGES.USER_SEARCH, {
-          query,
-          ...pagination,
-        }),
-      );
-      return result;
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Search failed',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

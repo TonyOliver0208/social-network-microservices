@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
-import { SERVICES, QUEUES } from '@app/common';
+import { SERVICES } from '@app/common';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -10,10 +11,18 @@ import { SERVICES, QUEUES } from '@app/common';
       {
         name: SERVICES.AUTH_SERVICE,
         useFactory: (configService: ConfigService) => ({
-          transport: Transport.TCP,
+          transport: Transport.GRPC,
           options: {
-            host: configService.get<string>('AUTH_SERVICE_HOST', 'localhost'),
-            port: configService.get<number>('AUTH_SERVICE_PORT', 3001),
+            url: configService.get<string>('AUTH_SERVICE_URL', 'localhost:50051'),
+            package: 'auth',
+            protoPath: join(__dirname, '../../../../proto/auth.proto'),
+            loader: {
+              keepCase: true,
+              longs: String,
+              enums: String,
+              defaults: true,
+              oneofs: true,
+            },
           },
         }),
         inject: [ConfigService],

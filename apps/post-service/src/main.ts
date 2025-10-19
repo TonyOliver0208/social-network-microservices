@@ -1,26 +1,48 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { Logger } from '@app/common';
+import { join } from 'path';
 
 async function bootstrap() {
-  const appContext = await NestFactory.createApplicationContext(AppModule);
-  const configService = appContext.get(ConfigService);
-  const logger = appContext.get(Logger);
+  const logger = new Logger('PostService');
+  const app = await NestFactory.create(AppModule);
 
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.TCP,
-      options: {
-        host: '0.0.0.0',
-        port: configService.get<number>('PORT', 3003),
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>('POST_SERVICE_PORT', 50053);
+
+  // gRPC Microservice
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.GRPC,
+    options: {
+      url: `0.0.0.0:${port}`,
+      package: 'post',
+      protoPath: join(__dirname, '../../../proto/post.proto'),
+      loader: {
+        keepCase: true,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
       },
     },
-  );
+  });
 
+  // RabbitMQ for async events (post.created, post.liked, etc.)
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [configService.get<string>('RABBITMQ_URL', 'amqp://guest:guest@localhost:5672')],
+      queue: 'post_queue',
+      queueOptions: {
+        durable: true,
+      },
+      prefetchCount: 1,
+    },
+  });
+
+  // Global validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -29,10 +51,10 @@ async function bootstrap() {
     }),
   );
 
-  app.useLogger(logger);
+  await app.startAllMicroservices();
 
-  await app.listen();
-  logger.log(`Post Service is listening on port ${configService.get<number>('PORT', 3003)}`, 'Bootstrap');
+  logger.log(`📝 Post Service (gRPC) is running on port ${port}`);
+  logger.log(`📨 Post Service (RabbitMQ) connected to post_queue`);
 }
 
 bootstrap();
