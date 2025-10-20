@@ -5,6 +5,8 @@
  */
 import { Observable } from 'rxjs';
 
+export const POST_PACKAGE_NAME = 'post';
+
 export interface CreatePostRequest {
   userId?: string;
   content?: string;

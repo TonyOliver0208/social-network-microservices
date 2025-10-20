@@ -5,6 +5,8 @@
  */
 import { Observable } from 'rxjs';
 
+export const MEDIA_PACKAGE_NAME = 'media';
+
 export interface UploadMediaRequest {
   userId?: string;
   file?: Uint8Array;

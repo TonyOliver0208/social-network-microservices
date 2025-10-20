@@ -1,7 +1,8 @@
 import { Controller, Logger } from '@nestjs/common';
-import { MessagePattern, EventPattern, Payload } from '@nestjs/microservices';
+import { GrpcMethod, EventPattern, Payload } from '@nestjs/microservices';
 import { MediaService } from './media.service';
-import { MESSAGES, EVENTS, ServiceResponse } from '@app/common';
+import { EVENTS, ServiceResponse } from '@app/common';
+import { MEDIASERVICE_SERVICE_NAME } from 'generated/media';
 
 @Controller()
 export class MediaController {
@@ -9,8 +10,10 @@ export class MediaController {
 
   constructor(private readonly mediaService: MediaService) {}
 
-  @MessagePattern(MESSAGES.MEDIA_UPLOAD)
-  async uploadMedia(@Payload() payload: {
+  // ========== gRPC Methods (Gateway → Media Service) ==========
+
+  @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'UploadMedia')
+  async uploadMedia(payload: {
     userId: string;
     file: {
       buffer: Buffer;
@@ -23,8 +26,8 @@ export class MediaController {
     return this.mediaService.uploadFile(payload.userId, payload.file);
   }
 
-  @MessagePattern(MESSAGES.MEDIA_DELETE)
-  async deleteMedia(@Payload() payload: {
+  @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'DeleteMedia')
+  async deleteMedia(payload: {
     mediaId: string;
     userId: string;
   }): Promise<ServiceResponse> {
@@ -32,14 +35,14 @@ export class MediaController {
     return this.mediaService.deleteFile(payload.mediaId, payload.userId);
   }
 
-  @MessagePattern(MESSAGES.MEDIA_FIND_BY_ID)
-  async findMediaById(@Payload() payload: { mediaId: string }): Promise<ServiceResponse> {
+  @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'GetMedia')
+  async findMediaById(payload: { mediaId: string }): Promise<ServiceResponse> {
     this.logger.log(`Find media by ID: ${payload.mediaId}`);
     return this.mediaService.findById(payload.mediaId);
   }
 
-  @MessagePattern(MESSAGES.MEDIA_GET_USER_MEDIA)
-  async getUserMedia(@Payload() payload: {
+  @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'GetUserMedia')
+  async getUserMedia(payload: {
     userId: string;
     type?: string;
     page?: number;
@@ -54,15 +57,27 @@ export class MediaController {
     );
   }
 
+  // ========== RabbitMQ Event Handlers (Service → Service) ==========
+
   @EventPattern(EVENTS.USER_DELETED)
   async handleUserDeleted(@Payload() data: { userId: string }) {
     this.logger.log(`Handling user deleted event for media: ${data.userId}`);
+    // Delete all media uploaded by this user
     await this.mediaService.deleteUserMedia(data.userId);
   }
 
   @EventPattern(EVENTS.POST_DELETED)
-  async handlePostDeleted(@Payload() data: { postId: string; mediaUrls: string[] }) {
+  async handlePostDeleted(@Payload() data: { postId: string; mediaUrls?: string[] }) {
     this.logger.log(`Handling post deleted event: ${data.postId}`);
     // Clean up orphaned media if needed
+    if (data.mediaUrls && data.mediaUrls.length > 0) {
+      // await this.mediaService.cleanupOrphanedMedia(data.mediaUrls);
+    }
+  }
+
+  @EventPattern(EVENTS.POST_CREATED)
+  async handlePostCreated(@Payload() data: { postId: string; mediaIds: string[] }) {
+    this.logger.log(`Handling post created event with media: ${data.postId}`);
+    // Link media to post for reference tracking
   }
 }

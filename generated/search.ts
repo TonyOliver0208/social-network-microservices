@@ -5,6 +5,8 @@
  */
 import { Observable } from 'rxjs';
 
+export const SEARCH_PACKAGE_NAME = 'search';
+
 export interface SearchUsersRequest {
   query?: string;
   page?: number;

@@ -3,6 +3,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { MediaController } from './media.controller';
 import { SERVICES } from '@app/common';
+import { MEDIA_PACKAGE_NAME } from '@app/proto/media';
 import { join } from 'path';
 
 @Module({
@@ -14,7 +15,7 @@ import { join } from 'path';
           transport: Transport.GRPC,
           options: {
             url: configService.get<string>('MEDIA_SERVICE_URL', 'localhost:50054'),
-            package: 'media',
+            package: MEDIA_PACKAGE_NAME,
             protoPath: join(__dirname, '../../../../proto/media.proto'),
             loader: {
               keepCase: true,

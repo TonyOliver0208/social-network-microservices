@@ -5,6 +5,8 @@
  */
 import { Observable } from 'rxjs';
 
+export const USER_PACKAGE_NAME = 'user';
+
 export interface GetUserByIdRequest {
   id?: string;
 }

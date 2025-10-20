@@ -55,11 +55,20 @@ function generateTypeScriptFromProto(protoContent, serviceName) {
   
   let currentMessage = null;
   let currentService = null;
+  let packageName = null;
   const messages = [];
   const services = [];
   
   for (let line of lines) {
     line = line.trim();
+    
+    // Parse package name
+    if (line.startsWith('package ')) {
+      const match = line.match(/package\s+(\w+)/);
+      if (match) {
+        packageName = match[1];
+      }
+    }
     
     // Parse message definitions
     if (line.startsWith('message ')) {
@@ -104,6 +113,11 @@ function generateTypeScriptFromProto(protoContent, serviceName) {
         });
       }
     }
+  }
+  
+  // Export package name constant
+  if (packageName) {
+    output += `export const ${packageName.toUpperCase()}_PACKAGE_NAME = '${packageName}';\n\n`;
   }
   
   // Generate message interfaces
@@ -190,7 +204,8 @@ console.log('\n📝 Created index.ts for barrel exports');
 console.log('\n✨ Proto code generation completed!\n');
 console.log('📁 Generated files location:', OUTPUT_DIR);
 console.log('💡 Usage examples:');
-console.log('   import { AuthService, LoginRequest, LoginResponse, AUTH_SERVICE_SERVICE_NAME } from "@app/proto"');
-console.log('   import { UserService, USER_SERVICE_SERVICE_NAME } from "@app/proto/user"');
-console.log('\n   const authService = this.client.getService<AuthService>(AUTH_SERVICE_SERVICE_NAME);');
+console.log('   import { AuthService, AUTHSERVICE_SERVICE_NAME, AUTH_PACKAGE_NAME } from "@app/proto"');
+console.log('   import { UserService, USERSERVICE_SERVICE_NAME, USER_PACKAGE_NAME } from "@app/proto/user"');
+console.log('\n   const authService = this.client.getService<AuthService>(AUTHSERVICE_SERVICE_NAME);');
+console.log('   package: AUTH_PACKAGE_NAME,');
 console.log('');

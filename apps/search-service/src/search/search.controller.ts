@@ -1,8 +1,9 @@
 import { Controller, Logger } from '@nestjs/common';
-import { MessagePattern, EventPattern, Payload } from '@nestjs/microservices';
+import { GrpcMethod, EventPattern, Payload } from '@nestjs/microservices';
 import { SearchService } from './search.service';
-import { MESSAGES, EVENTS, ServiceResponse } from '@app/common';
+import { EVENTS, ServiceResponse } from '@app/common';
 import { SearchQueryDto, IndexPostDto, IndexUserDto } from './dto';
+import { SEARCHSERVICE_SERVICE_NAME } from 'generated/search';
 
 @Controller()
 export class SearchController {
@@ -10,8 +11,10 @@ export class SearchController {
 
   constructor(private readonly searchService: SearchService) {}
 
-  @MessagePattern(MESSAGES.SEARCH_POSTS)
-  async searchPosts(@Payload() payload: SearchQueryDto): Promise<ServiceResponse> {
+  // ========== gRPC Methods (Gateway → Search Service) ==========
+
+  @GrpcMethod(SEARCHSERVICE_SERVICE_NAME, 'SearchPosts')
+  async searchPosts(payload: SearchQueryDto): Promise<ServiceResponse> {
     this.logger.log(`Search posts request: ${payload.query}`);
     return this.searchService.searchPosts(
       payload.query,
@@ -21,11 +24,14 @@ export class SearchController {
     );
   }
 
-  @MessagePattern(MESSAGES.SEARCH_USERS)
-  async searchUsers(@Payload() payload: SearchQueryDto): Promise<ServiceResponse> {
+  @GrpcMethod(SEARCHSERVICE_SERVICE_NAME, 'SearchUsers')
+  async searchUsers(payload: SearchQueryDto): Promise<ServiceResponse> {
     this.logger.log(`Search users request: ${payload.query}`);
     return this.searchService.searchUsers(payload.query, payload.page, payload.limit);
   }
+
+  // ========== RabbitMQ Event Handlers (Service → Service) ==========
+  // Search service primarily listens to events to keep index up-to-date
 
   @EventPattern(EVENTS.POST_CREATED)
   async handlePostCreated(@Payload() data: IndexPostDto) {
@@ -45,8 +51,8 @@ export class SearchController {
     await this.searchService.removePostFromIndex(data.postId);
   }
 
-  @EventPattern(EVENTS.USER_CREATED)
-  async handleUserCreated(@Payload() data: IndexUserDto) {
+  @EventPattern(EVENTS.USER_REGISTERED)
+  async handleUserRegistered(@Payload() data: IndexUserDto) {
     this.logger.log(`Indexing new user: ${data.userId}`);
     await this.searchService.indexUser(data);
   }
@@ -61,5 +67,17 @@ export class SearchController {
   async handleUserDeleted(@Payload() data: { userId: string }) {
     this.logger.log(`Removing user from index: ${data.userId}`);
     await this.searchService.removeUserFromIndex(data.userId);
+  }
+
+  @EventPattern(EVENTS.COMMENT_CREATED)
+  async handleCommentCreated(@Payload() data: { postId: string; commentId: string; content: string }) {
+    this.logger.log(`Updating post index after comment: ${data.postId}`);
+    // Update post's comment count in search index
+  }
+
+  @EventPattern(EVENTS.POST_LIKED)
+  async handlePostLiked(@Payload() data: { postId: string; userId: string }) {
+    this.logger.log(`Updating post index after like: ${data.postId}`);
+    // Update post's like count for ranking
   }
 }

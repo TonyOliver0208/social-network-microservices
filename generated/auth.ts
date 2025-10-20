@@ -5,6 +5,8 @@
  */
 import { Observable } from 'rxjs';
 
+export const AUTH_PACKAGE_NAME = 'auth';
+
 export interface RegisterRequest {
   email?: string;
   password?: string;

@@ -3,6 +3,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { SearchController } from './search.controller';
 import { SERVICES } from '@app/common';
+import { SEARCH_PACKAGE_NAME } from '@app/proto/search';
 import { join } from 'path';
 
 @Module({
@@ -14,7 +15,7 @@ import { join } from 'path';
           transport: Transport.GRPC,
           options: {
             url: configService.get<string>('SEARCH_SERVICE_URL', 'localhost:50055'),
-            package: 'search',
+            package: SEARCH_PACKAGE_NAME,
             protoPath: join(__dirname, '../../../../proto/search.proto'),
             loader: {
               keepCase: true,

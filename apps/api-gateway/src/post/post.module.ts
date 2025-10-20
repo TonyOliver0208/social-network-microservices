@@ -3,6 +3,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { PostController } from './post.controller';
 import { SERVICES } from '@app/common';
+import { POST_PACKAGE_NAME } from '@app/proto/post';
 import { join } from 'path';
 
 @Module({
@@ -14,7 +15,7 @@ import { join } from 'path';
           transport: Transport.GRPC,
           options: {
             url: configService.get<string>('POST_SERVICE_URL', 'localhost:50053'),
-            package: 'post',
+            package: POST_PACKAGE_NAME,
             protoPath: join(__dirname, '../../../../proto/post.proto'),
             loader: {
               keepCase: true,
