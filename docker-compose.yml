@@ -57,6 +57,63 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-design:
+    image: postgres:15-alpine
+    container_name: devcoll-postgres-design
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: devcoll_design
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres-design-data:/var/lib/postgresql/data
+    networks:
+      - devcoll-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-subscription:
+    image: postgres:15-alpine
+    container_name: devcoll-postgres-subscription
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: devcoll_subscription
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres-subscription-data:/var/lib/postgresql/data
+    networks:
+      - devcoll-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-upload:
+    image: postgres:15-alpine
+    container_name: devcoll-postgres-upload
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: devcoll_upload
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres-upload-data:/var/lib/postgresql/data
+    networks:
+      - devcoll-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   mongodb:
     image: mongo:7
     container_name: devcoll-mongodb
@@ -279,6 +336,75 @@ services:
       - devcoll-network
     restart: unless-stopped
 
+  design-service:
+    build:
+      context: .
+      dockerfile: apps/design-service/Dockerfile
+    container_name: devcoll-design-service
+    ports:
+      - "3006:3006"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3006
+      - DATABASE_URL=postgresql://postgres:password@postgres-design:5432/devcoll_design?schema=public
+      - REDIS_HOST=redis
+    depends_on:
+      postgres-design:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - devcoll-network
+    restart: unless-stopped
+
+  subscription-service:
+    build:
+      context: .
+      dockerfile: apps/subscription-service/Dockerfile
+    container_name: devcoll-subscription-service
+    ports:
+      - "3007:3007"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3007
+      - DATABASE_URL=postgresql://postgres:password@postgres-subscription:5432/devcoll_subscription?schema=public
+      - REDIS_HOST=redis
+    depends_on:
+      postgres-subscription:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - devcoll-network
+    restart: unless-stopped
+
+  upload-service:
+    build:
+      context: .
+      dockerfile: apps/upload-service/Dockerfile
+    container_name: devcoll-upload-service
+    ports:
+      - "3008:3008"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3008
+      - DATABASE_URL=postgresql://postgres:password@postgres-upload:5432/devcoll_upload?schema=public
+      - REDIS_HOST=redis
+    depends_on:
+      postgres-upload:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - devcoll-network
+    restart: unless-stopped
+
 networks:
   devcoll-network:
     driver: bridge
@@ -287,6 +413,9 @@ volumes:
   postgres-auth-data:
   postgres-user-data:
   postgres-post-data:
+  postgres-design-data:
+  postgres-subscription-data:
+  postgres-upload-data:
   mongodb-data:
   redis-data:
   rabbitmq-data:

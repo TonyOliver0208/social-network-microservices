@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client-design"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Design {
+  id         String   @id @default(uuid())
+  userId     String
+  name       String   @default("Untitled Design")
+  canvasData String?  @db.Text
+  width      Int?
+  height     Int?
+  category   String?
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@index([updatedAt])
+  @@map("designs")
+}
