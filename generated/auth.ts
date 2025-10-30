@@ -20,10 +20,17 @@ export interface LoginRequest {
   password?: string;
 }
 
+export interface GoogleAuthRequest {
+  token?: string;
+  tokenType?: string;
+}
+
 export interface AuthResponse {
   accessToken?: string;
   refreshToken?: string;
   user?: User;
+  expiresIn?: number;
+  refreshExpiresIn?: number;
 }
 
 export interface User {
@@ -32,6 +39,9 @@ export interface User {
   username?: string;
   firstName?: string;
   lastName?: string;
+  profileImage?: string;
+  provider?: string;
+  isVerified?: boolean;
 }
 
 export interface ValidateTokenRequest {
@@ -68,6 +78,7 @@ export interface ResetPasswordResponse {
 export interface AuthService {
   Register(request: RegisterRequest): Observable<AuthResponse>;
   Login(request: LoginRequest): Observable<AuthResponse>;
+  GoogleAuth(request: GoogleAuthRequest): Observable<AuthResponse>;
   ValidateToken(request: ValidateTokenRequest): Observable<ValidateTokenResponse>;
   RefreshToken(request: RefreshTokenRequest): Observable<AuthResponse>;
   Logout(request: LogoutRequest): Observable<LogoutResponse>;

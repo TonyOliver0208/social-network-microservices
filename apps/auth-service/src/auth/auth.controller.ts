@@ -2,7 +2,7 @@ import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod, EventPattern, Payload, RpcException } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 import { EVENTS, ServiceResponse } from '@app/common';
-import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, GoogleAuthDto } from './dto';
 import { AUTHSERVICE_SERVICE_NAME } from '@app/proto/auth';
 import { status as GrpcStatus } from '@grpc/grpc-js';
 
@@ -31,6 +31,8 @@ export class AuthController {
       accessToken: result.data.accessToken,
       refreshToken: result.data.refreshToken,
       user: result.data.user,
+      expiresIn: result.data.expiresIn || 900,
+      refreshExpiresIn: result.data.refreshExpiresIn || 604800,
     };
   }
 
@@ -86,6 +88,30 @@ export class AuthController {
       accessToken: result.data.accessToken,
       refreshToken: result.data.refreshToken,
       user: result.data.user,
+      expiresIn: result.data.expiresIn || 900,
+      refreshExpiresIn: result.data.refreshExpiresIn || 604800,
+    };
+  }
+
+  @GrpcMethod(AUTHSERVICE_SERVICE_NAME, 'GoogleAuth')
+  async googleAuth(googleAuthDto: GoogleAuthDto) {
+    this.logger.log(`Google auth request - tokenType: ${googleAuthDto.tokenType}`);
+    const result = await this.authService.googleAuth(googleAuthDto);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: result.error,
+      });
+    }
+    
+    return {
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      user: result.data.user,
+      expiresIn: result.data.expiresIn || 900,
+      refreshExpiresIn: result.data.refreshExpiresIn || 604800,
     };
   }
 

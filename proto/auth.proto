@@ -5,6 +5,7 @@ package auth;
 service AuthService {
   rpc Register (RegisterRequest) returns (AuthResponse);
   rpc Login (LoginRequest) returns (AuthResponse);
+  rpc GoogleAuth (GoogleAuthRequest) returns (AuthResponse);
   rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
   rpc RefreshToken (RefreshTokenRequest) returns (AuthResponse);
   rpc Logout (LogoutRequest) returns (LogoutResponse);
@@ -24,10 +25,17 @@ message LoginRequest {
   string password = 2;
 }
 
+message GoogleAuthRequest {
+  string token = 1;
+  string tokenType = 2; // "id_token" or "access_token"
+}
+
 message AuthResponse {
   string accessToken = 1;
   string refreshToken = 2;
   User user = 3;
+  int32 expiresIn = 4;
+  int32 refreshExpiresIn = 5;
 }
 
 message User {
@@ -36,6 +44,9 @@ message User {
   string username = 3;
   string firstName = 4;
   string lastName = 5;
+  string profileImage = 6;
+  string provider = 7;
+  bool isVerified = 8;
 }
 
 message ValidateTokenRequest {

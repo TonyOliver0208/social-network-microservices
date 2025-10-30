@@ -1,11 +1,32 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ({
+/******/ 	var __webpack_modules__ = ([
+/* 0 */,
+/* 1 */
+/***/ ((module) => {
 
-/***/ "./apps/auth-service/src/app.module.ts":
-/*!*********************************************!*\
-  !*** ./apps/auth-service/src/app.module.ts ***!
-  \*********************************************/
+module.exports = require("@nestjs/core");
+
+/***/ }),
+/* 2 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/microservices");
+
+/***/ }),
+/* 3 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/common");
+
+/***/ }),
+/* 4 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/config");
+
+/***/ }),
+/* 5 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -17,16 +38,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
-const passport_1 = __webpack_require__(/*! @nestjs/passport */ "@nestjs/passport");
-const auth_controller_1 = __webpack_require__(/*! ./auth/auth.controller */ "./apps/auth-service/src/auth/auth.controller.ts");
-const auth_service_1 = __webpack_require__(/*! ./auth/auth.service */ "./apps/auth-service/src/auth/auth.service.ts");
-const prisma_service_1 = __webpack_require__(/*! ./prisma/prisma.service */ "./apps/auth-service/src/prisma/prisma.service.ts");
-const jwt_strategy_1 = __webpack_require__(/*! ./auth/strategies/jwt.strategy */ "./apps/auth-service/src/auth/strategies/jwt.strategy.ts");
-const local_strategy_1 = __webpack_require__(/*! ./auth/strategies/local.strategy */ "./apps/auth-service/src/auth/strategies/local.strategy.ts");
-const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const common_1 = __webpack_require__(3);
+const config_1 = __webpack_require__(4);
+const jwt_1 = __webpack_require__(6);
+const passport_1 = __webpack_require__(7);
+const auth_controller_1 = __webpack_require__(8);
+const auth_service_1 = __webpack_require__(9);
+const prisma_service_1 = __webpack_require__(12);
+const jwt_strategy_1 = __webpack_require__(19);
+const local_strategy_1 = __webpack_require__(21);
+const common_2 = __webpack_require__(14);
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -53,11 +74,19 @@ exports.AppModule = AppModule = __decorate([
 
 
 /***/ }),
+/* 6 */
+/***/ ((module) => {
 
-/***/ "./apps/auth-service/src/auth/auth.controller.ts":
-/*!*******************************************************!*\
-  !*** ./apps/auth-service/src/auth/auth.controller.ts ***!
-  \*******************************************************/
+module.exports = require("@nestjs/jwt");
+
+/***/ }),
+/* 7 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/passport");
+
+/***/ }),
+/* 8 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -74,16 +103,16 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var AuthController_1;
-var _a, _b, _c, _d;
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthController = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const auth_service_1 = __webpack_require__(/*! ./auth.service */ "./apps/auth-service/src/auth/auth.service.ts");
-const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
-const dto_1 = __webpack_require__(/*! ./dto */ "./apps/auth-service/src/auth/dto/index.ts");
-const auth_1 = __webpack_require__(/*! @app/proto/auth */ "./generated/auth.ts");
-const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
+const common_1 = __webpack_require__(3);
+const microservices_1 = __webpack_require__(2);
+const auth_service_1 = __webpack_require__(9);
+const common_2 = __webpack_require__(14);
+const dto_1 = __webpack_require__(15);
+const auth_1 = __webpack_require__(17);
+const grpc_js_1 = __webpack_require__(18);
 let AuthController = AuthController_1 = class AuthController {
     constructor(authService) {
         this.authService = authService;
@@ -103,6 +132,8 @@ let AuthController = AuthController_1 = class AuthController {
             accessToken: result.data.accessToken,
             refreshToken: result.data.refreshToken,
             user: result.data.user,
+            expiresIn: result.data.expiresIn || 900,
+            refreshExpiresIn: result.data.refreshExpiresIn || 604800,
         };
     }
     getGrpcStatusCode(error, httpStatusCode) {
@@ -150,6 +181,26 @@ let AuthController = AuthController_1 = class AuthController {
             accessToken: result.data.accessToken,
             refreshToken: result.data.refreshToken,
             user: result.data.user,
+            expiresIn: result.data.expiresIn || 900,
+            refreshExpiresIn: result.data.refreshExpiresIn || 604800,
+        };
+    }
+    async googleAuth(googleAuthDto) {
+        this.logger.log(`Google auth request - tokenType: ${googleAuthDto.tokenType}`);
+        const result = await this.authService.googleAuth(googleAuthDto);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return {
+            accessToken: result.data.accessToken,
+            refreshToken: result.data.refreshToken,
+            user: result.data.user,
+            expiresIn: result.data.expiresIn || 900,
+            refreshExpiresIn: result.data.refreshExpiresIn || 604800,
         };
     }
     async refreshToken(refreshTokenDto) {
@@ -220,9 +271,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
+    (0, microservices_1.GrpcMethod)(auth_1.AUTHSERVICE_SERVICE_NAME, 'GoogleAuth'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_d = typeof dto_1.GoogleAuthDto !== "undefined" && dto_1.GoogleAuthDto) === "function" ? _d : Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "googleAuth", null);
+__decorate([
     (0, microservices_1.GrpcMethod)(auth_1.AUTHSERVICE_SERVICE_NAME, 'RefreshToken'),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof dto_1.RefreshTokenDto !== "undefined" && dto_1.RefreshTokenDto) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [typeof (_e = typeof dto_1.RefreshTokenDto !== "undefined" && dto_1.RefreshTokenDto) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "refreshToken", null);
 __decorate([
@@ -258,11 +315,7 @@ exports.AuthController = AuthController = AuthController_1 = __decorate([
 
 
 /***/ }),
-
-/***/ "./apps/auth-service/src/auth/auth.service.ts":
-/*!****************************************************!*\
-  !*** ./apps/auth-service/src/auth/auth.service.ts ***!
-  \****************************************************/
+/* 9 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -312,17 +365,26 @@ var AuthService_1;
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthService = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const bcrypt = __importStar(__webpack_require__(/*! bcrypt */ "bcrypt"));
-const prisma_service_1 = __webpack_require__(/*! ../prisma/prisma.service */ "./apps/auth-service/src/prisma/prisma.service.ts");
+const common_1 = __webpack_require__(3);
+const jwt_1 = __webpack_require__(6);
+const config_1 = __webpack_require__(4);
+const bcrypt = __importStar(__webpack_require__(10));
+const google_auth_library_1 = __webpack_require__(11);
+const prisma_service_1 = __webpack_require__(12);
 let AuthService = AuthService_1 = class AuthService {
     constructor(prisma, jwtService, configService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
         this.configService = configService;
         this.logger = new common_1.Logger(AuthService_1.name);
+        const googleClientId = this.configService.get('GOOGLE_CLIENT_ID');
+        if (googleClientId) {
+            this.googleClient = new google_auth_library_1.OAuth2Client(googleClientId);
+            this.logger.log('Google OAuth2 client initialized');
+        }
+        else {
+            this.logger.warn('GOOGLE_CLIENT_ID not configured - Google OAuth will not work');
+        }
     }
     async register(registerDto) {
         try {
@@ -370,6 +432,167 @@ let AuthService = AuthService_1 = class AuthService {
                 error: error.message,
                 statusCode: error.status || 500,
             };
+        }
+    }
+    async googleAuth(googleAuthDto) {
+        try {
+            if (!this.googleClient) {
+                throw new common_1.BadRequestException('Google OAuth is not configured');
+            }
+            this.logger.log(`Google OAuth request - tokenType: ${googleAuthDto.tokenType}`);
+            let googleUserId;
+            let email;
+            let name;
+            let picture;
+            let givenName;
+            let familyName;
+            if (googleAuthDto.tokenType === 'id_token') {
+                const ticket = await this.googleClient.verifyIdToken({
+                    idToken: googleAuthDto.token,
+                    audience: this.configService.get('GOOGLE_CLIENT_ID'),
+                });
+                const payload = ticket.getPayload();
+                if (!payload) {
+                    throw new common_1.UnauthorizedException('Invalid Google token');
+                }
+                googleUserId = payload.sub;
+                email = payload.email || '';
+                name = payload.name || email.split('@')[0];
+                picture = payload.picture || '';
+                givenName = payload.given_name || '';
+                familyName = payload.family_name || '';
+                this.logger.log(`Google ID token verified for user: ${email}`);
+            }
+            else {
+                throw new common_1.BadRequestException('Only id_token is currently supported');
+            }
+            if (!email) {
+                throw new common_1.UnauthorizedException('Email not provided by Google');
+            }
+            let user = await this.prisma.user.findFirst({
+                where: {
+                    provider: 'google',
+                    providerId: googleUserId,
+                },
+            });
+            if (!user) {
+                user = await this.prisma.user.findUnique({
+                    where: { email },
+                });
+                if (user) {
+                    this.logger.log(`Linking Google account to existing user: ${email}`);
+                    user = await this.prisma.user.update({
+                        where: { id: user.id },
+                        data: {
+                            provider: 'google',
+                            providerId: googleUserId,
+                            profileImage: picture || user.profileImage,
+                            firstName: givenName || user.firstName,
+                            lastName: familyName || user.lastName,
+                            isVerified: true,
+                            lastLoginAt: new Date(),
+                        },
+                    });
+                }
+                else {
+                    this.logger.log(`Creating new user from Google account: ${email}`);
+                    let username = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+                    let usernameExists = await this.prisma.user.findUnique({
+                        where: { username },
+                    });
+                    let counter = 1;
+                    while (usernameExists) {
+                        username = `${email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_')}_${counter}`;
+                        usernameExists = await this.prisma.user.findUnique({
+                            where: { username },
+                        });
+                        counter++;
+                    }
+                    user = await this.prisma.user.create({
+                        data: {
+                            email,
+                            username,
+                            provider: 'google',
+                            providerId: googleUserId,
+                            profileImage: picture,
+                            firstName: givenName,
+                            lastName: familyName,
+                            isVerified: true,
+                            isActive: true,
+                            lastLoginAt: new Date(),
+                        },
+                    });
+                    this.logger.log(`New Google user created: ${email} (${username})`);
+                }
+            }
+            else {
+                user = await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: {
+                        profileImage: picture || user.profileImage,
+                        firstName: givenName || user.firstName,
+                        lastName: familyName || user.lastName,
+                        lastLoginAt: new Date(),
+                    },
+                });
+                this.logger.log(`Google user logged in: ${email}`);
+            }
+            if (!user || !user.isActive) {
+                throw new common_1.UnauthorizedException('Account is deactivated');
+            }
+            const tokens = await this.generateTokens(user.id, user.email, user.username);
+            const accessExpiration = this.parseExpiration(this.configService.get('JWT_ACCESS_EXPIRATION', '15m'));
+            const refreshExpiration = this.parseExpiration(this.configService.get('JWT_REFRESH_EXPIRATION', '7d'));
+            return {
+                success: true,
+                data: {
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        username: user.username,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        profileImage: user.profileImage,
+                        provider: user.provider,
+                        isVerified: user.isVerified,
+                    },
+                    accessToken: tokens.accessToken,
+                    refreshToken: tokens.refreshToken,
+                    expiresIn: accessExpiration,
+                    refreshExpiresIn: refreshExpiration,
+                },
+                message: 'Google authentication successful',
+            };
+        }
+        catch (error) {
+            this.logger.error(`Google auth error: ${error.message}`);
+            if (error.message?.includes('Token used too late') ||
+                error.message?.includes('Invalid token')) {
+                return {
+                    success: false,
+                    error: 'Invalid or expired Google token',
+                    statusCode: 401,
+                };
+            }
+            return {
+                success: false,
+                error: error.message,
+                statusCode: error.status || 500,
+            };
+        }
+    }
+    parseExpiration(expiration) {
+        const match = expiration.match(/^(\d+)([smhd])$/);
+        if (!match)
+            return 900;
+        const value = parseInt(match[1]);
+        const unit = match[2];
+        switch (unit) {
+            case 's': return value;
+            case 'm': return value * 60;
+            case 'h': return value * 60 * 60;
+            case 'd': return value * 24 * 60 * 60;
+            default: return 900;
         }
     }
     async login(loginDto) {
@@ -540,11 +763,60 @@ exports.AuthService = AuthService = AuthService_1 = __decorate([
 
 
 /***/ }),
+/* 10 */
+/***/ ((module) => {
 
-/***/ "./apps/auth-service/src/auth/dto/index.ts":
-/*!*************************************************!*\
-  !*** ./apps/auth-service/src/auth/dto/index.ts ***!
-  \*************************************************/
+module.exports = require("bcrypt");
+
+/***/ }),
+/* 11 */
+/***/ ((module) => {
+
+module.exports = require("google-auth-library");
+
+/***/ }),
+/* 12 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PrismaService = void 0;
+const common_1 = __webpack_require__(3);
+const client_auth_1 = __webpack_require__(13);
+let PrismaService = class PrismaService extends client_auth_1.PrismaClient {
+    async onModuleInit() {
+        await this.$connect();
+    }
+    async onModuleDestroy() {
+        await this.$disconnect();
+    }
+};
+exports.PrismaService = PrismaService;
+exports.PrismaService = PrismaService = __decorate([
+    (0, common_1.Injectable)()
+], PrismaService);
+
+
+/***/ }),
+/* 13 */
+/***/ ((module) => {
+
+module.exports = require(".prisma/client-auth");
+
+/***/ }),
+/* 14 */
+/***/ ((module) => {
+
+module.exports = require("@app/common");
+
+/***/ }),
+/* 15 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -558,8 +830,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.RefreshTokenDto = exports.LoginDto = exports.RegisterDto = void 0;
-const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+exports.GoogleAuthDto = exports.RefreshTokenDto = exports.LoginDto = exports.RegisterDto = void 0;
+const class_validator_1 = __webpack_require__(16);
 class RegisterDto {
 }
 exports.RegisterDto = RegisterDto;
@@ -608,14 +880,46 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], RefreshTokenDto.prototype, "refreshToken", void 0);
+class GoogleAuthDto {
+}
+exports.GoogleAuthDto = GoogleAuthDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GoogleAuthDto.prototype, "token", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GoogleAuthDto.prototype, "tokenType", void 0);
 
 
 /***/ }),
+/* 16 */
+/***/ ((module) => {
 
-/***/ "./apps/auth-service/src/auth/strategies/jwt.strategy.ts":
-/*!***************************************************************!*\
-  !*** ./apps/auth-service/src/auth/strategies/jwt.strategy.ts ***!
-  \***************************************************************/
+module.exports = require("class-validator");
+
+/***/ }),
+/* 17 */
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AUTHSERVICE_SERVICE_NAME = exports.AUTH_PACKAGE_NAME = void 0;
+exports.AUTH_PACKAGE_NAME = 'auth';
+exports.AUTHSERVICE_SERVICE_NAME = 'AuthService';
+
+
+/***/ }),
+/* 18 */
+/***/ ((module) => {
+
+module.exports = require("@grpc/grpc-js");
+
+/***/ }),
+/* 19 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -631,11 +935,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.JwtStrategy = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const passport_1 = __webpack_require__(/*! @nestjs/passport */ "@nestjs/passport");
-const passport_jwt_1 = __webpack_require__(/*! passport-jwt */ "passport-jwt");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const prisma_service_1 = __webpack_require__(/*! ../../prisma/prisma.service */ "./apps/auth-service/src/prisma/prisma.service.ts");
+const common_1 = __webpack_require__(3);
+const passport_1 = __webpack_require__(7);
+const passport_jwt_1 = __webpack_require__(20);
+const config_1 = __webpack_require__(4);
+const prisma_service_1 = __webpack_require__(12);
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     constructor(configService, prisma) {
         super({
@@ -676,11 +980,13 @@ exports.JwtStrategy = JwtStrategy = __decorate([
 
 
 /***/ }),
+/* 20 */
+/***/ ((module) => {
 
-/***/ "./apps/auth-service/src/auth/strategies/local.strategy.ts":
-/*!*****************************************************************!*\
-  !*** ./apps/auth-service/src/auth/strategies/local.strategy.ts ***!
-  \*****************************************************************/
+module.exports = require("passport-jwt");
+
+/***/ }),
+/* 21 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -729,11 +1035,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LocalStrategy = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const passport_1 = __webpack_require__(/*! @nestjs/passport */ "@nestjs/passport");
-const passport_local_1 = __webpack_require__(/*! passport-local */ "passport-local");
-const bcrypt = __importStar(__webpack_require__(/*! bcrypt */ "bcrypt"));
-const prisma_service_1 = __webpack_require__(/*! ../../prisma/prisma.service */ "./apps/auth-service/src/prisma/prisma.service.ts");
+const common_1 = __webpack_require__(3);
+const passport_1 = __webpack_require__(7);
+const passport_local_1 = __webpack_require__(22);
+const bcrypt = __importStar(__webpack_require__(10));
+const prisma_service_1 = __webpack_require__(12);
 let LocalStrategy = class LocalStrategy extends (0, passport_1.PassportStrategy)(passport_local_1.Strategy) {
     constructor(prisma) {
         super({
@@ -770,196 +1076,19 @@ exports.LocalStrategy = LocalStrategy = __decorate([
 
 
 /***/ }),
-
-/***/ "./apps/auth-service/src/prisma/prisma.service.ts":
-/*!********************************************************!*\
-  !*** ./apps/auth-service/src/prisma/prisma.service.ts ***!
-  \********************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrismaService = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const client_auth_1 = __webpack_require__(/*! .prisma/client-auth */ ".prisma/client-auth");
-let PrismaService = class PrismaService extends client_auth_1.PrismaClient {
-    async onModuleInit() {
-        await this.$connect();
-    }
-    async onModuleDestroy() {
-        await this.$disconnect();
-    }
-};
-exports.PrismaService = PrismaService;
-exports.PrismaService = PrismaService = __decorate([
-    (0, common_1.Injectable)()
-], PrismaService);
-
-
-/***/ }),
-
-/***/ "./generated/auth.ts":
-/*!***************************!*\
-  !*** ./generated/auth.ts ***!
-  \***************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AUTHSERVICE_SERVICE_NAME = exports.AUTH_PACKAGE_NAME = void 0;
-exports.AUTH_PACKAGE_NAME = 'auth';
-exports.AUTHSERVICE_SERVICE_NAME = 'AuthService';
-
-
-/***/ }),
-
-/***/ ".prisma/client-auth":
-/*!**************************************!*\
-  !*** external ".prisma/client-auth" ***!
-  \**************************************/
-/***/ ((module) => {
-
-module.exports = require(".prisma/client-auth");
-
-/***/ }),
-
-/***/ "@app/common":
-/*!******************************!*\
-  !*** external "@app/common" ***!
-  \******************************/
-/***/ ((module) => {
-
-module.exports = require("@app/common");
-
-/***/ }),
-
-/***/ "@grpc/grpc-js":
-/*!********************************!*\
-  !*** external "@grpc/grpc-js" ***!
-  \********************************/
-/***/ ((module) => {
-
-module.exports = require("@grpc/grpc-js");
-
-/***/ }),
-
-/***/ "@nestjs/common":
-/*!*********************************!*\
-  !*** external "@nestjs/common" ***!
-  \*********************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-
-/***/ "@nestjs/config":
-/*!*********************************!*\
-  !*** external "@nestjs/config" ***!
-  \*********************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/config");
-
-/***/ }),
-
-/***/ "@nestjs/core":
-/*!*******************************!*\
-  !*** external "@nestjs/core" ***!
-  \*******************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/core");
-
-/***/ }),
-
-/***/ "@nestjs/jwt":
-/*!******************************!*\
-  !*** external "@nestjs/jwt" ***!
-  \******************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/jwt");
-
-/***/ }),
-
-/***/ "@nestjs/microservices":
-/*!****************************************!*\
-  !*** external "@nestjs/microservices" ***!
-  \****************************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/microservices");
-
-/***/ }),
-
-/***/ "@nestjs/passport":
-/*!***********************************!*\
-  !*** external "@nestjs/passport" ***!
-  \***********************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/passport");
-
-/***/ }),
-
-/***/ "bcrypt":
-/*!*************************!*\
-  !*** external "bcrypt" ***!
-  \*************************/
-/***/ ((module) => {
-
-module.exports = require("bcrypt");
-
-/***/ }),
-
-/***/ "class-validator":
-/*!**********************************!*\
-  !*** external "class-validator" ***!
-  \**********************************/
-/***/ ((module) => {
-
-module.exports = require("class-validator");
-
-/***/ }),
-
-/***/ "passport-jwt":
-/*!*******************************!*\
-  !*** external "passport-jwt" ***!
-  \*******************************/
-/***/ ((module) => {
-
-module.exports = require("passport-jwt");
-
-/***/ }),
-
-/***/ "passport-local":
-/*!*********************************!*\
-  !*** external "passport-local" ***!
-  \*********************************/
+/* 22 */
 /***/ ((module) => {
 
 module.exports = require("passport-local");
 
 /***/ }),
-
-/***/ "path":
-/*!***********************!*\
-  !*** external "path" ***!
-  \***********************/
+/* 23 */
 /***/ ((module) => {
 
 module.exports = require("path");
 
 /***/ })
-
-/******/ 	});
+/******/ 	]);
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -990,17 +1119,14 @@ var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
-/*!***************************************!*\
-  !*** ./apps/auth-service/src/main.ts ***!
-  \***************************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const app_module_1 = __webpack_require__(/*! ./app.module */ "./apps/auth-service/src/app.module.ts");
-const path_1 = __webpack_require__(/*! path */ "path");
+const core_1 = __webpack_require__(1);
+const microservices_1 = __webpack_require__(2);
+const common_1 = __webpack_require__(3);
+const config_1 = __webpack_require__(4);
+const app_module_1 = __webpack_require__(5);
+const path_1 = __webpack_require__(23);
 async function bootstrap() {
     const logger = new common_1.Logger('AuthService');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);

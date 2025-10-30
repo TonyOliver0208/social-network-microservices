@@ -12,7 +12,12 @@ model User {
   id            String         @id @default(uuid())
   email         String         @unique
   username      String         @unique
-  password      String
+  password      String?        // Optional for OAuth users
+  firstName     String?
+  lastName      String?
+  profileImage  String?
+  provider      String         @default("local") // "local", "google", "github", etc.
+  providerId    String?        // OAuth provider's user ID
   isVerified    Boolean        @default(false)
   isActive      Boolean        @default(true)
   lastLoginAt   DateTime?
@@ -20,8 +25,10 @@ model User {
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
 
+  @@unique([provider, providerId])
   @@index([email])
   @@index([username])
+  @@index([provider, providerId])
   @@map("users")
 }
 

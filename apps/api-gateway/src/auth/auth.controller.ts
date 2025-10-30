@@ -13,7 +13,7 @@ import { ClientGrpc } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { lastValueFrom } from 'rxjs';
 import { SERVICES, CurrentUser, JwtAuthGuard } from '@app/common';
-import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
+import { RegisterDto, LoginDto, RefreshTokenDto, GoogleAuthDto } from './dto';
 import { AuthService, AUTHSERVICE_SERVICE_NAME } from '@app/proto/auth';
 
 @ApiTags('auth')
@@ -71,6 +71,41 @@ export class AuthController implements OnModuleInit {
       const message = error.details || error.message || 'Login failed';
       const statusCode = this.getHttpStatusFromGrpcError(error);
       throw new HttpException(message, statusCode);
+    }
+  }
+
+  @Post('google')
+  @ApiOperation({ 
+    summary: 'Authenticate with Google OAuth',
+    description: 'Validates Google OAuth token and returns internal JWT tokens for the application'
+  })
+  async googleAuth(@Body() googleAuthDto: GoogleAuthDto) {
+    try {
+      const result = await lastValueFrom(this.authService.GoogleAuth(googleAuthDto));
+      
+      // Wrap response in standard format expected by frontend
+      return {
+        success: true,
+        data: {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          expiresIn: result.expiresIn,
+          refreshExpiresIn: result.refreshExpiresIn,
+          user: result.user,
+        },
+        message: 'Google authentication successful',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      const message = error.details || error.message || 'Google authentication failed';
+      const statusCode = this.getHttpStatusFromGrpcError(error);
+      
+      // Return structured error response
+      throw new HttpException({
+        success: false,
+        error: message,
+        timestamp: new Date().toISOString(),
+      }, statusCode);
     }
   }
 
