@@ -1,9 +1,10 @@
 import { Controller, Logger } from '@nestjs/common';
-import { GrpcMethod, EventPattern, Payload } from '@nestjs/microservices';
+import { GrpcMethod, EventPattern, Payload, RpcException } from '@nestjs/microservices';
 import { SearchService } from './search.service';
 import { EVENTS, ServiceResponse } from '@app/common';
 import { SearchQueryDto, IndexPostDto, IndexUserDto } from './dto';
-import { SEARCHSERVICE_SERVICE_NAME } from 'generated/search';
+import { SEARCHSERVICE_SERVICE_NAME } from '@app/proto/search';
+import { status as GrpcStatus } from '@grpc/grpc-js';
 
 @Controller()
 export class SearchController {
@@ -14,20 +15,66 @@ export class SearchController {
   // ========== gRPC Methods (Gateway → Search Service) ==========
 
   @GrpcMethod(SEARCHSERVICE_SERVICE_NAME, 'SearchPosts')
-  async searchPosts(payload: SearchQueryDto): Promise<ServiceResponse> {
+  async searchPosts(payload: SearchQueryDto) {
     this.logger.log(`Search posts request: ${payload.query}`);
-    return this.searchService.searchPosts(
+    const result = await this.searchService.searchPosts(
       payload.query,
       payload.page,
       payload.limit,
       payload.privacy,
     );
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode((result as any).error, (result as any).statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: (result as any).error,
+      });
+    }
+    
+    return result.data;
   }
 
   @GrpcMethod(SEARCHSERVICE_SERVICE_NAME, 'SearchUsers')
-  async searchUsers(payload: SearchQueryDto): Promise<ServiceResponse> {
+  async searchUsers(payload: SearchQueryDto) {
     this.logger.log(`Search users request: ${payload.query}`);
-    return this.searchService.searchUsers(payload.query, payload.page, payload.limit);
+    const result = await this.searchService.searchUsers(payload.query, payload.page, payload.limit);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode((result as any).error, (result as any).statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: (result as any).error,
+      });
+    }
+    
+    return result.data;
+  }
+
+  private getGrpcStatusCode(error?: string, httpStatusCode?: number): number {
+    // Map common errors to gRPC status codes
+    if (error?.includes('not found')) {
+      return GrpcStatus.NOT_FOUND;
+    }
+    if (error?.includes('invalid') || error?.includes('validation') || error?.includes('query too short')) {
+      return GrpcStatus.INVALID_ARGUMENT;
+    }
+    if (error?.includes('timeout') || error?.includes('deadline')) {
+      return GrpcStatus.DEADLINE_EXCEEDED;
+    }
+    
+    // Map HTTP status codes to gRPC codes
+    switch (httpStatusCode) {
+      case 404:
+        return GrpcStatus.NOT_FOUND;
+      case 400:
+        return GrpcStatus.INVALID_ARGUMENT;
+      case 408:
+      case 504:
+        return GrpcStatus.DEADLINE_EXCEEDED;
+      default:
+        return GrpcStatus.UNKNOWN;
+    }
   }
 
   // ========== RabbitMQ Event Handlers (Service → Service) ==========

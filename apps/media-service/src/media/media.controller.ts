@@ -1,8 +1,9 @@
 import { Controller, Logger } from '@nestjs/common';
-import { GrpcMethod, EventPattern, Payload } from '@nestjs/microservices';
+import { GrpcMethod, EventPattern, Payload, RpcException } from '@nestjs/microservices';
 import { MediaService } from './media.service';
 import { EVENTS, ServiceResponse } from '@app/common';
-import { MEDIASERVICE_SERVICE_NAME } from 'generated/media';
+import { MEDIASERVICE_SERVICE_NAME } from '@app/proto/media';
+import { status as GrpcStatus } from '@grpc/grpc-js';
 
 @Controller()
 export class MediaController {
@@ -21,24 +22,54 @@ export class MediaController {
       mimetype: string;
       size: number;
     };
-  }): Promise<ServiceResponse> {
+  }) {
     this.logger.log(`Upload media request from user: ${payload.userId}`);
-    return this.mediaService.uploadFile(payload.userId, payload.file);
+    const result = await this.mediaService.uploadFile(payload.userId, payload.file);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode((result as any).error, (result as any).statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: (result as any).error,
+      });
+    }
+    
+    return result.data;
   }
 
   @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'DeleteMedia')
   async deleteMedia(payload: {
     mediaId: string;
     userId: string;
-  }): Promise<ServiceResponse> {
+  }) {
     this.logger.log(`Delete media request: ${payload.mediaId} by user: ${payload.userId}`);
-    return this.mediaService.deleteFile(payload.mediaId, payload.userId);
+    const result = await this.mediaService.deleteFile(payload.mediaId, payload.userId);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode((result as any).error, (result as any).statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: (result as any).error,
+      });
+    }
+    
+    return result.data;
   }
 
   @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'GetMedia')
-  async findMediaById(payload: { mediaId: string }): Promise<ServiceResponse> {
+  async findMediaById(payload: { mediaId: string }) {
     this.logger.log(`Find media by ID: ${payload.mediaId}`);
-    return this.mediaService.findById(payload.mediaId);
+    const result = await this.mediaService.findById(payload.mediaId);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode((result as any).error, (result as any).statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: (result as any).error,
+      });
+    }
+    
+    return result.data;
   }
 
   @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'GetUserMedia')
@@ -47,14 +78,59 @@ export class MediaController {
     type?: string;
     page?: number;
     limit?: number;
-  }): Promise<ServiceResponse> {
+  }) {
     this.logger.log(`Get media for user: ${payload.userId}`);
-    return this.mediaService.getUserMedia(
+    const result = await this.mediaService.getUserMedia(
       payload.userId,
       payload.type,
       payload.page,
       payload.limit,
     );
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode((result as any).error, (result as any).statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: (result as any).error,
+      });
+    }
+    
+    return result.data;
+  }
+
+  private getGrpcStatusCode(error?: string, httpStatusCode?: number): number {
+    // Map common errors to gRPC status codes
+    if (error?.includes('not found')) {
+      return GrpcStatus.NOT_FOUND;
+    }
+    if (error?.includes('Unauthorized')) {
+      return GrpcStatus.UNAUTHENTICATED;
+    }
+    if (error?.includes('forbidden') || error?.includes('permission') || error?.includes('only')) {
+      return GrpcStatus.PERMISSION_DENIED;
+    }
+    if (error?.includes('invalid') || error?.includes('validation') || error?.includes('too large') || error?.includes('type not supported')) {
+      return GrpcStatus.INVALID_ARGUMENT;
+    }
+    if (error?.includes('quota') || error?.includes('limit exceeded')) {
+      return GrpcStatus.RESOURCE_EXHAUSTED;
+    }
+    
+    // Map HTTP status codes to gRPC codes
+    switch (httpStatusCode) {
+      case 404:
+        return GrpcStatus.NOT_FOUND;
+      case 401:
+        return GrpcStatus.UNAUTHENTICATED;
+      case 403:
+        return GrpcStatus.PERMISSION_DENIED;
+      case 400:
+        return GrpcStatus.INVALID_ARGUMENT;
+      case 429:
+        return GrpcStatus.RESOURCE_EXHAUSTED;
+      default:
+        return GrpcStatus.UNKNOWN;
+    }
   }
 
   // ========== RabbitMQ Event Handlers (Service → Service) ==========

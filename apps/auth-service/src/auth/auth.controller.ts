@@ -1,9 +1,10 @@
 import { Controller, Logger } from '@nestjs/common';
-import { GrpcMethod, EventPattern, Payload } from '@nestjs/microservices';
+import { GrpcMethod, EventPattern, Payload, RpcException } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 import { EVENTS, ServiceResponse } from '@app/common';
 import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
-import { AUTHSERVICE_SERVICE_NAME } from 'generated/auth';
+import { AUTHSERVICE_SERVICE_NAME } from '@app/proto/auth';
+import { status as GrpcStatus } from '@grpc/grpc-js';
 
 @Controller()
 export class AuthController {
@@ -14,33 +15,136 @@ export class AuthController {
   // ========== gRPC Methods (Gateway → Auth Service) ==========
   
   @GrpcMethod(AUTHSERVICE_SERVICE_NAME, 'Register')
-  async register(registerDto: RegisterDto): Promise<ServiceResponse> {
+  async register(registerDto: RegisterDto) {
     this.logger.log(`Register request: ${registerDto.email}`);
-    return this.authService.register(registerDto);
+    const result = await this.authService.register(registerDto);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: result.error,
+      });
+    }
+    
+    return {
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      user: result.data.user,
+    };
+  }
+
+  private getGrpcStatusCode(error?: string, httpStatusCode?: number): number {
+    // Map common errors to gRPC status codes
+    if (error?.includes('already exists') || error?.includes('duplicate')) {
+      return GrpcStatus.ALREADY_EXISTS;
+    }
+    if (error?.includes('not found')) {
+      return GrpcStatus.NOT_FOUND;
+    }
+    if (error?.includes('Invalid credentials') || error?.includes('Unauthorized')) {
+      return GrpcStatus.UNAUTHENTICATED;
+    }
+    if (error?.includes('forbidden') || error?.includes('permission')) {
+      return GrpcStatus.PERMISSION_DENIED;
+    }
+    if (error?.includes('invalid') || error?.includes('validation')) {
+      return GrpcStatus.INVALID_ARGUMENT;
+    }
+    
+    // Map HTTP status codes to gRPC codes
+    switch (httpStatusCode) {
+      case 409:
+        return GrpcStatus.ALREADY_EXISTS;
+      case 404:
+        return GrpcStatus.NOT_FOUND;
+      case 401:
+        return GrpcStatus.UNAUTHENTICATED;
+      case 403:
+        return GrpcStatus.PERMISSION_DENIED;
+      case 400:
+        return GrpcStatus.INVALID_ARGUMENT;
+      default:
+        return GrpcStatus.UNKNOWN;
+    }
   }
 
   @GrpcMethod(AUTHSERVICE_SERVICE_NAME, 'Login')
-  async login(loginDto: LoginDto): Promise<ServiceResponse> {
+  async login(loginDto: LoginDto) {
     this.logger.log(`Login request: ${loginDto.email}`);
-    return this.authService.login(loginDto);
+    const result = await this.authService.login(loginDto);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: result.error,
+      });
+    }
+    
+    return {
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      user: result.data.user,
+    };
   }
 
   @GrpcMethod(AUTHSERVICE_SERVICE_NAME, 'RefreshToken')
-  async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<ServiceResponse> {
+  async refreshToken(refreshTokenDto: RefreshTokenDto) {
     this.logger.log('Refresh token request');
-    return this.authService.refreshToken(refreshTokenDto.refreshToken);
+    const result = await this.authService.refreshToken(refreshTokenDto.refreshToken);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: result.error,
+      });
+    }
+    
+    return {
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      user: null, // Refresh token doesn't return user
+    };
   }
 
   @GrpcMethod(AUTHSERVICE_SERVICE_NAME, 'Logout')
-  async logout(payload: { userId: string }): Promise<ServiceResponse> {
+  async logout(payload: { userId: string }) {
     this.logger.log(`Logout request: ${payload.userId}`);
-    return this.authService.logout(payload.userId);
+    const result = await this.authService.logout(payload.userId);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: result.error,
+      });
+    }
+    
+    return {
+      success: true,
+    };
   }
 
   @GrpcMethod(AUTHSERVICE_SERVICE_NAME, 'ValidateToken')
-  async validateToken(payload: { token: string }): Promise<ServiceResponse> {
+  async validateToken(payload: { token: string }) {
     this.logger.log('Validate token request');
-    return this.authService.validateToken(payload.token);
+    const result = await this.authService.validateToken(payload.token);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: result.error,
+      });
+    }
+    
+    return {
+      valid: true,
+      userId: result.data.userId,
+      email: result.data.email,
+    };
   }
 
   // ========== RabbitMQ Event Handlers (Service → Service) ==========

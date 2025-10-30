@@ -85,44 +85,69 @@ const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
 const dto_1 = __webpack_require__(/*! ./dto */ "./apps/api-gateway/src/auth/dto/index.ts");
+const auth_1 = __webpack_require__(/*! @app/proto/auth */ "./generated/auth.ts");
 let AuthController = class AuthController {
-    constructor(authClient) {
-        this.authClient = authClient;
+    constructor(client) {
+        this.client = client;
+    }
+    onModuleInit() {
+        this.authService = this.client.getService(auth_1.AUTHSERVICE_SERVICE_NAME);
     }
     async register(registerDto) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.authClient.send(common_2.MESSAGES.AUTH_REGISTER, registerDto));
-            return result;
+            return await (0, rxjs_1.lastValueFrom)(this.authService.Register(registerDto));
         }
         catch (error) {
-            throw new common_1.HttpException(error.message || 'Registration failed', error.status || common_1.HttpStatus.BAD_REQUEST);
+            const message = error.details || error.message || 'Registration failed';
+            const statusCode = this.getHttpStatusFromGrpcError(error);
+            throw new common_1.HttpException(message, statusCode);
+        }
+    }
+    getHttpStatusFromGrpcError(error) {
+        const grpcCode = error.code;
+        switch (grpcCode) {
+            case 6:
+                return common_1.HttpStatus.CONFLICT;
+            case 3:
+                return common_1.HttpStatus.BAD_REQUEST;
+            case 16:
+                return common_1.HttpStatus.UNAUTHORIZED;
+            case 7:
+                return common_1.HttpStatus.FORBIDDEN;
+            case 5:
+                return common_1.HttpStatus.NOT_FOUND;
+            default:
+                return common_1.HttpStatus.INTERNAL_SERVER_ERROR;
         }
     }
     async login(loginDto) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.authClient.send(common_2.MESSAGES.AUTH_LOGIN, loginDto));
-            return result;
+            return await (0, rxjs_1.lastValueFrom)(this.authService.Login(loginDto));
         }
         catch (error) {
-            throw new common_1.HttpException(error.message || 'Login failed', error.status || common_1.HttpStatus.UNAUTHORIZED);
+            const message = error.details || error.message || 'Login failed';
+            const statusCode = this.getHttpStatusFromGrpcError(error);
+            throw new common_1.HttpException(message, statusCode);
         }
     }
     async refreshToken(refreshTokenDto) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.authClient.send(common_2.MESSAGES.AUTH_REFRESH_TOKEN, refreshTokenDto));
-            return result;
+            return await (0, rxjs_1.lastValueFrom)(this.authService.RefreshToken(refreshTokenDto));
         }
         catch (error) {
-            throw new common_1.HttpException(error.message || 'Token refresh failed', error.status || common_1.HttpStatus.UNAUTHORIZED);
+            const message = error.details || error.message || 'Token refresh failed';
+            const statusCode = this.getHttpStatusFromGrpcError(error);
+            throw new common_1.HttpException(message, statusCode);
         }
     }
     async logout(user) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.authClient.send(common_2.MESSAGES.AUTH_LOGOUT, { userId: user.userId }));
-            return result;
+            return await (0, rxjs_1.lastValueFrom)(this.authService.Logout({ userId: user.userId }));
         }
         catch (error) {
-            throw new common_1.HttpException(error.message || 'Logout failed', error.status || common_1.HttpStatus.BAD_REQUEST);
+            const message = error.details || error.message || 'Logout failed';
+            const statusCode = this.getHttpStatusFromGrpcError(error);
+            throw new common_1.HttpException(message, statusCode);
         }
     }
     async getCurrentUser(user) {
@@ -181,7 +206,7 @@ exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('auth'),
     (0, common_1.Controller)('auth'),
     __param(0, (0, common_1.Inject)(common_2.SERVICES.AUTH_SERVICE)),
-    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientGrpc !== "undefined" && microservices_1.ClientGrpc) === "function" ? _a : Object])
 ], AuthController);
 
 
@@ -203,32 +228,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const auth_controller_1 = __webpack_require__(/*! ./auth.controller */ "./apps/api-gateway/src/auth/auth.controller.ts");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const auth_1 = __webpack_require__(/*! @app/proto/auth */ "./generated/auth.ts");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            microservices_1.ClientsModule.registerAsync([
-                {
-                    name: common_2.SERVICES.AUTH_SERVICE,
-                    useFactory: (configService) => ({
-                        transport: microservices_1.Transport.TCP,
-                        options: {
-                            host: configService.get('AUTH_SERVICE_HOST', 'localhost'),
-                            port: configService.get('AUTH_SERVICE_PORT', 3001),
-                        },
-                    }),
-                    inject: [config_1.ConfigService],
-                },
-            ]),
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.AUTH_SERVICE,
+                package: auth_1.AUTH_PACKAGE_NAME,
+                protoFileName: 'auth.proto',
+                urlConfigKey: 'AUTH_SERVICE_URL',
+                defaultUrl: 'localhost:50051',
+            }),
         ],
         controllers: [auth_controller_1.AuthController],
-        exports: [microservices_1.ClientsModule],
     })
 ], AuthModule);
 
@@ -462,25 +479,26 @@ const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestj
 const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const media_1 = __webpack_require__(/*! @app/proto/media */ "./generated/media.ts");
 let MediaController = class MediaController {
-    constructor(mediaClient) {
-        this.mediaClient = mediaClient;
+    constructor(client) {
+        this.client = client;
+    }
+    onModuleInit() {
+        this.mediaService = this.client.getService(media_1.MEDIASERVICE_SERVICE_NAME);
     }
     async uploadMedia(userId, file) {
         if (!file) {
             throw new common_1.HttpException('No file provided', common_1.HttpStatus.BAD_REQUEST);
         }
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.mediaClient.send(common_2.MESSAGES.MEDIA_UPLOAD, {
+            return await (0, rxjs_1.lastValueFrom)(this.mediaService.UploadMedia({
                 userId,
-                file: {
-                    buffer: file.buffer,
-                    originalname: file.originalname,
-                    mimetype: file.mimetype,
-                    size: file.size,
-                },
+                file: file.buffer,
+                filename: file.originalname,
+                mimetype: file.mimetype,
+                type: file.mimetype.startsWith('image/') ? 'image' : 'video',
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to upload media', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
@@ -488,11 +506,10 @@ let MediaController = class MediaController {
     }
     async deleteMedia(mediaId, userId) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.mediaClient.send(common_2.MESSAGES.MEDIA_DELETE, {
-                mediaId,
+            return await (0, rxjs_1.lastValueFrom)(this.mediaService.DeleteMedia({
+                id: mediaId,
                 userId,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to delete media', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -539,7 +556,7 @@ exports.MediaController = MediaController = __decorate([
     (0, swagger_1.ApiTags)('media'),
     (0, common_1.Controller)('media'),
     __param(0, (0, common_1.Inject)(common_2.SERVICES.MEDIA_SERVICE)),
-    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientGrpc !== "undefined" && microservices_1.ClientGrpc) === "function" ? _a : Object])
 ], MediaController);
 
 
@@ -561,32 +578,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MediaModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const media_controller_1 = __webpack_require__(/*! ./media.controller */ "./apps/api-gateway/src/media/media.controller.ts");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const media_1 = __webpack_require__(/*! @app/proto/media */ "./generated/media.ts");
 let MediaModule = class MediaModule {
 };
 exports.MediaModule = MediaModule;
 exports.MediaModule = MediaModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            microservices_1.ClientsModule.registerAsync([
-                {
-                    name: common_2.SERVICES.MEDIA_SERVICE,
-                    useFactory: (configService) => ({
-                        transport: microservices_1.Transport.TCP,
-                        options: {
-                            host: configService.get('MEDIA_SERVICE_HOST', 'localhost'),
-                            port: configService.get('MEDIA_SERVICE_PORT', 3004),
-                        },
-                    }),
-                    inject: [config_1.ConfigService],
-                },
-            ]),
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.MEDIA_SERVICE,
+                package: media_1.MEDIA_PACKAGE_NAME,
+                protoFileName: 'media.proto',
+                urlConfigKey: 'MEDIA_SERVICE_URL',
+                defaultUrl: 'localhost:50054',
+            }),
         ],
         controllers: [media_controller_1.MediaController],
-        exports: [microservices_1.ClientsModule],
     })
 ], MediaModule);
 
@@ -705,7 +714,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h;
+var _a, _b, _c, _d, _e, _f, _g;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -714,17 +723,20 @@ const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
 const dto_1 = __webpack_require__(/*! ./dto */ "./apps/api-gateway/src/post/dto/index.ts");
+const post_1 = __webpack_require__(/*! @app/proto/post */ "./generated/post.ts");
 let PostController = class PostController {
-    constructor(postClient) {
-        this.postClient = postClient;
+    constructor(client) {
+        this.client = client;
+    }
+    onModuleInit() {
+        this.postService = this.client.getService(post_1.POSTSERVICE_SERVICE_NAME);
     }
     async createPost(userId, createPostDto) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.POST_CREATE, {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.CreatePost({
                 userId,
-                createPostDto,
+                ...createPostDto,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to create post', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -732,23 +744,23 @@ let PostController = class PostController {
     }
     async getFeed(userId, pagination) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.POST_GET_FEED, {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetFeed({
                 userId,
-                pagination,
+                page: pagination.page || 1,
+                limit: pagination.limit || 20,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to get feed', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    async getUserPosts(userId, pagination) {
+    async getUserPosts(targetUserId, pagination) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.POST_GET_USER_POSTS, {
-                userId,
-                pagination,
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetUserPosts({
+                userId: targetUserId,
+                page: pagination.page || 1,
+                limit: pagination.limit || 20,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to get user posts', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
@@ -756,11 +768,9 @@ let PostController = class PostController {
     }
     async getPost(postId, userId) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.POST_GET, {
-                postId,
-                userId,
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetPostById({
+                id: postId,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Post not found', error.status || common_1.HttpStatus.NOT_FOUND);
@@ -768,12 +778,11 @@ let PostController = class PostController {
     }
     async updatePost(postId, userId, updatePostDto) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.POST_UPDATE, {
-                postId,
+            return await (0, rxjs_1.lastValueFrom)(this.postService.UpdatePost({
+                id: postId,
                 userId,
-                updatePostDto,
+                ...updatePostDto,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to update post', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -781,11 +790,10 @@ let PostController = class PostController {
     }
     async deletePost(postId, userId) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.POST_DELETE, {
-                postId,
+            return await (0, rxjs_1.lastValueFrom)(this.postService.DeletePost({
+                id: postId,
                 userId,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to delete post', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -793,11 +801,10 @@ let PostController = class PostController {
     }
     async likePost(postId, userId) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.POST_LIKE, {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.LikePost({
                 postId,
                 userId,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to like post', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -805,36 +812,22 @@ let PostController = class PostController {
     }
     async unlikePost(postId, userId) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.POST_UNLIKE, {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.UnlikePost({
                 postId,
                 userId,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to unlike post', error.status || common_1.HttpStatus.BAD_REQUEST);
         }
     }
-    async getPostLikes(postId, pagination) {
-        try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.POST_GET_LIKES, {
-                postId,
-                pagination,
-            }));
-            return result;
-        }
-        catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to get likes', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
     async createComment(postId, userId, createCommentDto) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.COMMENT_CREATE, {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.CreateComment({
                 postId,
                 userId,
-                createCommentDto,
+                ...createCommentDto,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to create comment', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -842,36 +835,22 @@ let PostController = class PostController {
     }
     async getPostComments(postId, pagination) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.COMMENT_GET_POST_COMMENTS, {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetComments({
                 postId,
-                pagination,
+                page: pagination.page || 1,
+                limit: pagination.limit || 20,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to get comments', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    async updateComment(commentId, userId, content) {
-        try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.COMMENT_UPDATE, {
-                commentId,
-                userId,
-                content,
-            }));
-            return result;
-        }
-        catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to update comment', error.status || common_1.HttpStatus.BAD_REQUEST);
-        }
-    }
     async deleteComment(commentId, userId) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.postClient.send(common_2.MESSAGES.COMMENT_DELETE, {
-                commentId,
+            return await (0, rxjs_1.lastValueFrom)(this.postService.DeleteComment({
+                id: commentId,
                 userId,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to delete comment', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -973,19 +952,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "unlikePost", null);
 __decorate([
-    (0, common_1.Get)(':id/likes'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get post likes' }),
-    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
-    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_f = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _f : Object]),
-    __metadata("design:returntype", Promise)
-], PostController.prototype, "getPostLikes", null);
-__decorate([
     (0, common_1.Post)(':id/comments'),
     (0, common_1.UseGuards)(common_2.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
@@ -994,7 +960,7 @@ __decorate([
     __param(1, (0, common_2.CurrentUser)('userId')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, typeof (_g = typeof dto_1.CreateCommentDto !== "undefined" && dto_1.CreateCommentDto) === "function" ? _g : Object]),
+    __metadata("design:paramtypes", [String, String, typeof (_f = typeof dto_1.CreateCommentDto !== "undefined" && dto_1.CreateCommentDto) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "createComment", null);
 __decorate([
@@ -1007,21 +973,9 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_h = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _h : Object]),
+    __metadata("design:paramtypes", [String, typeof (_g = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _g : Object]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getPostComments", null);
-__decorate([
-    (0, common_1.Patch)('comments/:id'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Update comment' }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_2.CurrentUser)('userId')),
-    __param(2, (0, common_1.Body)('content')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
-    __metadata("design:returntype", Promise)
-], PostController.prototype, "updateComment", null);
 __decorate([
     (0, common_1.Delete)('comments/:id'),
     (0, common_1.UseGuards)(common_2.JwtAuthGuard),
@@ -1037,7 +991,7 @@ exports.PostController = PostController = __decorate([
     (0, swagger_1.ApiTags)('posts'),
     (0, common_1.Controller)('posts'),
     __param(0, (0, common_1.Inject)(common_2.SERVICES.POST_SERVICE)),
-    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientGrpc !== "undefined" && microservices_1.ClientGrpc) === "function" ? _a : Object])
 ], PostController);
 
 
@@ -1059,32 +1013,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const post_controller_1 = __webpack_require__(/*! ./post.controller */ "./apps/api-gateway/src/post/post.controller.ts");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const post_1 = __webpack_require__(/*! @app/proto/post */ "./generated/post.ts");
 let PostModule = class PostModule {
 };
 exports.PostModule = PostModule;
 exports.PostModule = PostModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            microservices_1.ClientsModule.registerAsync([
-                {
-                    name: common_2.SERVICES.POST_SERVICE,
-                    useFactory: (configService) => ({
-                        transport: microservices_1.Transport.TCP,
-                        options: {
-                            host: configService.get('POST_SERVICE_HOST', 'localhost'),
-                            port: configService.get('POST_SERVICE_PORT', 3003),
-                        },
-                    }),
-                    inject: [config_1.ConfigService],
-                },
-            ]),
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.POST_SERVICE,
+                package: post_1.POST_PACKAGE_NAME,
+                protoFileName: 'post.proto',
+                urlConfigKey: 'POST_SERVICE_URL',
+                defaultUrl: 'localhost:50053',
+            }),
         ],
         controllers: [post_controller_1.PostController],
-        exports: [microservices_1.ClientsModule],
     })
 ], PostModule);
 
@@ -1118,20 +1064,24 @@ const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestj
 const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const search_1 = __webpack_require__(/*! @app/proto/search */ "./generated/search.ts");
 let SearchController = class SearchController {
-    constructor(searchClient) {
-        this.searchClient = searchClient;
+    constructor(client) {
+        this.client = client;
+    }
+    onModuleInit() {
+        this.searchService = this.client.getService(search_1.SEARCHSERVICE_SERVICE_NAME);
     }
     async searchPosts(query, pagination) {
         if (!query || query.trim().length === 0) {
             throw new common_1.HttpException('Search query is required', common_1.HttpStatus.BAD_REQUEST);
         }
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.searchClient.send(common_2.MESSAGES.SEARCH_POSTS, {
+            return await (0, rxjs_1.lastValueFrom)(this.searchService.SearchPosts({
                 query,
-                ...pagination,
+                page: pagination.page || 1,
+                limit: pagination.limit || 20,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Search failed', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1142,11 +1092,11 @@ let SearchController = class SearchController {
             throw new common_1.HttpException('Search query is required', common_1.HttpStatus.BAD_REQUEST);
         }
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.searchClient.send(common_2.MESSAGES.SEARCH_USERS, {
+            return await (0, rxjs_1.lastValueFrom)(this.searchService.SearchUsers({
                 query,
-                ...pagination,
+                page: pagination.page || 1,
+                limit: pagination.limit || 20,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Search failed', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1186,7 +1136,7 @@ exports.SearchController = SearchController = __decorate([
     (0, swagger_1.ApiTags)('search'),
     (0, common_1.Controller)('search'),
     __param(0, (0, common_1.Inject)(common_2.SERVICES.SEARCH_SERVICE)),
-    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientGrpc !== "undefined" && microservices_1.ClientGrpc) === "function" ? _a : Object])
 ], SearchController);
 
 
@@ -1208,32 +1158,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SearchModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const search_controller_1 = __webpack_require__(/*! ./search.controller */ "./apps/api-gateway/src/search/search.controller.ts");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const search_1 = __webpack_require__(/*! @app/proto/search */ "./generated/search.ts");
 let SearchModule = class SearchModule {
 };
 exports.SearchModule = SearchModule;
 exports.SearchModule = SearchModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            microservices_1.ClientsModule.registerAsync([
-                {
-                    name: common_2.SERVICES.SEARCH_SERVICE,
-                    useFactory: (configService) => ({
-                        transport: microservices_1.Transport.TCP,
-                        options: {
-                            host: configService.get('SEARCH_SERVICE_HOST', 'localhost'),
-                            port: configService.get('SEARCH_SERVICE_PORT', 3005),
-                        },
-                    }),
-                    inject: [config_1.ConfigService],
-                },
-            ]),
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.SEARCH_SERVICE,
+                package: search_1.SEARCH_PACKAGE_NAME,
+                protoFileName: 'search.proto',
+                urlConfigKey: 'SEARCH_SERVICE_URL',
+                defaultUrl: 'localhost:50055',
+            }),
         ],
         controllers: [search_controller_1.SearchController],
-        exports: [microservices_1.ClientsModule],
     })
 ], SearchModule);
 
@@ -1340,7 +1282,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UserController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -1349,14 +1291,17 @@ const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
 const dto_1 = __webpack_require__(/*! ./dto */ "./apps/api-gateway/src/user/dto/index.ts");
+const user_1 = __webpack_require__(/*! @app/proto/user */ "./generated/user.ts");
 let UserController = class UserController {
-    constructor(userClient) {
-        this.userClient = userClient;
+    constructor(client) {
+        this.client = client;
+    }
+    onModuleInit() {
+        this.userService = this.client.getService(user_1.USERSERVICE_SERVICE_NAME);
     }
     async getProfile(userId) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.userClient.send(common_2.MESSAGES.USER_GET_PROFILE, { userId }));
-            return result;
+            return await (0, rxjs_1.lastValueFrom)(this.userService.GetUserById({ id: userId }));
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to get profile', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1364,11 +1309,10 @@ let UserController = class UserController {
     }
     async updateProfile(userId, updateProfileDto) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.userClient.send(common_2.MESSAGES.USER_UPDATE_PROFILE, {
-                userId,
-                data: updateProfileDto,
+            return await (0, rxjs_1.lastValueFrom)(this.userService.UpdateProfile({
+                id: userId,
+                ...updateProfileDto,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to update profile', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -1376,11 +1320,10 @@ let UserController = class UserController {
     }
     async followUser(followerId, followingId) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.userClient.send(common_2.MESSAGES.USER_FOLLOW, {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.FollowUser({
                 followerId,
                 followingId,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to follow user', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -1388,11 +1331,10 @@ let UserController = class UserController {
     }
     async unfollowUser(followerId, followingId) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.userClient.send(common_2.MESSAGES.USER_UNFOLLOW, {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.UnfollowUser({
                 followerId,
                 followingId,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to unfollow user', error.status || common_1.HttpStatus.BAD_REQUEST);
@@ -1400,11 +1342,11 @@ let UserController = class UserController {
     }
     async getFollowers(userId, pagination) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.userClient.send(common_2.MESSAGES.USER_GET_FOLLOWERS, {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.GetFollowers({
                 userId,
-                ...pagination,
+                page: pagination.page || 1,
+                limit: pagination.limit || 20,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to get followers', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1412,26 +1354,14 @@ let UserController = class UserController {
     }
     async getFollowing(userId, pagination) {
         try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.userClient.send(common_2.MESSAGES.USER_GET_FOLLOWING, {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.GetFollowing({
                 userId,
-                ...pagination,
+                page: pagination.page || 1,
+                limit: pagination.limit || 20,
             }));
-            return result;
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to get following', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-    async searchUsers(query, pagination) {
-        try {
-            const result = await (0, rxjs_1.firstValueFrom)(this.userClient.send(common_2.MESSAGES.USER_SEARCH, {
-                query,
-                ...pagination,
-            }));
-            return result;
-        }
-        catch (error) {
-            throw new common_1.HttpException(error.message || 'Search failed', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 };
@@ -1505,25 +1435,11 @@ __decorate([
     __metadata("design:paramtypes", [String, typeof (_d = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "getFollowing", null);
-__decorate([
-    (0, common_1.Get)('search'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Search users' }),
-    (0, swagger_1.ApiQuery)({ name: 'q', required: true, type: String }),
-    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
-    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
-    __param(0, (0, common_1.Query)('q')),
-    __param(1, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_e = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _e : Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "searchUsers", null);
 exports.UserController = UserController = __decorate([
     (0, swagger_1.ApiTags)('users'),
     (0, common_1.Controller)('users'),
     __param(0, (0, common_1.Inject)(common_2.SERVICES.USER_SERVICE)),
-    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientGrpc !== "undefined" && microservices_1.ClientGrpc) === "function" ? _a : Object])
 ], UserController);
 
 
@@ -1545,34 +1461,101 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UserModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const user_controller_1 = __webpack_require__(/*! ./user.controller */ "./apps/api-gateway/src/user/user.controller.ts");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const user_1 = __webpack_require__(/*! @app/proto/user */ "./generated/user.ts");
 let UserModule = class UserModule {
 };
 exports.UserModule = UserModule;
 exports.UserModule = UserModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            microservices_1.ClientsModule.registerAsync([
-                {
-                    name: common_2.SERVICES.USER_SERVICE,
-                    useFactory: (configService) => ({
-                        transport: microservices_1.Transport.TCP,
-                        options: {
-                            host: configService.get('USER_SERVICE_HOST', 'localhost'),
-                            port: configService.get('USER_SERVICE_PORT', 3002),
-                        },
-                    }),
-                    inject: [config_1.ConfigService],
-                },
-            ]),
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.USER_SERVICE,
+                package: user_1.USER_PACKAGE_NAME,
+                protoFileName: 'user.proto',
+                urlConfigKey: 'USER_SERVICE_URL',
+                defaultUrl: 'localhost:50052',
+            }),
         ],
         controllers: [user_controller_1.UserController],
-        exports: [microservices_1.ClientsModule],
     })
 ], UserModule);
+
+
+/***/ }),
+
+/***/ "./generated/auth.ts":
+/*!***************************!*\
+  !*** ./generated/auth.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AUTHSERVICE_SERVICE_NAME = exports.AUTH_PACKAGE_NAME = void 0;
+exports.AUTH_PACKAGE_NAME = 'auth';
+exports.AUTHSERVICE_SERVICE_NAME = 'AuthService';
+
+
+/***/ }),
+
+/***/ "./generated/media.ts":
+/*!****************************!*\
+  !*** ./generated/media.ts ***!
+  \****************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MEDIASERVICE_SERVICE_NAME = exports.MEDIA_PACKAGE_NAME = void 0;
+exports.MEDIA_PACKAGE_NAME = 'media';
+exports.MEDIASERVICE_SERVICE_NAME = 'MediaService';
+
+
+/***/ }),
+
+/***/ "./generated/post.ts":
+/*!***************************!*\
+  !*** ./generated/post.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.POSTSERVICE_SERVICE_NAME = exports.POST_PACKAGE_NAME = void 0;
+exports.POST_PACKAGE_NAME = 'post';
+exports.POSTSERVICE_SERVICE_NAME = 'PostService';
+
+
+/***/ }),
+
+/***/ "./generated/search.ts":
+/*!*****************************!*\
+  !*** ./generated/search.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SEARCHSERVICE_SERVICE_NAME = exports.SEARCH_PACKAGE_NAME = void 0;
+exports.SEARCH_PACKAGE_NAME = 'search';
+exports.SEARCHSERVICE_SERVICE_NAME = 'SearchService';
+
+
+/***/ }),
+
+/***/ "./generated/user.ts":
+/*!***************************!*\
+  !*** ./generated/user.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.USERSERVICE_SERVICE_NAME = exports.USER_PACKAGE_NAME = void 0;
+exports.USER_PACKAGE_NAME = 'user';
+exports.USERSERVICE_SERVICE_NAME = 'UserService';
 
 
 /***/ }),

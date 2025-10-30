@@ -18,7 +18,7 @@ async function bootstrap() {
     options: {
       url: `0.0.0.0:${port}`,
       package: 'auth',
-      protoPath: join(__dirname, '../../../proto/auth.proto'),
+      protoPath: join(__dirname, '..', '..', '..', 'proto', 'auth.proto'),
       loader: {
         keepCase: true,
         longs: String,

@@ -36,10 +36,29 @@ export class AuthController implements OnModuleInit {
     try {
       return await lastValueFrom(this.authService.Register(registerDto));
     } catch (error) {
-      throw new HttpException(
-        error.message || 'Registration failed',
-        error.status || HttpStatus.BAD_REQUEST,
-      );
+      // Handle gRPC errors
+      const message = error.details || error.message || 'Registration failed';
+      const statusCode = this.getHttpStatusFromGrpcError(error);
+      throw new HttpException(message, statusCode);
+    }
+  }
+
+  private getHttpStatusFromGrpcError(error: any): number {
+    // Map gRPC error codes to HTTP status codes
+    const grpcCode = error.code;
+    switch (grpcCode) {
+      case 6: // ALREADY_EXISTS
+        return HttpStatus.CONFLICT;
+      case 3: // INVALID_ARGUMENT
+        return HttpStatus.BAD_REQUEST;
+      case 16: // UNAUTHENTICATED
+        return HttpStatus.UNAUTHORIZED;
+      case 7: // PERMISSION_DENIED
+        return HttpStatus.FORBIDDEN;
+      case 5: // NOT_FOUND
+        return HttpStatus.NOT_FOUND;
+      default:
+        return HttpStatus.INTERNAL_SERVER_ERROR;
     }
   }
 
@@ -49,10 +68,9 @@ export class AuthController implements OnModuleInit {
     try {
       return await lastValueFrom(this.authService.Login(loginDto));
     } catch (error) {
-      throw new HttpException(
-        error.message || 'Login failed',
-        error.status || HttpStatus.UNAUTHORIZED,
-      );
+      const message = error.details || error.message || 'Login failed';
+      const statusCode = this.getHttpStatusFromGrpcError(error);
+      throw new HttpException(message, statusCode);
     }
   }
 
@@ -62,10 +80,9 @@ export class AuthController implements OnModuleInit {
     try {
       return await lastValueFrom(this.authService.RefreshToken(refreshTokenDto));
     } catch (error) {
-      throw new HttpException(
-        error.message || 'Token refresh failed',
-        error.status || HttpStatus.UNAUTHORIZED,
-      );
+      const message = error.details || error.message || 'Token refresh failed';
+      const statusCode = this.getHttpStatusFromGrpcError(error);
+      throw new HttpException(message, statusCode);
     }
   }
 
@@ -77,10 +94,9 @@ export class AuthController implements OnModuleInit {
     try {
       return await lastValueFrom(this.authService.Logout({ userId: user.userId }));
     } catch (error) {
-      throw new HttpException(
-        error.message || 'Logout failed',
-        error.status || HttpStatus.BAD_REQUEST,
-      );
+      const message = error.details || error.message || 'Logout failed';
+      const statusCode = this.getHttpStatusFromGrpcError(error);
+      throw new HttpException(message, statusCode);
     }
   }
 

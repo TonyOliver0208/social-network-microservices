@@ -26,7 +26,7 @@ export class GrpcModule {
               options: {
                 url: configService.get<string>(options.urlConfigKey) || options.defaultUrl,
                 package: options.package,
-                protoPath: join(__dirname, `../../../../proto/${options.protoFileName}`),
+                protoPath: join(__dirname, '..', '..', '..', 'proto', options.protoFileName),
                 loader: {
                   keepCase: true,
                   longs: String,

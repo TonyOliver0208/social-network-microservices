@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { LoggerModule, RabbitMQModule, RedisModule } from '@app/common';
+import { RabbitMQModule, RedisModule } from '@app/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { PostModule } from './post/post.module';
 
@@ -10,8 +10,10 @@ import { PostModule } from './post/post.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    LoggerModule,
-    RabbitMQModule.register({ name: 'POST_SERVICE' }),
+    RabbitMQModule.register({ 
+      name: 'POST_SERVICE',
+      queue: 'post_queue'
+    }),
     RedisModule.register(),
     PrismaModule,
     PostModule,

@@ -25,7 +25,7 @@ let GrpcModule = GrpcModule_1 = class GrpcModule {
                             options: {
                                 url: configService.get(options.urlConfigKey) || options.defaultUrl,
                                 package: options.package,
-                                protoPath: (0, path_1.join)(__dirname, `../../../../proto/${options.protoFileName}`),
+                                protoPath: (0, path_1.join)(__dirname, '..', '..', '..', 'proto', options.protoFileName),
                                 loader: {
                                     keepCase: true,
                                     longs: String,

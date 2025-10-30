@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ServiceResponse, calculatePagination } from '@app/common';
+import { ServiceResponse, PaginatedResponse, calculatePagination } from '@app/common';
 import { UpdateProfileDto } from './dto';
 
 @Injectable()
@@ -204,7 +204,7 @@ export class UserService {
   }
 
   // Get followers
-  async getFollowers(userId: string, page = 1, limit = 20): Promise<ServiceResponse> {
+  async getFollowers(userId: string, page = 1, limit = 20): Promise<PaginatedResponse<any> | ServiceResponse> {
     try {
       const skip = (page - 1) * limit;
 
@@ -240,7 +240,7 @@ export class UserService {
   }
 
   // Get following
-  async getFollowing(userId: string, page = 1, limit = 20): Promise<ServiceResponse> {
+  async getFollowing(userId: string, page = 1, limit = 20): Promise<PaginatedResponse<any> | ServiceResponse> {
     try {
       const skip = (page - 1) * limit;
 
@@ -276,7 +276,7 @@ export class UserService {
   }
 
   // Search users
-  async searchUsers(query: string, page = 1, limit = 20): Promise<ServiceResponse> {
+  async searchUsers(query: string, page = 1, limit = 20): Promise<PaginatedResponse<any> | ServiceResponse> {
     try {
       const skip = (page - 1) * limit;
 

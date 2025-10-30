@@ -1,24 +1,19 @@
 import { IsString, IsOptional, IsNumber, Min, IsEnum } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class SearchQueryDto {
-  @ApiProperty()
   @IsString()
   query: string;
 
-  @ApiProperty({ required: false, default: 1 })
   @IsOptional()
   @IsNumber()
   @Min(1)
   page?: number = 1;
 
-  @ApiProperty({ required: false, default: 20 })
   @IsOptional()
   @IsNumber()
   @Min(1)
   limit?: number = 20;
 
-  @ApiProperty({ required: false, enum: ['PUBLIC', 'FRIENDS'] })
   @IsOptional()
   @IsEnum(['PUBLIC', 'FRIENDS'])
   privacy?: string;

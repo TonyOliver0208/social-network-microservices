@@ -196,8 +196,19 @@ Key variables (see `.env.example`):
 # API Gateway
 API_GATEWAY_PORT=3000
 
-# gRPC Service URLs
+# gRPC Service Ports
+AUTH_SERVICE_PORT=50051
+USER_SERVICE_PORT=50052
+POST_SERVICE_PORT=50053
+MEDIA_SERVICE_PORT=50054
+SEARCH_SERVICE_PORT=50055
+
+# gRPC Service URLs (for Gateway)
 AUTH_SERVICE_URL=localhost:50051
+USER_SERVICE_URL=localhost:50052
+POST_SERVICE_URL=localhost:50053
+MEDIA_SERVICE_URL=localhost:50054
+SEARCH_SERVICE_URL=localhost:50055
 USER_SERVICE_URL=localhost:50052
 POST_SERVICE_URL=localhost:50053
 MEDIA_SERVICE_URL=localhost:50054
@@ -212,9 +223,111 @@ MONGODB_URI=mongodb://localhost:27017/dbname
 
 ## 📚 Documentation
 
-- **[PROTO.md](./PROTO.md)** - Proto code generation guide
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Detailed system architecture
-- **[CHANGELOG.md](./CHANGELOG.md)** - Migration history and changes
+For detailed architecture and design decisions, see **[ARCHITECTURE.md](./ARCHITECTURE.md)**  
+For migration history and changes, see **[CHANGELOG.md](./CHANGELOG.md)**
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+# API Gateway
+API_GATEWAY_PORT=3000
+
+# gRPC Service Ports
+AUTH_SERVICE_PORT=50051
+USER_SERVICE_PORT=50052
+POST_SERVICE_PORT=50053
+MEDIA_SERVICE_PORT=50054
+SEARCH_SERVICE_PORT=50055
+
+# gRPC Service URLs (for Gateway)
+AUTH_SERVICE_URL=localhost:50051
+USER_SERVICE_URL=localhost:50052
+POST_SERVICE_URL=localhost:50053
+MEDIA_SERVICE_URL=localhost:50054
+SEARCH_SERVICE_URL=localhost:50055
+
+# Database URLs
+AUTH_DATABASE_URL="postgresql://postgres:password@localhost:5435/devcoll_auth?schema=public"
+USER_DATABASE_URL="postgresql://postgres:password@localhost:5433/devcoll_user?schema=public"
+POST_DATABASE_URL="postgresql://postgres:password@localhost:5434/devcoll_post?schema=public"
+MEDIA_MONGODB_URI="mongodb://localhost:27017/devcoll_media"
+SEARCH_MONGODB_URI="mongodb://localhost:27017/devcoll_search"
+
+# Infrastructure
+RABBITMQ_URL=amqp://guest:guest@localhost:5672
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
+JWT_ACCESS_EXPIRATION=15m
+JWT_REFRESH_EXPIRATION=7d
+```
+
+### Docker vs Local Development
+
+**Local Development:**
+- Services: `localhost:50051-50055`
+- Databases: `localhost:5433-5435` (PostgreSQL), `localhost:27017` (MongoDB)
+
+**Docker:**
+- Services: `service-name:50051-50055` (e.g., `auth-service:50051`)
+- Databases: Internal Docker network names
+
+---
+
+## 🔧 Proto Code Generation
+
+TypeScript interfaces are auto-generated from `.proto` files for type-safe gRPC communication.
+
+### Generate Proto Code
+
+```bash
+# After modifying any .proto file in proto/
+npm run proto:gen
+```
+
+### Proto Files Location
+
+```
+proto/
+  ├── auth.proto      # Authentication service
+  ├── user.proto      # User service
+  ├── post.proto      # Post service  
+  ├── media.proto     # Media service
+  └── search.proto    # Search service
+```
+
+### Generated Code
+
+```
+generated/           # Auto-generated TypeScript (DO NOT EDIT)
+  ├── auth.ts
+  ├── user.ts
+  ├── post.ts
+  ├── media.ts
+  └── search.ts
+```
+
+### Usage Example
+
+```typescript
+import { AUTHSERVICE_SERVICE_NAME } from 'generated/auth';
+
+@GrpcMethod(AUTHSERVICE_SERVICE_NAME, 'Login')
+async login(dto: LoginDto) {
+  // Implementation
+}
+```
+
+---
 
 ## 🤝 Contributing
 
@@ -227,10 +340,6 @@ MONGODB_URI=mongodb://localhost:27017/dbname
 ## 📝 License
 
 MIT License - see LICENSE file for details
-
-## 👥 Team
-
-DevColl Team
 
 ---
 

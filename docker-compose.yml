@@ -118,13 +118,12 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
       - API_GATEWAY_PORT=3000
-      - AUTH_SERVICE_HOST=auth-service
-      - USER_SERVICE_HOST=user-service
-      - POST_SERVICE_HOST=post-service
-      - MEDIA_SERVICE_HOST=media-service
-      - SEARCH_SERVICE_HOST=search-service
+      - AUTH_SERVICE_URL=auth-service:50051
+      - USER_SERVICE_URL=user-service:50052
+      - POST_SERVICE_URL=post-service:50053
+      - MEDIA_SERVICE_URL=media-service:50054
+      - SEARCH_SERVICE_URL=search-service:50055
       - REDIS_HOST=redis
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
@@ -152,16 +151,15 @@ services:
       dockerfile: apps/auth-service/Dockerfile
     container_name: devcoll-auth-service
     ports:
-      - "3001:3001"
+      - "50051:50051"
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
-      - AUTH_SERVICE_PORT=3001
+      - AUTH_SERVICE_PORT=50051
       - AUTH_DATABASE_URL=postgresql://postgres:password@postgres-auth:5432/devcoll_auth?schema=public
       - REDIS_HOST=redis
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - USER_SERVICE_HOST=user-service
+      - USER_SERVICE_URL=user-service:50052
     depends_on:
       postgres-auth:
         condition: service_healthy
@@ -179,12 +177,11 @@ services:
       dockerfile: apps/user-service/Dockerfile
     container_name: devcoll-user-service
     ports:
-      - "3002:3002"
+      - "50052:50052"
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
-      - USER_SERVICE_PORT=3002
+      - USER_SERVICE_PORT=50052
       - USER_DATABASE_URL=postgresql://postgres:password@postgres-user:5432/devcoll_user?schema=public
       - REDIS_HOST=redis
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
@@ -205,17 +202,16 @@ services:
       dockerfile: apps/post-service/Dockerfile
     container_name: devcoll-post-service
     ports:
-      - "3003:3003"
+      - "50053:50053"
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
-      - POST_SERVICE_PORT=3003
+      - POST_SERVICE_PORT=50053
       - POST_DATABASE_URL=postgresql://postgres:password@postgres-post:5432/devcoll_post?schema=public
       - REDIS_HOST=redis
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - MEDIA_SERVICE_HOST=media-service
-      - USER_SERVICE_HOST=user-service
+      - MEDIA_SERVICE_URL=media-service:50054
+      - USER_SERVICE_URL=user-service:50052
     depends_on:
       postgres-post:
         condition: service_healthy
@@ -233,12 +229,11 @@ services:
       dockerfile: apps/media-service/Dockerfile
     container_name: devcoll-media-service
     ports:
-      - "3004:3004"
+      - "50054:50054"
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
-      - MEDIA_SERVICE_PORT=3004
+      - MEDIA_SERVICE_PORT=50054
       - MEDIA_MONGODB_URI=mongodb://mongodb:27017/devcoll_media
       - REDIS_HOST=redis
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
@@ -259,12 +254,11 @@ services:
       dockerfile: apps/search-service/Dockerfile
     container_name: devcoll-search-service
     ports:
-      - "3005:3005"
+      - "50055:50055"
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
-      - SEARCH_SERVICE_PORT=3005
+      - SEARCH_SERVICE_PORT=50055
       - SEARCH_MONGODB_URI=mongodb://mongodb:27017/devcoll_search
       - REDIS_HOST=redis
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672

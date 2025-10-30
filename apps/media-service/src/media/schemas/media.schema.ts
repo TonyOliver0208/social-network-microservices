@@ -32,7 +32,7 @@ export class Media {
   @Prop({ default: 'local' })
   storage: string; // 'local', 's3', 'cloudinary', etc.
 
-  @Prop()
+  @Prop({ type: Object })
   metadata?: Record<string, any>;
 
   @Prop({ default: true })

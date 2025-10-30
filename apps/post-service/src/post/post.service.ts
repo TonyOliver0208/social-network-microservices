@@ -10,7 +10,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 export class PostService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject('RABBITMQ_SERVICE') private readonly rabbitClient: ClientProxy,
+    @Inject('POST_SERVICE') private readonly rabbitClient: ClientProxy,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 

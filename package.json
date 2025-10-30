@@ -40,23 +40,21 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.9",
-    "@protobuf-ts/plugin": "^2.11.1",
-    "@protobuf-ts/runtime": "^2.11.1",
-    "@protobuf-ts/runtime-rpc": "^2.11.1",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.8.1",
-    "grpc-tools": "^1.13.0",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
-    "ts-proto": "^2.7.7",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.0",
     "@grpc/proto-loader": "^0.7.15",
+    "@nestjs/cache-manager": "^2.1.1",
     "@nestjs/microservices": "^10.4.20",
     "@nestjs/mongoose": "^11.0.3",
     "amqplib": "^0.10.9",
+    "cache-manager": "^5.3.2",
+    "cache-manager-ioredis": "^2.1.0",
     "mongoose": "^8.19.1",
     "uuid": "^13.0.0"
   }
