@@ -26,9 +26,9 @@
     "docker:logs": "docker-compose logs -f",
     "prisma:generate": "cd apps/auth-service && npx prisma generate && cd ../user-service && npx prisma generate && cd ../post-service && npx prisma generate",
     "prisma:migrate": "npm run prisma:migrate:auth && npm run prisma:migrate:user && npm run prisma:migrate:post",
-    "prisma:migrate:auth": "cd apps/auth-service && npx prisma migrate dev",
-    "prisma:migrate:user": "cd apps/user-service && npx prisma migrate dev",
-    "prisma:migrate:post": "cd apps/post-service && npx prisma migrate dev",
+    "prisma:migrate:auth": "export $(cat .env | grep -v '^#' | xargs) && cd apps/auth-service && npx prisma migrate dev",
+    "prisma:migrate:user": "export $(cat .env | grep -v '^#' | xargs) && cd apps/user-service && npx prisma migrate dev",
+    "prisma:migrate:post": "export $(cat .env | grep -v '^#' | xargs) && cd apps/post-service && npx prisma migrate dev",
     "prisma:studio:auth": "cd apps/auth-service && npx prisma studio",
     "prisma:studio:user": "cd apps/user-service && npx prisma studio",
     "prisma:studio:post": "cd apps/post-service && npx prisma studio"

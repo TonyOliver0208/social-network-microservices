@@ -1,92 +1,11 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ([
-/* 0 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+/******/ 	var __webpack_modules__ = ({
 
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(1);
-const common_1 = __webpack_require__(2);
-const config_1 = __webpack_require__(3);
-const swagger_1 = __webpack_require__(4);
-const app_module_1 = __webpack_require__(5);
-const compression_1 = __importDefault(__webpack_require__(31));
-const helmet_1 = __importDefault(__webpack_require__(32));
-const common_2 = __webpack_require__(7);
-async function bootstrap() {
-    const logger = new common_1.Logger('API Gateway');
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    const configService = app.get(config_1.ConfigService);
-    const port = configService.get('API_GATEWAY_PORT', 3000);
-    const corsOrigins = configService.get('CORS_ORIGIN', '*').split(',');
-    app.use((0, helmet_1.default)());
-    app.use((0, compression_1.default)());
-    app.enableCors({
-        origin: corsOrigins,
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
-    });
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(new common_1.ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-        transformOptions: {
-            enableImplicitConversion: true,
-        },
-    }));
-    app.useGlobalFilters(new common_2.AllExceptionsFilter());
-    const config = new swagger_1.DocumentBuilder()
-        .setTitle('DevColl API')
-        .setDescription('DevColl Social Network API Documentation')
-        .setVersion('1.0')
-        .addBearerAuth()
-        .addTag('auth', 'Authentication endpoints')
-        .addTag('users', 'User management endpoints')
-        .addTag('posts', 'Post management endpoints')
-        .addTag('media', 'Media upload endpoints')
-        .addTag('search', 'Search endpoints')
-        .build();
-    const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('api/docs', app, document);
-    await app.listen(port, '0.0.0.0');
-    logger.log(`🚀 API Gateway is running on: http://localhost:${port}`);
-    logger.log(`📚 Swagger docs available at: http://localhost:${port}/api/docs`);
-}
-bootstrap();
-
-
-/***/ }),
-/* 1 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/core");
-
-/***/ }),
-/* 2 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-/* 3 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/config");
-
-/***/ }),
-/* 4 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/swagger");
-
-/***/ }),
-/* 5 */
+/***/ "./apps/api-gateway/src/app.module.ts":
+/*!********************************************!*\
+  !*** ./apps/api-gateway/src/app.module.ts ***!
+  \********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -98,16 +17,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
-const common_1 = __webpack_require__(2);
-const config_1 = __webpack_require__(3);
-const throttler_1 = __webpack_require__(6);
-const common_2 = __webpack_require__(7);
-const auth_module_1 = __webpack_require__(8);
-const user_module_1 = __webpack_require__(15);
-const post_module_1 = __webpack_require__(19);
-const media_module_1 = __webpack_require__(23);
-const search_module_1 = __webpack_require__(27);
-const health_controller_1 = __webpack_require__(30);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const throttler_1 = __webpack_require__(/*! @nestjs/throttler */ "@nestjs/throttler");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const auth_module_1 = __webpack_require__(/*! ./auth/auth.module */ "./apps/api-gateway/src/auth/auth.module.ts");
+const user_module_1 = __webpack_require__(/*! ./user/user.module */ "./apps/api-gateway/src/user/user.module.ts");
+const post_module_1 = __webpack_require__(/*! ./post/post.module */ "./apps/api-gateway/src/post/post.module.ts");
+const media_module_1 = __webpack_require__(/*! ./media/media.module */ "./apps/api-gateway/src/media/media.module.ts");
+const search_module_1 = __webpack_require__(/*! ./search/search.module */ "./apps/api-gateway/src/search/search.module.ts");
+const health_controller_1 = __webpack_require__(/*! ./health/health.controller */ "./apps/api-gateway/src/health/health.controller.ts");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -137,55 +56,11 @@ exports.AppModule = AppModule = __decorate([
 
 
 /***/ }),
-/* 6 */
-/***/ ((module) => {
 
-module.exports = require("@nestjs/throttler");
-
-/***/ }),
-/* 7 */
-/***/ ((module) => {
-
-module.exports = require("@app/common");
-
-/***/ }),
-/* 8 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AuthModule = void 0;
-const common_1 = __webpack_require__(2);
-const auth_controller_1 = __webpack_require__(9);
-const common_2 = __webpack_require__(7);
-const auth_1 = __webpack_require__(14);
-let AuthModule = class AuthModule {
-};
-exports.AuthModule = AuthModule;
-exports.AuthModule = AuthModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            common_2.GrpcModule.register({
-                name: common_2.SERVICES.AUTH_SERVICE,
-                package: auth_1.AUTH_PACKAGE_NAME,
-                protoFileName: 'auth.proto',
-                urlConfigKey: 'AUTH_SERVICE_URL',
-                defaultUrl: 'localhost:50051',
-            }),
-        ],
-        controllers: [auth_controller_1.AuthController],
-    })
-], AuthModule);
-
-
-/***/ }),
-/* 9 */
+/***/ "./apps/api-gateway/src/auth/auth.controller.ts":
+/*!******************************************************!*\
+  !*** ./apps/api-gateway/src/auth/auth.controller.ts ***!
+  \******************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -204,13 +79,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthController = void 0;
-const common_1 = __webpack_require__(2);
-const microservices_1 = __webpack_require__(10);
-const swagger_1 = __webpack_require__(4);
-const rxjs_1 = __webpack_require__(11);
-const common_2 = __webpack_require__(7);
-const dto_1 = __webpack_require__(12);
-const auth_1 = __webpack_require__(14);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const dto_1 = __webpack_require__(/*! ./dto */ "./apps/api-gateway/src/auth/dto/index.ts");
+const auth_1 = __webpack_require__(/*! @app/proto/auth */ "./generated/auth.ts");
 let AuthController = class AuthController {
     constructor(client) {
         this.client = client;
@@ -373,19 +248,51 @@ exports.AuthController = AuthController = __decorate([
 
 
 /***/ }),
-/* 10 */
-/***/ ((module) => {
 
-module.exports = require("@nestjs/microservices");
+/***/ "./apps/api-gateway/src/auth/auth.module.ts":
+/*!**************************************************!*\
+  !*** ./apps/api-gateway/src/auth/auth.module.ts ***!
+  \**************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AuthModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const auth_controller_1 = __webpack_require__(/*! ./auth.controller */ "./apps/api-gateway/src/auth/auth.controller.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const auth_1 = __webpack_require__(/*! @app/proto/auth */ "./generated/auth.ts");
+let AuthModule = class AuthModule {
+};
+exports.AuthModule = AuthModule;
+exports.AuthModule = AuthModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.AUTH_SERVICE,
+                package: auth_1.AUTH_PACKAGE_NAME,
+                protoFileName: 'auth.proto',
+                urlConfigKey: 'AUTH_SERVICE_URL',
+                defaultUrl: 'localhost:50051',
+            }),
+        ],
+        controllers: [auth_controller_1.AuthController],
+    })
+], AuthModule);
+
 
 /***/ }),
-/* 11 */
-/***/ ((module) => {
 
-module.exports = require("rxjs");
-
-/***/ }),
-/* 12 */
+/***/ "./apps/api-gateway/src/auth/dto/index.ts":
+/*!************************************************!*\
+  !*** ./apps/api-gateway/src/auth/dto/index.ts ***!
+  \************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -400,8 +307,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GoogleAuthDto = exports.RefreshTokenDto = exports.LoginDto = exports.RegisterDto = void 0;
-const class_validator_1 = __webpack_require__(13);
-const swagger_1 = __webpack_require__(4);
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 class RegisterDto {
 }
 exports.RegisterDto = RegisterDto;
@@ -481,24 +388,11 @@ __decorate([
 
 
 /***/ }),
-/* 13 */
-/***/ ((module) => {
 
-module.exports = require("class-validator");
-
-/***/ }),
-/* 14 */
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AUTHSERVICE_SERVICE_NAME = exports.AUTH_PACKAGE_NAME = void 0;
-exports.AUTH_PACKAGE_NAME = 'auth';
-exports.AUTHSERVICE_SERVICE_NAME = 'AuthService';
-
-
-/***/ }),
-/* 15 */
+/***/ "./apps/api-gateway/src/health/health.controller.ts":
+/*!**********************************************************!*\
+  !*** ./apps/api-gateway/src/health/health.controller.ts ***!
+  \**********************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -508,33 +402,118 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserModule = void 0;
-const common_1 = __webpack_require__(2);
-const user_controller_1 = __webpack_require__(16);
-const common_2 = __webpack_require__(7);
-const user_1 = __webpack_require__(18);
-let UserModule = class UserModule {
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-exports.UserModule = UserModule;
-exports.UserModule = UserModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            common_2.GrpcModule.register({
-                name: common_2.SERVICES.USER_SERVICE,
-                package: user_1.USER_PACKAGE_NAME,
-                protoFileName: 'user.proto',
-                urlConfigKey: 'USER_SERVICE_URL',
-                defaultUrl: 'localhost:50052',
-            }),
-        ],
-        controllers: [user_controller_1.UserController],
-    })
-], UserModule);
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.HealthController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+let HealthController = class HealthController {
+    check() {
+        return {
+            success: true,
+            message: 'API Gateway is healthy',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+        };
+    }
+    ping() {
+        return {
+            success: true,
+            message: 'pong',
+            timestamp: new Date().toISOString(),
+        };
+    }
+};
+exports.HealthController = HealthController;
+__decorate([
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], HealthController.prototype, "check", null);
+__decorate([
+    (0, common_1.Get)('ping'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], HealthController.prototype, "ping", null);
+exports.HealthController = HealthController = __decorate([
+    (0, common_1.Controller)('health')
+], HealthController);
 
 
 /***/ }),
-/* 16 */
+
+/***/ "./apps/api-gateway/src/main.ts":
+/*!**************************************!*\
+  !*** ./apps/api-gateway/src/main.ts ***!
+  \**************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const app_module_1 = __webpack_require__(/*! ./app.module */ "./apps/api-gateway/src/app.module.ts");
+const compression_1 = __importDefault(__webpack_require__(/*! compression */ "compression"));
+const helmet_1 = __importDefault(__webpack_require__(/*! helmet */ "helmet"));
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+async function bootstrap() {
+    const logger = new common_1.Logger('API Gateway');
+    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const configService = app.get(config_1.ConfigService);
+    const port = configService.get('API_GATEWAY_PORT', 3000);
+    const corsOrigins = configService.get('CORS_ORIGIN', '*').split(',');
+    app.use((0, helmet_1.default)());
+    app.use((0, compression_1.default)());
+    app.enableCors({
+        origin: corsOrigins,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    });
+    app.setGlobalPrefix('api/v1');
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: {
+            enableImplicitConversion: true,
+        },
+    }));
+    app.useGlobalFilters(new common_2.AllExceptionsFilter());
+    const config = new swagger_1.DocumentBuilder()
+        .setTitle('DevColl API')
+        .setDescription('DevColl Social Network API Documentation')
+        .setVersion('1.0')
+        .addBearerAuth()
+        .addTag('auth', 'Authentication endpoints')
+        .addTag('users', 'User management endpoints')
+        .addTag('posts', 'Post management endpoints')
+        .addTag('media', 'Media upload endpoints')
+        .addTag('search', 'Search endpoints')
+        .build();
+    const document = swagger_1.SwaggerModule.createDocument(app, config);
+    swagger_1.SwaggerModule.setup('api/docs', app, document);
+    await app.listen(port, '0.0.0.0');
+    logger.log(`🚀 API Gateway is running on: http://localhost:${port}`);
+    logger.log(`📚 Swagger docs available at: http://localhost:${port}/api/docs`);
+}
+bootstrap();
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/media/media.controller.ts":
+/*!********************************************************!*\
+  !*** ./apps/api-gateway/src/media/media.controller.ts ***!
+  \********************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -550,169 +529,142 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserController = void 0;
-const common_1 = __webpack_require__(2);
-const microservices_1 = __webpack_require__(10);
-const swagger_1 = __webpack_require__(4);
-const rxjs_1 = __webpack_require__(11);
-const common_2 = __webpack_require__(7);
-const dto_1 = __webpack_require__(17);
-const user_1 = __webpack_require__(18);
-let UserController = class UserController {
+exports.MediaController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const platform_express_1 = __webpack_require__(/*! @nestjs/platform-express */ "@nestjs/platform-express");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const media_1 = __webpack_require__(/*! @app/proto/media */ "./generated/media.ts");
+let MediaController = class MediaController {
     constructor(client) {
         this.client = client;
     }
     onModuleInit() {
-        this.userService = this.client.getService(user_1.USERSERVICE_SERVICE_NAME);
+        this.mediaService = this.client.getService(media_1.MEDIASERVICE_SERVICE_NAME);
     }
-    async getProfile(userId) {
+    async uploadMedia(userId, file) {
+        if (!file) {
+            throw new common_1.HttpException('No file provided', common_1.HttpStatus.BAD_REQUEST);
+        }
         try {
-            return await (0, rxjs_1.lastValueFrom)(this.userService.GetUserById({ id: userId }));
-        }
-        catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to get profile', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-    async updateProfile(userId, updateProfileDto) {
-        try {
-            return await (0, rxjs_1.lastValueFrom)(this.userService.UpdateProfile({
-                id: userId,
-                ...updateProfileDto,
-            }));
-        }
-        catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to update profile', error.status || common_1.HttpStatus.BAD_REQUEST);
-        }
-    }
-    async followUser(followerId, followingId) {
-        try {
-            return await (0, rxjs_1.lastValueFrom)(this.userService.FollowUser({
-                followerId,
-                followingId,
-            }));
-        }
-        catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to follow user', error.status || common_1.HttpStatus.BAD_REQUEST);
-        }
-    }
-    async unfollowUser(followerId, followingId) {
-        try {
-            return await (0, rxjs_1.lastValueFrom)(this.userService.UnfollowUser({
-                followerId,
-                followingId,
-            }));
-        }
-        catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to unfollow user', error.status || common_1.HttpStatus.BAD_REQUEST);
-        }
-    }
-    async getFollowers(userId, pagination) {
-        try {
-            return await (0, rxjs_1.lastValueFrom)(this.userService.GetFollowers({
+            return await (0, rxjs_1.lastValueFrom)(this.mediaService.UploadMedia({
                 userId,
-                page: pagination.page || 1,
-                limit: pagination.limit || 20,
+                file: file.buffer,
+                filename: file.originalname,
+                mimetype: file.mimetype,
+                type: file.mimetype.startsWith('image/') ? 'image' : 'video',
             }));
         }
         catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to get followers', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new common_1.HttpException(error.message || 'Failed to upload media', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    async getFollowing(userId, pagination) {
+    async deleteMedia(mediaId, userId) {
         try {
-            return await (0, rxjs_1.lastValueFrom)(this.userService.GetFollowing({
+            return await (0, rxjs_1.lastValueFrom)(this.mediaService.DeleteMedia({
+                id: mediaId,
                 userId,
-                page: pagination.page || 1,
-                limit: pagination.limit || 20,
             }));
         }
         catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to get following', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new common_1.HttpException(error.message || 'Failed to delete media', error.status || common_1.HttpStatus.BAD_REQUEST);
         }
     }
 };
-exports.UserController = UserController;
+exports.MediaController = MediaController;
 __decorate([
-    (0, common_1.Get)(':id'),
+    (0, common_1.Post)('upload'),
     (0, common_1.UseGuards)(common_2.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get user profile' }),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload media file' }),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiBody)({
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    }),
+    __param(0, (0, common_2.CurrentUser)('userId')),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, typeof (_c = typeof Express !== "undefined" && (_b = Express.Multer) !== void 0 && _b.File) === "function" ? _c : Object]),
+    __metadata("design:returntype", Promise)
+], MediaController.prototype, "uploadMedia", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete media file' }),
     __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "getProfile", null);
-__decorate([
-    (0, common_1.Patch)('profile'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Update user profile' }),
-    __param(0, (0, common_2.CurrentUser)('userId')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_b = typeof dto_1.UpdateProfileDto !== "undefined" && dto_1.UpdateProfileDto) === "function" ? _b : Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "updateProfile", null);
-__decorate([
-    (0, common_1.Post)(':id/follow'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Follow a user' }),
-    __param(0, (0, common_2.CurrentUser)('userId')),
-    __param(1, (0, common_1.Param)('id')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
-], UserController.prototype, "followUser", null);
-__decorate([
-    (0, common_1.Delete)(':id/follow'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Unfollow a user' }),
-    __param(0, (0, common_2.CurrentUser)('userId')),
-    __param(1, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "unfollowUser", null);
-__decorate([
-    (0, common_1.Get)(':id/followers'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get user followers' }),
-    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
-    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_c = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _c : Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "getFollowers", null);
-__decorate([
-    (0, common_1.Get)(':id/following'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get users followed by this user' }),
-    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
-    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_d = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _d : Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "getFollowing", null);
-exports.UserController = UserController = __decorate([
-    (0, swagger_1.ApiTags)('users'),
-    (0, common_1.Controller)('users'),
-    __param(0, (0, common_1.Inject)(common_2.SERVICES.USER_SERVICE)),
+], MediaController.prototype, "deleteMedia", null);
+exports.MediaController = MediaController = __decorate([
+    (0, swagger_1.ApiTags)('media'),
+    (0, common_1.Controller)('media'),
+    __param(0, (0, common_1.Inject)(common_2.SERVICES.MEDIA_SERVICE)),
     __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientGrpc !== "undefined" && microservices_1.ClientGrpc) === "function" ? _a : Object])
-], UserController);
+], MediaController);
 
 
 /***/ }),
-/* 17 */
+
+/***/ "./apps/api-gateway/src/media/media.module.ts":
+/*!****************************************************!*\
+  !*** ./apps/api-gateway/src/media/media.module.ts ***!
+  \****************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MediaModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const media_controller_1 = __webpack_require__(/*! ./media.controller */ "./apps/api-gateway/src/media/media.controller.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const media_1 = __webpack_require__(/*! @app/proto/media */ "./generated/media.ts");
+let MediaModule = class MediaModule {
+};
+exports.MediaModule = MediaModule;
+exports.MediaModule = MediaModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.MEDIA_SERVICE,
+                package: media_1.MEDIA_PACKAGE_NAME,
+                protoFileName: 'media.proto',
+                urlConfigKey: 'MEDIA_SERVICE_URL',
+                defaultUrl: 'localhost:50054',
+            }),
+        ],
+        controllers: [media_controller_1.MediaController],
+    })
+], MediaModule);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/post/dto/index.ts":
+/*!************************************************!*\
+  !*** ./apps/api-gateway/src/post/dto/index.ts ***!
+  \************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -726,117 +678,86 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UpdateProfileDto = void 0;
-const class_validator_1 = __webpack_require__(13);
-const swagger_1 = __webpack_require__(4);
-class UpdateProfileDto {
+exports.CreateCommentDto = exports.UpdatePostDto = exports.CreatePostDto = exports.Privacy = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+var Privacy;
+(function (Privacy) {
+    Privacy["PUBLIC"] = "PUBLIC";
+    Privacy["FRIENDS"] = "FRIENDS";
+    Privacy["PRIVATE"] = "PRIVATE";
+})(Privacy || (exports.Privacy = Privacy = {}));
+class CreatePostDto {
 }
-exports.UpdateProfileDto = UpdateProfileDto;
+exports.CreatePostDto = CreatePostDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: 'John Doe' }),
+    (0, swagger_1.ApiProperty)({ example: 'This is my first post!' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(1),
+    (0, class_validator_1.MaxLength)(5000),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "content", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: ['https://example.com/image1.jpg'] }),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreatePostDto.prototype, "mediaUrls", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: Privacy.PUBLIC, enum: Privacy }),
+    (0, class_validator_1.IsEnum)(Privacy),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreatePostDto.prototype, "privacy", void 0);
+class UpdatePostDto {
+}
+exports.UpdatePostDto = UpdatePostDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: 'Updated content' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(100),
+    (0, class_validator_1.MinLength)(1),
+    (0, class_validator_1.MaxLength)(5000),
     __metadata("design:type", String)
-], UpdateProfileDto.prototype, "fullName", void 0);
+], UpdatePostDto.prototype, "content", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: 'Software Developer & Tech Enthusiast' }),
+    (0, swagger_1.ApiProperty)({ required: false, example: ['https://example.com/image1.jpg'] }),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], UpdatePostDto.prototype, "mediaUrls", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: Privacy.PUBLIC, enum: Privacy }),
+    (0, class_validator_1.IsEnum)(Privacy),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdatePostDto.prototype, "privacy", void 0);
+class CreateCommentDto {
+}
+exports.CreateCommentDto = CreateCommentDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Great post!' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(1),
+    (0, class_validator_1.MaxLength)(2000),
+    __metadata("design:type", String)
+], CreateCommentDto.prototype, "content", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: 'parent-comment-uuid' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(500),
     __metadata("design:type", String)
-], UpdateProfileDto.prototype, "bio", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: 'https://example.com/avatar.jpg' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
-    __metadata("design:type", String)
-], UpdateProfileDto.prototype, "avatar", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: 'https://example.com/cover.jpg' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
-    __metadata("design:type", String)
-], UpdateProfileDto.prototype, "coverImage", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: 'https://johndoe.com' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
-    __metadata("design:type", String)
-], UpdateProfileDto.prototype, "website", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: 'San Francisco, CA' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(100),
-    __metadata("design:type", String)
-], UpdateProfileDto.prototype, "location", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: '1990-01-01' }),
-    (0, class_validator_1.IsDateString)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], UpdateProfileDto.prototype, "birthDate", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: false }),
-    (0, class_validator_1.IsBoolean)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Boolean)
-], UpdateProfileDto.prototype, "isPrivate", void 0);
+], CreateCommentDto.prototype, "parentId", void 0);
 
 
 /***/ }),
-/* 18 */
-/***/ ((__unused_webpack_module, exports) => {
 
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.USERSERVICE_SERVICE_NAME = exports.USER_PACKAGE_NAME = void 0;
-exports.USER_PACKAGE_NAME = 'user';
-exports.USERSERVICE_SERVICE_NAME = 'UserService';
-
-
-/***/ }),
-/* 19 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PostModule = void 0;
-const common_1 = __webpack_require__(2);
-const post_controller_1 = __webpack_require__(20);
-const common_2 = __webpack_require__(7);
-const post_1 = __webpack_require__(22);
-let PostModule = class PostModule {
-};
-exports.PostModule = PostModule;
-exports.PostModule = PostModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            common_2.GrpcModule.register({
-                name: common_2.SERVICES.POST_SERVICE,
-                package: post_1.POST_PACKAGE_NAME,
-                protoFileName: 'post.proto',
-                urlConfigKey: 'POST_SERVICE_URL',
-                defaultUrl: 'localhost:50053',
-            }),
-        ],
-        controllers: [post_controller_1.PostController],
-    })
-], PostModule);
-
-
-/***/ }),
-/* 20 */
+/***/ "./apps/api-gateway/src/post/post.controller.ts":
+/*!******************************************************!*\
+  !*** ./apps/api-gateway/src/post/post.controller.ts ***!
+  \******************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -855,13 +776,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var _a, _b, _c, _d, _e, _f, _g;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostController = void 0;
-const common_1 = __webpack_require__(2);
-const microservices_1 = __webpack_require__(10);
-const swagger_1 = __webpack_require__(4);
-const rxjs_1 = __webpack_require__(11);
-const common_2 = __webpack_require__(7);
-const dto_1 = __webpack_require__(21);
-const post_1 = __webpack_require__(22);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const dto_1 = __webpack_require__(/*! ./dto */ "./apps/api-gateway/src/post/dto/index.ts");
+const post_1 = __webpack_require__(/*! @app/proto/post */ "./generated/post.ts");
 let PostController = class PostController {
     constructor(client) {
         this.client = client;
@@ -1134,107 +1055,11 @@ exports.PostController = PostController = __decorate([
 
 
 /***/ }),
-/* 21 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CreateCommentDto = exports.UpdatePostDto = exports.CreatePostDto = exports.Privacy = void 0;
-const class_validator_1 = __webpack_require__(13);
-const swagger_1 = __webpack_require__(4);
-var Privacy;
-(function (Privacy) {
-    Privacy["PUBLIC"] = "PUBLIC";
-    Privacy["FRIENDS"] = "FRIENDS";
-    Privacy["PRIVATE"] = "PRIVATE";
-})(Privacy || (exports.Privacy = Privacy = {}));
-class CreatePostDto {
-}
-exports.CreatePostDto = CreatePostDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'This is my first post!' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(1),
-    (0, class_validator_1.MaxLength)(5000),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "content", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: ['https://example.com/image1.jpg'] }),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsString)({ each: true }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Array)
-], CreatePostDto.prototype, "mediaUrls", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: Privacy.PUBLIC, enum: Privacy }),
-    (0, class_validator_1.IsEnum)(Privacy),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreatePostDto.prototype, "privacy", void 0);
-class UpdatePostDto {
-}
-exports.UpdatePostDto = UpdatePostDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: 'Updated content' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MinLength)(1),
-    (0, class_validator_1.MaxLength)(5000),
-    __metadata("design:type", String)
-], UpdatePostDto.prototype, "content", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: ['https://example.com/image1.jpg'] }),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsString)({ each: true }),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Array)
-], UpdatePostDto.prototype, "mediaUrls", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: Privacy.PUBLIC, enum: Privacy }),
-    (0, class_validator_1.IsEnum)(Privacy),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], UpdatePostDto.prototype, "privacy", void 0);
-class CreateCommentDto {
-}
-exports.CreateCommentDto = CreateCommentDto;
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Great post!' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(1),
-    (0, class_validator_1.MaxLength)(2000),
-    __metadata("design:type", String)
-], CreateCommentDto.prototype, "content", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false, example: 'parent-comment-uuid' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreateCommentDto.prototype, "parentId", void 0);
-
-
-/***/ }),
-/* 22 */
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.POSTSERVICE_SERVICE_NAME = exports.POST_PACKAGE_NAME = void 0;
-exports.POST_PACKAGE_NAME = 'post';
-exports.POSTSERVICE_SERVICE_NAME = 'PostService';
-
-
-/***/ }),
-/* 23 */
+/***/ "./apps/api-gateway/src/post/post.module.ts":
+/*!**************************************************!*\
+  !*** ./apps/api-gateway/src/post/post.module.ts ***!
+  \**************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1245,192 +1070,36 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MediaModule = void 0;
-const common_1 = __webpack_require__(2);
-const media_controller_1 = __webpack_require__(24);
-const common_2 = __webpack_require__(7);
-const media_1 = __webpack_require__(26);
-let MediaModule = class MediaModule {
+exports.PostModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const post_controller_1 = __webpack_require__(/*! ./post.controller */ "./apps/api-gateway/src/post/post.controller.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const post_1 = __webpack_require__(/*! @app/proto/post */ "./generated/post.ts");
+let PostModule = class PostModule {
 };
-exports.MediaModule = MediaModule;
-exports.MediaModule = MediaModule = __decorate([
+exports.PostModule = PostModule;
+exports.PostModule = PostModule = __decorate([
     (0, common_1.Module)({
         imports: [
             common_2.GrpcModule.register({
-                name: common_2.SERVICES.MEDIA_SERVICE,
-                package: media_1.MEDIA_PACKAGE_NAME,
-                protoFileName: 'media.proto',
-                urlConfigKey: 'MEDIA_SERVICE_URL',
-                defaultUrl: 'localhost:50054',
+                name: common_2.SERVICES.POST_SERVICE,
+                package: post_1.POST_PACKAGE_NAME,
+                protoFileName: 'post.proto',
+                urlConfigKey: 'POST_SERVICE_URL',
+                defaultUrl: 'localhost:50053',
             }),
         ],
-        controllers: [media_controller_1.MediaController],
+        controllers: [post_controller_1.PostController],
     })
-], MediaModule);
+], PostModule);
 
 
 /***/ }),
-/* 24 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b, _c;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MediaController = void 0;
-const common_1 = __webpack_require__(2);
-const platform_express_1 = __webpack_require__(25);
-const microservices_1 = __webpack_require__(10);
-const swagger_1 = __webpack_require__(4);
-const rxjs_1 = __webpack_require__(11);
-const common_2 = __webpack_require__(7);
-const media_1 = __webpack_require__(26);
-let MediaController = class MediaController {
-    constructor(client) {
-        this.client = client;
-    }
-    onModuleInit() {
-        this.mediaService = this.client.getService(media_1.MEDIASERVICE_SERVICE_NAME);
-    }
-    async uploadMedia(userId, file) {
-        if (!file) {
-            throw new common_1.HttpException('No file provided', common_1.HttpStatus.BAD_REQUEST);
-        }
-        try {
-            return await (0, rxjs_1.lastValueFrom)(this.mediaService.UploadMedia({
-                userId,
-                file: file.buffer,
-                filename: file.originalname,
-                mimetype: file.mimetype,
-                type: file.mimetype.startsWith('image/') ? 'image' : 'video',
-            }));
-        }
-        catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to upload media', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-    async deleteMedia(mediaId, userId) {
-        try {
-            return await (0, rxjs_1.lastValueFrom)(this.mediaService.DeleteMedia({
-                id: mediaId,
-                userId,
-            }));
-        }
-        catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to delete media', error.status || common_1.HttpStatus.BAD_REQUEST);
-        }
-    }
-};
-exports.MediaController = MediaController;
-__decorate([
-    (0, common_1.Post)('upload'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
-    (0, swagger_1.ApiOperation)({ summary: 'Upload media file' }),
-    (0, swagger_1.ApiConsumes)('multipart/form-data'),
-    (0, swagger_1.ApiBody)({
-        schema: {
-            type: 'object',
-            properties: {
-                file: {
-                    type: 'string',
-                    format: 'binary',
-                },
-            },
-        },
-    }),
-    __param(0, (0, common_2.CurrentUser)('userId')),
-    __param(1, (0, common_1.UploadedFile)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_c = typeof Express !== "undefined" && (_b = Express.Multer) !== void 0 && _b.File) === "function" ? _c : Object]),
-    __metadata("design:returntype", Promise)
-], MediaController.prototype, "uploadMedia", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Delete media file' }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_2.CurrentUser)('userId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", Promise)
-], MediaController.prototype, "deleteMedia", null);
-exports.MediaController = MediaController = __decorate([
-    (0, swagger_1.ApiTags)('media'),
-    (0, common_1.Controller)('media'),
-    __param(0, (0, common_1.Inject)(common_2.SERVICES.MEDIA_SERVICE)),
-    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientGrpc !== "undefined" && microservices_1.ClientGrpc) === "function" ? _a : Object])
-], MediaController);
-
-
-/***/ }),
-/* 25 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/platform-express");
-
-/***/ }),
-/* 26 */
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MEDIASERVICE_SERVICE_NAME = exports.MEDIA_PACKAGE_NAME = void 0;
-exports.MEDIA_PACKAGE_NAME = 'media';
-exports.MEDIASERVICE_SERVICE_NAME = 'MediaService';
-
-
-/***/ }),
-/* 27 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SearchModule = void 0;
-const common_1 = __webpack_require__(2);
-const search_controller_1 = __webpack_require__(28);
-const common_2 = __webpack_require__(7);
-const search_1 = __webpack_require__(29);
-let SearchModule = class SearchModule {
-};
-exports.SearchModule = SearchModule;
-exports.SearchModule = SearchModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            common_2.GrpcModule.register({
-                name: common_2.SERVICES.SEARCH_SERVICE,
-                package: search_1.SEARCH_PACKAGE_NAME,
-                protoFileName: 'search.proto',
-                urlConfigKey: 'SEARCH_SERVICE_URL',
-                defaultUrl: 'localhost:50055',
-            }),
-        ],
-        controllers: [search_controller_1.SearchController],
-    })
-], SearchModule);
-
-
-/***/ }),
-/* 28 */
+/***/ "./apps/api-gateway/src/search/search.controller.ts":
+/*!**********************************************************!*\
+  !*** ./apps/api-gateway/src/search/search.controller.ts ***!
+  \**********************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1449,12 +1118,12 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SearchController = void 0;
-const common_1 = __webpack_require__(2);
-const microservices_1 = __webpack_require__(10);
-const swagger_1 = __webpack_require__(4);
-const rxjs_1 = __webpack_require__(11);
-const common_2 = __webpack_require__(7);
-const search_1 = __webpack_require__(29);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const search_1 = __webpack_require__(/*! @app/proto/search */ "./generated/search.ts");
 let SearchController = class SearchController {
     constructor(client) {
         this.client = client;
@@ -1531,18 +1200,51 @@ exports.SearchController = SearchController = __decorate([
 
 
 /***/ }),
-/* 29 */
-/***/ ((__unused_webpack_module, exports) => {
+
+/***/ "./apps/api-gateway/src/search/search.module.ts":
+/*!******************************************************!*\
+  !*** ./apps/api-gateway/src/search/search.module.ts ***!
+  \******************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SEARCHSERVICE_SERVICE_NAME = exports.SEARCH_PACKAGE_NAME = void 0;
-exports.SEARCH_PACKAGE_NAME = 'search';
-exports.SEARCHSERVICE_SERVICE_NAME = 'SearchService';
+exports.SearchModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const search_controller_1 = __webpack_require__(/*! ./search.controller */ "./apps/api-gateway/src/search/search.controller.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const search_1 = __webpack_require__(/*! @app/proto/search */ "./generated/search.ts");
+let SearchModule = class SearchModule {
+};
+exports.SearchModule = SearchModule;
+exports.SearchModule = SearchModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.SEARCH_SERVICE,
+                package: search_1.SEARCH_PACKAGE_NAME,
+                protoFileName: 'search.proto',
+                urlConfigKey: 'SEARCH_SERVICE_URL',
+                defaultUrl: 'localhost:50055',
+            }),
+        ],
+        controllers: [search_controller_1.SearchController],
+    })
+], SearchModule);
 
 
 /***/ }),
-/* 30 */
+
+/***/ "./apps/api-gateway/src/user/dto/index.ts":
+/*!************************************************!*\
+  !*** ./apps/api-gateway/src/user/dto/index.ts ***!
+  \************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1556,57 +1258,488 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.HealthController = void 0;
-const common_1 = __webpack_require__(2);
-let HealthController = class HealthController {
-    check() {
-        return {
-            success: true,
-            message: 'API Gateway is healthy',
-            timestamp: new Date().toISOString(),
-            uptime: process.uptime(),
-        };
-    }
-    ping() {
-        return {
-            success: true,
-            message: 'pong',
-            timestamp: new Date().toISOString(),
-        };
-    }
-};
-exports.HealthController = HealthController;
+exports.UpdateProfileDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+class UpdateProfileDto {
+}
+exports.UpdateProfileDto = UpdateProfileDto;
 __decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], HealthController.prototype, "check", null);
+    (0, swagger_1.ApiProperty)({ required: false, example: 'John Doe' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "fullName", void 0);
 __decorate([
-    (0, common_1.Get)('ping'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], HealthController.prototype, "ping", null);
-exports.HealthController = HealthController = __decorate([
-    (0, common_1.Controller)('health')
-], HealthController);
+    (0, swagger_1.ApiProperty)({ required: false, example: 'Software Developer & Tech Enthusiast' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(500),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "bio", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: 'https://example.com/avatar.jpg' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsUrl)(),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "avatar", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: 'https://example.com/cover.jpg' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsUrl)(),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "coverImage", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: 'https://johndoe.com' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsUrl)(),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "website", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: 'San Francisco, CA' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "location", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: '1990-01-01' }),
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "birthDate", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: false }),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], UpdateProfileDto.prototype, "isPrivate", void 0);
 
 
 /***/ }),
-/* 31 */
+
+/***/ "./apps/api-gateway/src/user/user.controller.ts":
+/*!******************************************************!*\
+  !*** ./apps/api-gateway/src/user/user.controller.ts ***!
+  \******************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c, _d;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const dto_1 = __webpack_require__(/*! ./dto */ "./apps/api-gateway/src/user/dto/index.ts");
+const user_1 = __webpack_require__(/*! @app/proto/user */ "./generated/user.ts");
+let UserController = class UserController {
+    constructor(client) {
+        this.client = client;
+    }
+    onModuleInit() {
+        this.userService = this.client.getService(user_1.USERSERVICE_SERVICE_NAME);
+    }
+    async getProfile(userId) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.GetUserById({ id: userId }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get profile', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async updateProfile(userId, updateProfileDto) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.UpdateProfile({
+                id: userId,
+                ...updateProfileDto,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to update profile', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async followUser(followerId, followingId) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.FollowUser({
+                followerId,
+                followingId,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to follow user', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async unfollowUser(followerId, followingId) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.UnfollowUser({
+                followerId,
+                followingId,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to unfollow user', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async getFollowers(userId, pagination) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.GetFollowers({
+                userId,
+                page: pagination.page || 1,
+                limit: pagination.limit || 20,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get followers', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async getFollowing(userId, pagination) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.userService.GetFollowing({
+                userId,
+                page: pagination.page || 1,
+                limit: pagination.limit || 20,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get following', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+};
+exports.UserController = UserController;
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get user profile' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.Patch)('profile'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Update user profile' }),
+    __param(0, (0, common_2.CurrentUser)('userId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, typeof (_b = typeof dto_1.UpdateProfileDto !== "undefined" && dto_1.UpdateProfileDto) === "function" ? _b : Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Post)(':id/follow'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Follow a user' }),
+    __param(0, (0, common_2.CurrentUser)('userId')),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "followUser", null);
+__decorate([
+    (0, common_1.Delete)(':id/follow'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Unfollow a user' }),
+    __param(0, (0, common_2.CurrentUser)('userId')),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "unfollowUser", null);
+__decorate([
+    (0, common_1.Get)(':id/followers'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get user followers' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, typeof (_c = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _c : Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "getFollowers", null);
+__decorate([
+    (0, common_1.Get)(':id/following'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get users followed by this user' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, typeof (_d = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _d : Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "getFollowing", null);
+exports.UserController = UserController = __decorate([
+    (0, swagger_1.ApiTags)('users'),
+    (0, common_1.Controller)('users'),
+    __param(0, (0, common_1.Inject)(common_2.SERVICES.USER_SERVICE)),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientGrpc !== "undefined" && microservices_1.ClientGrpc) === "function" ? _a : Object])
+], UserController);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/user/user.module.ts":
+/*!**************************************************!*\
+  !*** ./apps/api-gateway/src/user/user.module.ts ***!
+  \**************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const user_controller_1 = __webpack_require__(/*! ./user.controller */ "./apps/api-gateway/src/user/user.controller.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const user_1 = __webpack_require__(/*! @app/proto/user */ "./generated/user.ts");
+let UserModule = class UserModule {
+};
+exports.UserModule = UserModule;
+exports.UserModule = UserModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.USER_SERVICE,
+                package: user_1.USER_PACKAGE_NAME,
+                protoFileName: 'user.proto',
+                urlConfigKey: 'USER_SERVICE_URL',
+                defaultUrl: 'localhost:50052',
+            }),
+        ],
+        controllers: [user_controller_1.UserController],
+    })
+], UserModule);
+
+
+/***/ }),
+
+/***/ "./generated/auth.ts":
+/*!***************************!*\
+  !*** ./generated/auth.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AUTHSERVICE_SERVICE_NAME = exports.AUTH_PACKAGE_NAME = void 0;
+exports.AUTH_PACKAGE_NAME = 'auth';
+exports.AUTHSERVICE_SERVICE_NAME = 'AuthService';
+
+
+/***/ }),
+
+/***/ "./generated/media.ts":
+/*!****************************!*\
+  !*** ./generated/media.ts ***!
+  \****************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MEDIASERVICE_SERVICE_NAME = exports.MEDIA_PACKAGE_NAME = void 0;
+exports.MEDIA_PACKAGE_NAME = 'media';
+exports.MEDIASERVICE_SERVICE_NAME = 'MediaService';
+
+
+/***/ }),
+
+/***/ "./generated/post.ts":
+/*!***************************!*\
+  !*** ./generated/post.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.POSTSERVICE_SERVICE_NAME = exports.POST_PACKAGE_NAME = void 0;
+exports.POST_PACKAGE_NAME = 'post';
+exports.POSTSERVICE_SERVICE_NAME = 'PostService';
+
+
+/***/ }),
+
+/***/ "./generated/search.ts":
+/*!*****************************!*\
+  !*** ./generated/search.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SEARCHSERVICE_SERVICE_NAME = exports.SEARCH_PACKAGE_NAME = void 0;
+exports.SEARCH_PACKAGE_NAME = 'search';
+exports.SEARCHSERVICE_SERVICE_NAME = 'SearchService';
+
+
+/***/ }),
+
+/***/ "./generated/user.ts":
+/*!***************************!*\
+  !*** ./generated/user.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.USERSERVICE_SERVICE_NAME = exports.USER_PACKAGE_NAME = void 0;
+exports.USER_PACKAGE_NAME = 'user';
+exports.USERSERVICE_SERVICE_NAME = 'UserService';
+
+
+/***/ }),
+
+/***/ "@app/common":
+/*!******************************!*\
+  !*** external "@app/common" ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = require("@app/common");
+
+/***/ }),
+
+/***/ "@nestjs/common":
+/*!*********************************!*\
+  !*** external "@nestjs/common" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/common");
+
+/***/ }),
+
+/***/ "@nestjs/config":
+/*!*********************************!*\
+  !*** external "@nestjs/config" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/config");
+
+/***/ }),
+
+/***/ "@nestjs/core":
+/*!*******************************!*\
+  !*** external "@nestjs/core" ***!
+  \*******************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/core");
+
+/***/ }),
+
+/***/ "@nestjs/microservices":
+/*!****************************************!*\
+  !*** external "@nestjs/microservices" ***!
+  \****************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/microservices");
+
+/***/ }),
+
+/***/ "@nestjs/platform-express":
+/*!*******************************************!*\
+  !*** external "@nestjs/platform-express" ***!
+  \*******************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/platform-express");
+
+/***/ }),
+
+/***/ "@nestjs/swagger":
+/*!**********************************!*\
+  !*** external "@nestjs/swagger" ***!
+  \**********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/swagger");
+
+/***/ }),
+
+/***/ "@nestjs/throttler":
+/*!************************************!*\
+  !*** external "@nestjs/throttler" ***!
+  \************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/throttler");
+
+/***/ }),
+
+/***/ "class-validator":
+/*!**********************************!*\
+  !*** external "class-validator" ***!
+  \**********************************/
+/***/ ((module) => {
+
+module.exports = require("class-validator");
+
+/***/ }),
+
+/***/ "compression":
+/*!******************************!*\
+  !*** external "compression" ***!
+  \******************************/
 /***/ ((module) => {
 
 module.exports = require("compression");
 
 /***/ }),
-/* 32 */
+
+/***/ "helmet":
+/*!*************************!*\
+  !*** external "helmet" ***!
+  \*************************/
 /***/ ((module) => {
 
 module.exports = require("helmet");
 
+/***/ }),
+
+/***/ "rxjs":
+/*!***********************!*\
+  !*** external "rxjs" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("rxjs");
+
 /***/ })
-/******/ 	]);
+
+/******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -1637,7 +1770,7 @@ module.exports = require("helmet");
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __webpack_require__(0);
+/******/ 	var __webpack_exports__ = __webpack_require__("./apps/api-gateway/src/main.ts");
 /******/ 	
 /******/ })()
 ;
