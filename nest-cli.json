@@ -63,6 +63,33 @@
       "compilerOptions": {
         "tsConfigPath": "apps/search-service/tsconfig.app.json"
       }
+    },
+    "design-service": {
+      "type": "application",
+      "root": "apps/design-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/design-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/design-service/tsconfig.app.json"
+      }
+    },
+    "subscription-service": {
+      "type": "application",
+      "root": "apps/subscription-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/subscription-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/subscription-service/tsconfig.app.json"
+      }
+    },
+    "upload-service": {
+      "type": "application",
+      "root": "apps/upload-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/upload-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/upload-service/tsconfig.app.json"
+      }
     }
   }
 }

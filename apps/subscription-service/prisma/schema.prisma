@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client-subscription"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Subscription {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  isPremium    Boolean   @default(false)
+  paymentId    String?
+  premiumSince DateTime?
+  expiresAt    DateTime?
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([isPremium])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  userId           String
+  subscriptionId   String?
+  amount           Decimal       @db.Decimal(10, 2)
+  currency         String        @default("USD")
+  status           PaymentStatus @default(PENDING)
+  paymentMethod    String
+  transactionId    String?       @unique
+  stripePaymentId  String?       @unique
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([transactionId])
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}

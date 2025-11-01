@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client-upload"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Media {
+  id            String      @id @default(uuid())
+  userId        String
+  name          String
+  cloudinaryId  String      @unique
+  url           String
+  mimeType      String
+  size          Int
+  width         Int?
+  height        Int?
+  category      MediaCategory @default(IMAGE)
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@index([cloudinaryId])
+  @@map("media")
+}
+
+model AIGeneratedImage {
+  id             String   @id @default(uuid())
+  userId         String
+  prompt         String   @db.Text
+  negativePrompt String?  @db.Text
+  style          String?
+  imageUrl       String
+  cloudinaryId   String?  @unique
+  model          String   @default("dall-e-3")
+  
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@index([model])
+  @@map("ai_generated_images")
+}
+
+enum MediaCategory {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+  OTHER
+}
