@@ -81,7 +81,19 @@ export class AuthController implements OnModuleInit {
   })
   async googleAuth(@Body() googleAuthDto: GoogleAuthDto) {
     try {
+      console.log('🔐 [API Gateway] Google OAuth request received:', {
+        hasToken: !!googleAuthDto.token,
+        tokenType: googleAuthDto.tokenType,
+        tokenLength: googleAuthDto.token?.length || 0
+      });
+
       const result = await lastValueFrom(this.authService.GoogleAuth(googleAuthDto));
+      
+      console.log('✅ [API Gateway] Google OAuth successful:', {
+        hasAccessToken: !!result.accessToken,
+        hasRefreshToken: !!result.refreshToken,
+        hasUser: !!result.user
+      });
       
       // Wrap response in standard format expected by frontend
       return {
@@ -97,6 +109,13 @@ export class AuthController implements OnModuleInit {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
+      console.error('❌ [API Gateway] Google OAuth error:', {
+        errorCode: error.code,
+        errorDetails: error.details,
+        errorMessage: error.message,
+        fullError: error
+      });
+
       const message = error.details || error.message || 'Google authentication failed';
       const statusCode = this.getHttpStatusFromGrpcError(error);
       

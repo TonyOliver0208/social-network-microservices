@@ -21,6 +21,11 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Check if password exists (OAuth users don't have passwords)
+    if (!user.password) {
+      throw new UnauthorizedException('Invalid credentials. Please use OAuth login.');
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {

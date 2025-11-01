@@ -132,7 +132,17 @@ let AuthController = class AuthController {
     }
     async googleAuth(googleAuthDto) {
         try {
+            console.log('🔐 [API Gateway] Google OAuth request received:', {
+                hasToken: !!googleAuthDto.token,
+                tokenType: googleAuthDto.tokenType,
+                tokenLength: googleAuthDto.token?.length || 0
+            });
             const result = await (0, rxjs_1.lastValueFrom)(this.authService.GoogleAuth(googleAuthDto));
+            console.log('✅ [API Gateway] Google OAuth successful:', {
+                hasAccessToken: !!result.accessToken,
+                hasRefreshToken: !!result.refreshToken,
+                hasUser: !!result.user
+            });
             return {
                 success: true,
                 data: {
@@ -147,6 +157,12 @@ let AuthController = class AuthController {
             };
         }
         catch (error) {
+            console.error('❌ [API Gateway] Google OAuth error:', {
+                errorCode: error.code,
+                errorDetails: error.details,
+                errorMessage: error.message,
+                fullError: error
+            });
             const message = error.details || error.message || 'Google authentication failed';
             const statusCode = this.getHttpStatusFromGrpcError(error);
             throw new common_1.HttpException({

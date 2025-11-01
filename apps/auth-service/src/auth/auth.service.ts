@@ -93,11 +93,16 @@ export class AuthService {
 
   async googleAuth(googleAuthDto: GoogleAuthDto): Promise<ServiceResponse> {
     try {
+      this.logger.log('🔐 [Auth Service] Google OAuth request received');
+      this.logger.log(`📋 [Auth Service] Token type: ${googleAuthDto.tokenType}`);
+      this.logger.log(`📋 [Auth Service] Token length: ${googleAuthDto.token?.length || 0}`);
+      this.logger.log(`📋 [Auth Service] Has Google client: ${!!this.googleClient}`);
+      this.logger.log(`📋 [Auth Service] Google client ID configured: ${!!this.configService.get('GOOGLE_CLIENT_ID')}`);
+
       if (!this.googleClient) {
+        this.logger.error('❌ [Auth Service] Google OAuth is not configured');
         throw new BadRequestException('Google OAuth is not configured');
       }
-
-      this.logger.log(`Google OAuth request - tokenType: ${googleAuthDto.tokenType}`);
 
       let googleUserId: string;
       let email: string;
@@ -108,26 +113,34 @@ export class AuthService {
 
       // Verify Google token (supports both id_token and access_token)
       if (googleAuthDto.tokenType === 'id_token') {
-        // Verify ID token
-        const ticket = await this.googleClient.verifyIdToken({
-          idToken: googleAuthDto.token,
-          audience: this.configService.get('GOOGLE_CLIENT_ID'),
-        });
-
-        const payload = ticket.getPayload();
+        this.logger.log('🔍 [Auth Service] Verifying Google ID token...');
         
-        if (!payload) {
-          throw new UnauthorizedException('Invalid Google token');
+        try {
+          // Verify ID token
+          const ticket = await this.googleClient.verifyIdToken({
+            idToken: googleAuthDto.token,
+            audience: this.configService.get('GOOGLE_CLIENT_ID'),
+          });
+
+          const payload = ticket.getPayload();
+          
+          if (!payload) {
+            this.logger.error('❌ [Auth Service] Invalid Google token - no payload');
+            throw new UnauthorizedException('Invalid Google token');
+          }
+
+          googleUserId = payload.sub;
+          email = payload.email || '';
+          name = payload.name || email.split('@')[0];
+          picture = payload.picture || '';
+          givenName = payload.given_name || '';
+          familyName = payload.family_name || '';
+
+          this.logger.log(`✅ [Auth Service] Google ID token verified for user: ${email}`);
+        } catch (verifyError) {
+          this.logger.error('❌ [Auth Service] Google token verification failed:', verifyError.message);
+          throw new UnauthorizedException(`Invalid Google token: ${verifyError.message}`);
         }
-
-        googleUserId = payload.sub;
-        email = payload.email || '';
-        name = payload.name || email.split('@')[0];
-        picture = payload.picture || '';
-        givenName = payload.given_name || '';
-        familyName = payload.family_name || '';
-
-        this.logger.log(`Google ID token verified for user: ${email}`);
       } else {
         throw new BadRequestException('Only id_token is currently supported');
       }
@@ -253,20 +266,29 @@ export class AuthService {
         message: 'Google authentication successful',
       };
     } catch (error) {
-      this.logger.error(`Google auth error: ${error.message}`);
+      this.logger.error('❌ [Auth Service] Google auth error:', error);
+      this.logger.error(`❌ [Auth Service] Error message: ${error.message}`);
+      this.logger.error(`❌ [Auth Service] Error stack: ${error.stack}`);
       
       if (error.message?.includes('Token used too late') || 
-          error.message?.includes('Invalid token')) {
+          error.message?.includes('Invalid token') ||
+          error.message?.includes('Token used too early')) {
+        this.logger.error('❌ [Auth Service] Google token validation failed');
         return {
           success: false,
-          error: 'Invalid or expired Google token',
+          error: 'Invalid or expired Google token. Please try signing in again.',
           statusCode: 401,
         };
       }
 
+      // If it's already an UnauthorizedException or BadRequestException, preserve it
+      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+        throw error;
+      }
+
       return {
         success: false,
-        error: error.message,
+        error: error.message || 'Google authentication failed',
         statusCode: error.status || 500,
       };
     }
@@ -302,6 +324,11 @@ export class AuthService {
       // Check if active
       if (!user.isActive) {
         throw new UnauthorizedException('Account is deactivated');
+      }
+
+      // Check if password exists (OAuth users don't have passwords)
+      if (!user.password) {
+        throw new UnauthorizedException('Invalid credentials. Please use OAuth login.');
       }
 
       // Verify password

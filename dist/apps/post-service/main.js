@@ -1,11 +1,32 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ({
+/******/ 	var __webpack_modules__ = ([
+/* 0 */,
+/* 1 */
+/***/ ((module) => {
 
-/***/ "./apps/post-service/src/app.module.ts":
-/*!*********************************************!*\
-  !*** ./apps/post-service/src/app.module.ts ***!
-  \*********************************************/
+module.exports = require("@nestjs/core");
+
+/***/ }),
+/* 2 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/microservices");
+
+/***/ }),
+/* 3 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/common");
+
+/***/ }),
+/* 4 */
+/***/ ((module) => {
+
+module.exports = require("@nestjs/config");
+
+/***/ }),
+/* 5 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -17,11 +38,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
-const prisma_module_1 = __webpack_require__(/*! ./prisma/prisma.module */ "./apps/post-service/src/prisma/prisma.module.ts");
-const post_module_1 = __webpack_require__(/*! ./post/post.module */ "./apps/post-service/src/post/post.module.ts");
+const common_1 = __webpack_require__(3);
+const config_1 = __webpack_require__(4);
+const common_2 = __webpack_require__(6);
+const prisma_module_1 = __webpack_require__(7);
+const post_module_1 = __webpack_require__(10);
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -45,11 +66,103 @@ exports.AppModule = AppModule = __decorate([
 
 
 /***/ }),
+/* 6 */
+/***/ ((module) => {
 
-/***/ "./apps/post-service/src/post/post.controller.ts":
-/*!*******************************************************!*\
-  !*** ./apps/post-service/src/post/post.controller.ts ***!
-  \*******************************************************/
+module.exports = require("@app/common");
+
+/***/ }),
+/* 7 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PrismaModule = void 0;
+const common_1 = __webpack_require__(3);
+const prisma_service_1 = __webpack_require__(8);
+let PrismaModule = class PrismaModule {
+};
+exports.PrismaModule = PrismaModule;
+exports.PrismaModule = PrismaModule = __decorate([
+    (0, common_1.Module)({
+        providers: [prisma_service_1.PrismaService],
+        exports: [prisma_service_1.PrismaService],
+    })
+], PrismaModule);
+
+
+/***/ }),
+/* 8 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PrismaService = void 0;
+const common_1 = __webpack_require__(3);
+const client_post_1 = __webpack_require__(9);
+let PrismaService = class PrismaService extends client_post_1.PrismaClient {
+    async onModuleInit() {
+        await this.$connect();
+    }
+    async onModuleDestroy() {
+        await this.$disconnect();
+    }
+};
+exports.PrismaService = PrismaService;
+exports.PrismaService = PrismaService = __decorate([
+    (0, common_1.Injectable)()
+], PrismaService);
+
+
+/***/ }),
+/* 9 */
+/***/ ((module) => {
+
+module.exports = require(".prisma/client-post");
+
+/***/ }),
+/* 10 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PostModule = void 0;
+const common_1 = __webpack_require__(3);
+const post_controller_1 = __webpack_require__(11);
+const post_service_1 = __webpack_require__(12);
+const prisma_module_1 = __webpack_require__(7);
+let PostModule = class PostModule {
+};
+exports.PostModule = PostModule;
+exports.PostModule = PostModule = __decorate([
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule],
+        controllers: [post_controller_1.PostController],
+        providers: [post_service_1.PostService],
+    })
+], PostModule);
+
+
+/***/ }),
+/* 11 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -69,12 +182,12 @@ var PostController_1;
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostController = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const post_service_1 = __webpack_require__(/*! ./post.service */ "./apps/post-service/src/post/post.service.ts");
-const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
-const post_1 = __webpack_require__(/*! @app/proto/post */ "./generated/post.ts");
-const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
+const common_1 = __webpack_require__(3);
+const microservices_1 = __webpack_require__(2);
+const post_service_1 = __webpack_require__(12);
+const common_2 = __webpack_require__(6);
+const post_1 = __webpack_require__(15);
+const grpc_js_1 = __webpack_require__(16);
 let PostController = PostController_1 = class PostController {
     constructor(postService) {
         this.postService = postService;
@@ -357,44 +470,7 @@ exports.PostController = PostController = PostController_1 = __decorate([
 
 
 /***/ }),
-
-/***/ "./apps/post-service/src/post/post.module.ts":
-/*!***************************************************!*\
-  !*** ./apps/post-service/src/post/post.module.ts ***!
-  \***************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PostModule = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const post_controller_1 = __webpack_require__(/*! ./post.controller */ "./apps/post-service/src/post/post.controller.ts");
-const post_service_1 = __webpack_require__(/*! ./post.service */ "./apps/post-service/src/post/post.service.ts");
-const prisma_module_1 = __webpack_require__(/*! ../prisma/prisma.module */ "./apps/post-service/src/prisma/prisma.module.ts");
-let PostModule = class PostModule {
-};
-exports.PostModule = PostModule;
-exports.PostModule = PostModule = __decorate([
-    (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
-        controllers: [post_controller_1.PostController],
-        providers: [post_service_1.PostService],
-    })
-], PostModule);
-
-
-/***/ }),
-
-/***/ "./apps/post-service/src/post/post.service.ts":
-/*!****************************************************!*\
-  !*** ./apps/post-service/src/post/post.service.ts ***!
-  \****************************************************/
+/* 12 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -413,12 +489,12 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostService = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const prisma_service_1 = __webpack_require__(/*! ../prisma/prisma.service */ "./apps/post-service/src/prisma/prisma.service.ts");
-const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
-const cache_manager_1 = __webpack_require__(/*! cache-manager */ "cache-manager");
-const cache_manager_2 = __webpack_require__(/*! @nestjs/cache-manager */ "@nestjs/cache-manager");
+const common_1 = __webpack_require__(3);
+const microservices_1 = __webpack_require__(2);
+const prisma_service_1 = __webpack_require__(8);
+const common_2 = __webpack_require__(6);
+const cache_manager_1 = __webpack_require__(13);
+const cache_manager_2 = __webpack_require__(14);
 let PostService = class PostService {
     constructor(prisma, rabbitClient, cacheManager) {
         this.prisma = prisma;
@@ -816,74 +892,19 @@ exports.PostService = PostService = __decorate([
 
 
 /***/ }),
+/* 13 */
+/***/ ((module) => {
 
-/***/ "./apps/post-service/src/prisma/prisma.module.ts":
-/*!*******************************************************!*\
-  !*** ./apps/post-service/src/prisma/prisma.module.ts ***!
-  \*******************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrismaModule = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const prisma_service_1 = __webpack_require__(/*! ./prisma.service */ "./apps/post-service/src/prisma/prisma.service.ts");
-let PrismaModule = class PrismaModule {
-};
-exports.PrismaModule = PrismaModule;
-exports.PrismaModule = PrismaModule = __decorate([
-    (0, common_1.Module)({
-        providers: [prisma_service_1.PrismaService],
-        exports: [prisma_service_1.PrismaService],
-    })
-], PrismaModule);
-
+module.exports = require("cache-manager");
 
 /***/ }),
+/* 14 */
+/***/ ((module) => {
 
-/***/ "./apps/post-service/src/prisma/prisma.service.ts":
-/*!********************************************************!*\
-  !*** ./apps/post-service/src/prisma/prisma.service.ts ***!
-  \********************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrismaService = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const client_post_1 = __webpack_require__(/*! .prisma/client-post */ ".prisma/client-post");
-let PrismaService = class PrismaService extends client_post_1.PrismaClient {
-    async onModuleInit() {
-        await this.$connect();
-    }
-    async onModuleDestroy() {
-        await this.$disconnect();
-    }
-};
-exports.PrismaService = PrismaService;
-exports.PrismaService = PrismaService = __decorate([
-    (0, common_1.Injectable)()
-], PrismaService);
-
+module.exports = require("@nestjs/cache-manager");
 
 /***/ }),
-
-/***/ "./generated/post.ts":
-/*!***************************!*\
-  !*** ./generated/post.ts ***!
-  \***************************/
+/* 15 */
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -894,108 +915,19 @@ exports.POSTSERVICE_SERVICE_NAME = 'PostService';
 
 
 /***/ }),
-
-/***/ ".prisma/client-post":
-/*!**************************************!*\
-  !*** external ".prisma/client-post" ***!
-  \**************************************/
-/***/ ((module) => {
-
-module.exports = require(".prisma/client-post");
-
-/***/ }),
-
-/***/ "@app/common":
-/*!******************************!*\
-  !*** external "@app/common" ***!
-  \******************************/
-/***/ ((module) => {
-
-module.exports = require("@app/common");
-
-/***/ }),
-
-/***/ "@grpc/grpc-js":
-/*!********************************!*\
-  !*** external "@grpc/grpc-js" ***!
-  \********************************/
+/* 16 */
 /***/ ((module) => {
 
 module.exports = require("@grpc/grpc-js");
 
 /***/ }),
-
-/***/ "@nestjs/cache-manager":
-/*!****************************************!*\
-  !*** external "@nestjs/cache-manager" ***!
-  \****************************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/cache-manager");
-
-/***/ }),
-
-/***/ "@nestjs/common":
-/*!*********************************!*\
-  !*** external "@nestjs/common" ***!
-  \*********************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-
-/***/ "@nestjs/config":
-/*!*********************************!*\
-  !*** external "@nestjs/config" ***!
-  \*********************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/config");
-
-/***/ }),
-
-/***/ "@nestjs/core":
-/*!*******************************!*\
-  !*** external "@nestjs/core" ***!
-  \*******************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/core");
-
-/***/ }),
-
-/***/ "@nestjs/microservices":
-/*!****************************************!*\
-  !*** external "@nestjs/microservices" ***!
-  \****************************************/
-/***/ ((module) => {
-
-module.exports = require("@nestjs/microservices");
-
-/***/ }),
-
-/***/ "cache-manager":
-/*!********************************!*\
-  !*** external "cache-manager" ***!
-  \********************************/
-/***/ ((module) => {
-
-module.exports = require("cache-manager");
-
-/***/ }),
-
-/***/ "path":
-/*!***********************!*\
-  !*** external "path" ***!
-  \***********************/
+/* 17 */
 /***/ ((module) => {
 
 module.exports = require("path");
 
 /***/ })
-
-/******/ 	});
+/******/ 	]);
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -1026,17 +958,14 @@ var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
-/*!***************************************!*\
-  !*** ./apps/post-service/src/main.ts ***!
-  \***************************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const app_module_1 = __webpack_require__(/*! ./app.module */ "./apps/post-service/src/app.module.ts");
-const path_1 = __webpack_require__(/*! path */ "path");
+const core_1 = __webpack_require__(1);
+const microservices_1 = __webpack_require__(2);
+const common_1 = __webpack_require__(3);
+const config_1 = __webpack_require__(4);
+const app_module_1 = __webpack_require__(5);
+const path_1 = __webpack_require__(17);
 async function bootstrap() {
     const logger = new common_1.Logger('PostService');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
