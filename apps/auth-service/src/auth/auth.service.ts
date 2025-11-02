@@ -374,6 +374,10 @@ export class AuthService {
 
   async refreshToken(refreshToken: string): Promise<ServiceResponse> {
     try {
+      this.logger.log('🔄 [Auth Service] Refresh token request received');
+      this.logger.log(`🔍 [Auth Service] Token length: ${refreshToken?.length || 0}`);
+      this.logger.log(`🔍 [Auth Service] Token preview: ${refreshToken?.substring(0, 50)}...`);
+
       // Find refresh token
       const storedToken = await this.prisma.refreshToken.findUnique({
         where: { token: refreshToken },
@@ -381,14 +385,26 @@ export class AuthService {
       });
 
       if (!storedToken) {
+        this.logger.error('❌ [Auth Service] Refresh token not found in database');
+        this.logger.error(`🔍 [Auth Service] Searched for token: ${refreshToken?.substring(0, 50)}...`);
+        
+        // Check how many tokens are in the database
+        const tokenCount = await this.prisma.refreshToken.count();
+        this.logger.error(`🔍 [Auth Service] Total refresh tokens in DB: ${tokenCount}`);
+        
         throw new UnauthorizedException('Invalid refresh token');
       }
 
+      this.logger.log(`✅ [Auth Service] Refresh token found for user: ${storedToken.user.email}`);
+
       // Check if expired
       if (new Date() > storedToken.expiresAt) {
+        this.logger.error(`❌ [Auth Service] Refresh token expired at: ${storedToken.expiresAt}`);
         await this.prisma.refreshToken.delete({ where: { id: storedToken.id } });
         throw new UnauthorizedException('Refresh token expired');
       }
+
+      this.logger.log('🔄 [Auth Service] Generating new tokens...');
 
       // Generate new tokens
       const tokens = await this.generateTokens(
@@ -400,13 +416,15 @@ export class AuthService {
       // Delete old refresh token
       await this.prisma.refreshToken.delete({ where: { id: storedToken.id } });
 
+      this.logger.log('✅ [Auth Service] Token refresh successful');
+
       return {
         success: true,
         data: tokens,
         message: 'Token refreshed successfully',
       };
     } catch (error) {
-      this.logger.error(`Refresh token error: ${error.message}`);
+      this.logger.error(`❌ [Auth Service] Refresh token error: ${error.message}`);
       return {
         success: false,
         error: error.message,

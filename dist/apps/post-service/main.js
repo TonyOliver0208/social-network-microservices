@@ -1,32 +1,11 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ([
-/* 0 */,
-/* 1 */
-/***/ ((module) => {
+/******/ 	var __webpack_modules__ = ({
 
-module.exports = require("@nestjs/core");
-
-/***/ }),
-/* 2 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/microservices");
-
-/***/ }),
-/* 3 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-/* 4 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/config");
-
-/***/ }),
-/* 5 */
+/***/ "./apps/post-service/src/app.module.ts":
+/*!*********************************************!*\
+  !*** ./apps/post-service/src/app.module.ts ***!
+  \*********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -38,11 +17,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
-const common_1 = __webpack_require__(3);
-const config_1 = __webpack_require__(4);
-const common_2 = __webpack_require__(6);
-const prisma_module_1 = __webpack_require__(7);
-const post_module_1 = __webpack_require__(10);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const prisma_module_1 = __webpack_require__(/*! ./prisma/prisma.module */ "./apps/post-service/src/prisma/prisma.module.ts");
+const post_module_1 = __webpack_require__(/*! ./post/post.module */ "./apps/post-service/src/post/post.module.ts");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -66,103 +45,11 @@ exports.AppModule = AppModule = __decorate([
 
 
 /***/ }),
-/* 6 */
-/***/ ((module) => {
 
-module.exports = require("@app/common");
-
-/***/ }),
-/* 7 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrismaModule = void 0;
-const common_1 = __webpack_require__(3);
-const prisma_service_1 = __webpack_require__(8);
-let PrismaModule = class PrismaModule {
-};
-exports.PrismaModule = PrismaModule;
-exports.PrismaModule = PrismaModule = __decorate([
-    (0, common_1.Module)({
-        providers: [prisma_service_1.PrismaService],
-        exports: [prisma_service_1.PrismaService],
-    })
-], PrismaModule);
-
-
-/***/ }),
-/* 8 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrismaService = void 0;
-const common_1 = __webpack_require__(3);
-const client_post_1 = __webpack_require__(9);
-let PrismaService = class PrismaService extends client_post_1.PrismaClient {
-    async onModuleInit() {
-        await this.$connect();
-    }
-    async onModuleDestroy() {
-        await this.$disconnect();
-    }
-};
-exports.PrismaService = PrismaService;
-exports.PrismaService = PrismaService = __decorate([
-    (0, common_1.Injectable)()
-], PrismaService);
-
-
-/***/ }),
-/* 9 */
-/***/ ((module) => {
-
-module.exports = require(".prisma/client-post");
-
-/***/ }),
-/* 10 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PostModule = void 0;
-const common_1 = __webpack_require__(3);
-const post_controller_1 = __webpack_require__(11);
-const post_service_1 = __webpack_require__(12);
-const prisma_module_1 = __webpack_require__(7);
-let PostModule = class PostModule {
-};
-exports.PostModule = PostModule;
-exports.PostModule = PostModule = __decorate([
-    (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
-        controllers: [post_controller_1.PostController],
-        providers: [post_service_1.PostService],
-    })
-], PostModule);
-
-
-/***/ }),
-/* 11 */
+/***/ "./apps/post-service/src/post/post.controller.ts":
+/*!*******************************************************!*\
+  !*** ./apps/post-service/src/post/post.controller.ts ***!
+  \*******************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -182,12 +69,12 @@ var PostController_1;
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostController = void 0;
-const common_1 = __webpack_require__(3);
-const microservices_1 = __webpack_require__(2);
-const post_service_1 = __webpack_require__(12);
-const common_2 = __webpack_require__(6);
-const post_1 = __webpack_require__(15);
-const grpc_js_1 = __webpack_require__(16);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const post_service_1 = __webpack_require__(/*! ./post.service */ "./apps/post-service/src/post/post.service.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const post_1 = __webpack_require__(/*! @app/proto/post */ "./generated/post.ts");
+const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
 let PostController = PostController_1 = class PostController {
     constructor(postService) {
         this.postService = postService;
@@ -196,7 +83,12 @@ let PostController = PostController_1 = class PostController {
     async createPost(data) {
         try {
             this.logger.log(`Creating post for user: ${data.userId}`);
-            return await this.postService.createPost(data.userId, data.createPostDto);
+            const createPostDto = {
+                content: data.content,
+                mediaUrls: data.mediaUrls,
+                privacy: data.visibility,
+            };
+            return await this.postService.createPost(data.userId, createPostDto);
         }
         catch (error) {
             throw this.handleException(error);
@@ -204,8 +96,8 @@ let PostController = PostController_1 = class PostController {
     }
     async getPost(data) {
         try {
-            this.logger.log(`Getting post: ${data.postId}`);
-            return await this.postService.getPost(data.postId, data.userId);
+            this.logger.log(`Getting post: ${data.id}`);
+            return await this.postService.getPost(data.id, data.userId);
         }
         catch (error) {
             throw this.handleException(error);
@@ -213,8 +105,8 @@ let PostController = PostController_1 = class PostController {
     }
     async updatePost(data) {
         try {
-            this.logger.log(`Updating post: ${data.postId} by user: ${data.userId}`);
-            return await this.postService.updatePost(data.postId, data.userId, data.updatePostDto);
+            this.logger.log(`Updating post: ${data.id} by user: ${data.userId}`);
+            return await this.postService.updatePost(data.id, data.userId, data.updatePostDto);
         }
         catch (error) {
             throw this.handleException(error);
@@ -222,8 +114,8 @@ let PostController = PostController_1 = class PostController {
     }
     async deletePost(data) {
         try {
-            this.logger.log(`Deleting post: ${data.postId} by user: ${data.userId}`);
-            return await this.postService.deletePost(data.postId, data.userId);
+            this.logger.log(`Deleting post: ${data.id} by user: ${data.userId}`);
+            return await this.postService.deletePost(data.id, data.userId);
         }
         catch (error) {
             throw this.handleException(error);
@@ -232,16 +124,19 @@ let PostController = PostController_1 = class PostController {
     async getFeed(data) {
         try {
             this.logger.log(`Getting feed for user: ${data.userId}`);
-            return await this.postService.getFeed(data.userId, data.pagination);
+            const result = await this.postService.getFeed(data.userId, { page: data.page, limit: data.limit });
+            this.logger.log(`Feed result:`, JSON.stringify(result, null, 2));
+            return result;
         }
         catch (error) {
+            this.logger.error(`Error: ${error.message}`, error.stack);
             throw this.handleException(error);
         }
     }
     async getUserPosts(data) {
         try {
             this.logger.log(`Getting posts for user: ${data.userId}`);
-            return await this.postService.getUserPosts(data.userId, data.pagination);
+            return await this.postService.getUserPosts(data.userId, { page: data.page, limit: data.limit });
         }
         catch (error) {
             throw this.handleException(error);
@@ -268,7 +163,7 @@ let PostController = PostController_1 = class PostController {
     async getPostLikes(data) {
         try {
             this.logger.log(`Getting likes for post: ${data.postId}`);
-            return await this.postService.getPostLikes(data.postId, data.pagination);
+            return await this.postService.getPostLikes(data.postId, { page: data.page, limit: data.limit });
         }
         catch (error) {
             throw this.handleException(error);
@@ -304,7 +199,7 @@ let PostController = PostController_1 = class PostController {
     async getPostComments(data) {
         try {
             this.logger.log(`Getting comments for post: ${data.postId}`);
-            return await this.postService.getPostComments(data.postId, data.pagination);
+            return await this.postService.getPostComments(data.postId, { page: data.page, limit: data.limit });
         }
         catch (error) {
             throw this.handleException(error);
@@ -470,7 +365,44 @@ exports.PostController = PostController = PostController_1 = __decorate([
 
 
 /***/ }),
-/* 12 */
+
+/***/ "./apps/post-service/src/post/post.module.ts":
+/*!***************************************************!*\
+  !*** ./apps/post-service/src/post/post.module.ts ***!
+  \***************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PostModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const post_controller_1 = __webpack_require__(/*! ./post.controller */ "./apps/post-service/src/post/post.controller.ts");
+const post_service_1 = __webpack_require__(/*! ./post.service */ "./apps/post-service/src/post/post.service.ts");
+const prisma_module_1 = __webpack_require__(/*! ../prisma/prisma.module */ "./apps/post-service/src/prisma/prisma.module.ts");
+let PostModule = class PostModule {
+};
+exports.PostModule = PostModule;
+exports.PostModule = PostModule = __decorate([
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule],
+        controllers: [post_controller_1.PostController],
+        providers: [post_service_1.PostService],
+    })
+], PostModule);
+
+
+/***/ }),
+
+/***/ "./apps/post-service/src/post/post.service.ts":
+/*!****************************************************!*\
+  !*** ./apps/post-service/src/post/post.service.ts ***!
+  \****************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -489,17 +421,30 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostService = void 0;
-const common_1 = __webpack_require__(3);
-const microservices_1 = __webpack_require__(2);
-const prisma_service_1 = __webpack_require__(8);
-const common_2 = __webpack_require__(6);
-const cache_manager_1 = __webpack_require__(13);
-const cache_manager_2 = __webpack_require__(14);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const prisma_service_1 = __webpack_require__(/*! ../prisma/prisma.service */ "./apps/post-service/src/prisma/prisma.service.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const cache_manager_1 = __webpack_require__(/*! cache-manager */ "cache-manager");
+const cache_manager_2 = __webpack_require__(/*! @nestjs/cache-manager */ "@nestjs/cache-manager");
 let PostService = class PostService {
     constructor(prisma, rabbitClient, cacheManager) {
         this.prisma = prisma;
         this.rabbitClient = rabbitClient;
         this.cacheManager = cacheManager;
+    }
+    formatPostResponse(post) {
+        return {
+            id: post.id,
+            userId: post.authorId,
+            content: post.content,
+            mediaUrls: post.mediaUrls || [],
+            likesCount: post._count?.likes || 0,
+            commentsCount: post._count?.comments || 0,
+            visibility: post.privacy,
+            createdAt: post.createdAt.toISOString(),
+            updatedAt: post.updatedAt.toISOString(),
+        };
     }
     async createPost(userId, createPostDto) {
         const post = await this.prisma.post.create({
@@ -523,7 +468,7 @@ let PostService = class PostService {
             createdAt: post.createdAt,
         });
         await this.cacheManager.del(common_2.CACHE_KEYS.USER_FEED(userId));
-        return post;
+        return this.formatPostResponse(post);
     }
     async getPost(postId, userId) {
         const cacheKey = common_2.CACHE_KEYS.POST(postId);
@@ -549,11 +494,7 @@ let PostService = class PostService {
         if (!post) {
             throw new common_1.NotFoundException('Post not found');
         }
-        const result = {
-            ...post,
-            isLiked: userId ? post.likes?.length > 0 : false,
-            likes: undefined,
-        };
+        const result = this.formatPostResponse(post);
         await this.cacheManager.set(cacheKey, result, common_2.CACHE_TTL.MEDIUM);
         return result;
     }
@@ -581,7 +522,7 @@ let PostService = class PostService {
         });
         await this.cacheManager.del(common_2.CACHE_KEYS.POST(postId));
         await this.cacheManager.del(common_2.CACHE_KEYS.USER_FEED(userId));
-        return updatedPost;
+        return this.formatPostResponse(updatedPost);
     }
     async deletePost(postId, userId) {
         const post = await this.prisma.post.findUnique({
@@ -634,17 +575,10 @@ let PostService = class PostService {
             this.prisma.post.count(),
         ]);
         const result = {
-            data: posts.map(post => ({
-                ...post,
-                isLiked: post.likes.length > 0,
-                likes: undefined,
-            })),
-            meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            },
+            posts: posts.map(post => this.formatPostResponse(post)),
+            total,
+            page,
+            limit,
         };
         await this.cacheManager.set(cacheKey, result, common_2.CACHE_TTL.SHORT);
         return result;
@@ -672,13 +606,10 @@ let PostService = class PostService {
             }),
         ]);
         return {
-            data: posts,
-            meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            },
+            posts: posts.map(post => this.formatPostResponse(post)),
+            total,
+            page,
+            limit,
         };
     }
     async likePost(postId, userId) {
@@ -861,13 +792,14 @@ let PostService = class PostService {
             }),
         ]);
         return {
-            data: comments,
-            meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            },
+            comments: comments.map(comment => ({
+                id: comment.id,
+                postId: comment.postId,
+                userId: comment.authorId,
+                content: comment.content,
+                createdAt: comment.createdAt.toISOString(),
+            })),
+            total,
         };
     }
     async handleUserDeleted(userId) {
@@ -892,19 +824,74 @@ exports.PostService = PostService = __decorate([
 
 
 /***/ }),
-/* 13 */
-/***/ ((module) => {
 
-module.exports = require("cache-manager");
+/***/ "./apps/post-service/src/prisma/prisma.module.ts":
+/*!*******************************************************!*\
+  !*** ./apps/post-service/src/prisma/prisma.module.ts ***!
+  \*******************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PrismaModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ./prisma.service */ "./apps/post-service/src/prisma/prisma.service.ts");
+let PrismaModule = class PrismaModule {
+};
+exports.PrismaModule = PrismaModule;
+exports.PrismaModule = PrismaModule = __decorate([
+    (0, common_1.Module)({
+        providers: [prisma_service_1.PrismaService],
+        exports: [prisma_service_1.PrismaService],
+    })
+], PrismaModule);
+
 
 /***/ }),
-/* 14 */
-/***/ ((module) => {
 
-module.exports = require("@nestjs/cache-manager");
+/***/ "./apps/post-service/src/prisma/prisma.service.ts":
+/*!********************************************************!*\
+  !*** ./apps/post-service/src/prisma/prisma.service.ts ***!
+  \********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PrismaService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const client_post_1 = __webpack_require__(/*! .prisma/client-post */ ".prisma/client-post");
+let PrismaService = class PrismaService extends client_post_1.PrismaClient {
+    async onModuleInit() {
+        await this.$connect();
+    }
+    async onModuleDestroy() {
+        await this.$disconnect();
+    }
+};
+exports.PrismaService = PrismaService;
+exports.PrismaService = PrismaService = __decorate([
+    (0, common_1.Injectable)()
+], PrismaService);
+
 
 /***/ }),
-/* 15 */
+
+/***/ "./generated/post.ts":
+/*!***************************!*\
+  !*** ./generated/post.ts ***!
+  \***************************/
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -915,19 +902,108 @@ exports.POSTSERVICE_SERVICE_NAME = 'PostService';
 
 
 /***/ }),
-/* 16 */
+
+/***/ ".prisma/client-post":
+/*!**************************************!*\
+  !*** external ".prisma/client-post" ***!
+  \**************************************/
+/***/ ((module) => {
+
+module.exports = require(".prisma/client-post");
+
+/***/ }),
+
+/***/ "@app/common":
+/*!******************************!*\
+  !*** external "@app/common" ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = require("@app/common");
+
+/***/ }),
+
+/***/ "@grpc/grpc-js":
+/*!********************************!*\
+  !*** external "@grpc/grpc-js" ***!
+  \********************************/
 /***/ ((module) => {
 
 module.exports = require("@grpc/grpc-js");
 
 /***/ }),
-/* 17 */
+
+/***/ "@nestjs/cache-manager":
+/*!****************************************!*\
+  !*** external "@nestjs/cache-manager" ***!
+  \****************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/cache-manager");
+
+/***/ }),
+
+/***/ "@nestjs/common":
+/*!*********************************!*\
+  !*** external "@nestjs/common" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/common");
+
+/***/ }),
+
+/***/ "@nestjs/config":
+/*!*********************************!*\
+  !*** external "@nestjs/config" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/config");
+
+/***/ }),
+
+/***/ "@nestjs/core":
+/*!*******************************!*\
+  !*** external "@nestjs/core" ***!
+  \*******************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/core");
+
+/***/ }),
+
+/***/ "@nestjs/microservices":
+/*!****************************************!*\
+  !*** external "@nestjs/microservices" ***!
+  \****************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/microservices");
+
+/***/ }),
+
+/***/ "cache-manager":
+/*!********************************!*\
+  !*** external "cache-manager" ***!
+  \********************************/
+/***/ ((module) => {
+
+module.exports = require("cache-manager");
+
+/***/ }),
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
 /***/ ((module) => {
 
 module.exports = require("path");
 
 /***/ })
-/******/ 	]);
+
+/******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -958,14 +1034,17 @@ var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
+/*!***************************************!*\
+  !*** ./apps/post-service/src/main.ts ***!
+  \***************************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(1);
-const microservices_1 = __webpack_require__(2);
-const common_1 = __webpack_require__(3);
-const config_1 = __webpack_require__(4);
-const app_module_1 = __webpack_require__(5);
-const path_1 = __webpack_require__(17);
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const app_module_1 = __webpack_require__(/*! ./app.module */ "./apps/post-service/src/app.module.ts");
+const path_1 = __webpack_require__(/*! path */ "path");
 async function bootstrap() {
     const logger = new common_1.Logger('PostService');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);

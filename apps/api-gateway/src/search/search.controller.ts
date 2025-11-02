@@ -37,7 +37,8 @@ export class SearchController implements OnModuleInit {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async searchPosts(
     @Query('q') query: string,
-    @Query() pagination: PaginationDto,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     if (!query || query.trim().length === 0) {
       throw new HttpException('Search query is required', HttpStatus.BAD_REQUEST);
@@ -47,8 +48,8 @@ export class SearchController implements OnModuleInit {
       return await lastValueFrom(
         this.searchService.SearchPosts({
           query,
-          page: pagination.page || 1,
-          limit: pagination.limit || 20,
+          page: page || 1,
+          limit: limit || 20,
         }),
       );
     } catch (error) {
@@ -68,7 +69,8 @@ export class SearchController implements OnModuleInit {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async searchUsers(
     @Query('q') query: string,
-    @Query() pagination: PaginationDto,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     if (!query || query.trim().length === 0) {
       throw new HttpException('Search query is required', HttpStatus.BAD_REQUEST);
@@ -78,8 +80,8 @@ export class SearchController implements OnModuleInit {
       return await lastValueFrom(
         this.searchService.SearchUsers({
           query,
-          page: pagination.page || 1,
-          limit: pagination.limit || 20,
+          page: page || 1,
+          limit: limit || 20,
         }),
       );
     } catch (error) {

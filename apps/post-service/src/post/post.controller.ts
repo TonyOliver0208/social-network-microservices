@@ -15,60 +15,68 @@ export class PostController {
   // ========== gRPC Methods (Gateway → Post Service) ==========
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'CreatePost')
-  async createPost(data: { userId: string; createPostDto: CreatePostDto }) {
+  async createPost(data: { userId: string; content: string; mediaUrls?: string[]; visibility?: string }) {
     try {
       this.logger.log(`Creating post for user: ${data.userId}`);
-      return await this.postService.createPost(data.userId, data.createPostDto);
+      const createPostDto: CreatePostDto = {
+        content: data.content,
+        mediaUrls: data.mediaUrls,
+        privacy: data.visibility as any,
+      };
+      return await this.postService.createPost(data.userId, createPostDto);
     } catch (error) {
       throw this.handleException(error);
     }
   }
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetPostById')
-  async getPost(data: { postId: string; userId?: string }) {
+  async getPost(data: { id: string; userId?: string }) {
     try {
-      this.logger.log(`Getting post: ${data.postId}`);
-      return await this.postService.getPost(data.postId, data.userId);
+      this.logger.log(`Getting post: ${data.id}`);
+      return await this.postService.getPost(data.id, data.userId);
     } catch (error) {
       throw this.handleException(error);
     }
   }
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'UpdatePost')
-  async updatePost(data: { postId: string; userId: string; updatePostDto: UpdatePostDto }) {
+  async updatePost(data: { id: string; userId: string; updatePostDto: UpdatePostDto }) {
     try {
-      this.logger.log(`Updating post: ${data.postId} by user: ${data.userId}`);
-      return await this.postService.updatePost(data.postId, data.userId, data.updatePostDto);
+      this.logger.log(`Updating post: ${data.id} by user: ${data.userId}`);
+      return await this.postService.updatePost(data.id, data.userId, data.updatePostDto);
     } catch (error) {
       throw this.handleException(error);
     }
   }
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'DeletePost')
-  async deletePost(data: { postId: string; userId: string }) {
+  async deletePost(data: { id: string; userId: string }) {
     try {
-      this.logger.log(`Deleting post: ${data.postId} by user: ${data.userId}`);
-      return await this.postService.deletePost(data.postId, data.userId);
+      this.logger.log(`Deleting post: ${data.id} by user: ${data.userId}`);
+      return await this.postService.deletePost(data.id, data.userId);
     } catch (error) {
       throw this.handleException(error);
     }
   }
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetFeed')
-  async getFeed(data: { userId: string; pagination: PaginationDto }) {
+  async getFeed(data: { userId: string; page: number; limit: number }) {
     try {
       this.logger.log(`Getting feed for user: ${data.userId}`);
-      return await this.postService.getFeed(data.userId, data.pagination);
+      const result = await this.postService.getFeed(data.userId, { page: data.page, limit: data.limit });
+      this.logger.log(`Feed result:`, JSON.stringify(result, null, 2));
+      return result;
     } catch (error) {
+      this.logger.error(`Error: ${error.message}`, error.stack);
       throw this.handleException(error);
     }
   }
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetUserPosts')
-  async getUserPosts(data: { userId: string; pagination: PaginationDto }) {
+  async getUserPosts(data: { userId: string; page: number; limit: number }) {
     try {
       this.logger.log(`Getting posts for user: ${data.userId}`);
-      return await this.postService.getUserPosts(data.userId, data.pagination);
+      return await this.postService.getUserPosts(data.userId, { page: data.page, limit: data.limit });
     } catch (error) {
       throw this.handleException(error);
     }
@@ -95,10 +103,10 @@ export class PostController {
   }
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetPostLikes')
-  async getPostLikes(data: { postId: string; pagination: PaginationDto }) {
+  async getPostLikes(data: { postId: string; page: number; limit: number }) {
     try {
       this.logger.log(`Getting likes for post: ${data.postId}`);
-      return await this.postService.getPostLikes(data.postId, data.pagination);
+      return await this.postService.getPostLikes(data.postId, { page: data.page, limit: data.limit });
     } catch (error) {
       throw this.handleException(error);
     }
@@ -135,10 +143,10 @@ export class PostController {
   }
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetComments')
-  async getPostComments(data: { postId: string; pagination: PaginationDto }) {
+  async getPostComments(data: { postId: string; page: number; limit: number }) {
     try {
       this.logger.log(`Getting comments for post: ${data.postId}`);
-      return await this.postService.getPostComments(data.postId, data.pagination);
+      return await this.postService.getPostComments(data.postId, { page: data.page, limit: data.limit });
     } catch (error) {
       throw this.handleException(error);
     }

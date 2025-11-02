@@ -14,6 +14,21 @@ export class PostService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
+  // Helper method to format post for gRPC response
+  private formatPostResponse(post: any) {
+    return {
+      id: post.id,
+      userId: post.authorId,
+      content: post.content,
+      mediaUrls: post.mediaUrls || [],
+      likesCount: post._count?.likes || 0,
+      commentsCount: post._count?.comments || 0,
+      visibility: post.privacy,
+      createdAt: post.createdAt.toISOString(),
+      updatedAt: post.updatedAt.toISOString(),
+    };
+  }
+
   async createPost(userId: string, createPostDto: CreatePostDto) {
     const post = await this.prisma.post.create({
       data: {
@@ -41,7 +56,7 @@ export class PostService {
     // Invalidate feed cache
     await this.cacheManager.del(CACHE_KEYS.USER_FEED(userId));
 
-    return post;
+    return this.formatPostResponse(post);
   }
 
   async getPost(postId: string, userId?: string) {
@@ -72,11 +87,7 @@ export class PostService {
       throw new NotFoundException('Post not found');
     }
 
-    const result = {
-      ...post,
-      isLiked: userId ? post.likes?.length > 0 : false,
-      likes: undefined,
-    };
+    const result = this.formatPostResponse(post);
 
     await this.cacheManager.set(cacheKey, result, CACHE_TTL.MEDIUM);
     return result;
@@ -112,7 +123,7 @@ export class PostService {
     await this.cacheManager.del(CACHE_KEYS.POST(postId));
     await this.cacheManager.del(CACHE_KEYS.USER_FEED(userId));
 
-    return updatedPost;
+    return this.formatPostResponse(updatedPost);
   }
 
   async deletePost(postId: string, userId: string) {
@@ -179,17 +190,10 @@ export class PostService {
     ]);
 
     const result = {
-      data: posts.map(post => ({
-        ...post,
-        isLiked: post.likes.length > 0,
-        likes: undefined,
-      })),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      posts: posts.map(post => this.formatPostResponse(post)),
+      total,
+      page,
+      limit,
     };
 
     await this.cacheManager.set(cacheKey, result, CACHE_TTL.SHORT);
@@ -221,13 +225,10 @@ export class PostService {
     ]);
 
     return {
-      data: posts,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      posts: posts.map(post => this.formatPostResponse(post)),
+      total,
+      page,
+      limit,
     };
   }
 
@@ -456,13 +457,14 @@ export class PostService {
     ]);
 
     return {
-      data: comments,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      comments: comments.map(comment => ({
+        id: comment.id,
+        postId: comment.postId,
+        userId: comment.authorId,
+        content: comment.content,
+        createdAt: comment.createdAt.toISOString(),
+      })),
+      total,
     };
   }
 

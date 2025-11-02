@@ -639,19 +639,30 @@ let AuthService = AuthService_1 = class AuthService {
     }
     async refreshToken(refreshToken) {
         try {
+            this.logger.log('🔄 [Auth Service] Refresh token request received');
+            this.logger.log(`🔍 [Auth Service] Token length: ${refreshToken?.length || 0}`);
+            this.logger.log(`🔍 [Auth Service] Token preview: ${refreshToken?.substring(0, 50)}...`);
             const storedToken = await this.prisma.refreshToken.findUnique({
                 where: { token: refreshToken },
                 include: { user: true },
             });
             if (!storedToken) {
+                this.logger.error('❌ [Auth Service] Refresh token not found in database');
+                this.logger.error(`🔍 [Auth Service] Searched for token: ${refreshToken?.substring(0, 50)}...`);
+                const tokenCount = await this.prisma.refreshToken.count();
+                this.logger.error(`🔍 [Auth Service] Total refresh tokens in DB: ${tokenCount}`);
                 throw new common_1.UnauthorizedException('Invalid refresh token');
             }
+            this.logger.log(`✅ [Auth Service] Refresh token found for user: ${storedToken.user.email}`);
             if (new Date() > storedToken.expiresAt) {
+                this.logger.error(`❌ [Auth Service] Refresh token expired at: ${storedToken.expiresAt}`);
                 await this.prisma.refreshToken.delete({ where: { id: storedToken.id } });
                 throw new common_1.UnauthorizedException('Refresh token expired');
             }
+            this.logger.log('🔄 [Auth Service] Generating new tokens...');
             const tokens = await this.generateTokens(storedToken.user.id, storedToken.user.email, storedToken.user.username);
             await this.prisma.refreshToken.delete({ where: { id: storedToken.id } });
+            this.logger.log('✅ [Auth Service] Token refresh successful');
             return {
                 success: true,
                 data: tokens,
@@ -659,7 +670,7 @@ let AuthService = AuthService_1 = class AuthService {
             };
         }
         catch (error) {
-            this.logger.error(`Refresh token error: ${error.message}`);
+            this.logger.error(`❌ [Auth Service] Refresh token error: ${error.message}`);
             return {
                 success: false,
                 error: error.message,

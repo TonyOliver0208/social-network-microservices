@@ -7,3 +7,4 @@ export * from './dto';
 export * from './constants';
 export * from './utils';
 export * from './modules';
+export * from './middlewares/jwt.middleware';

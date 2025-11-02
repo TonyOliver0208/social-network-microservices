@@ -28,6 +28,12 @@ const media_module_1 = __webpack_require__(/*! ./media/media.module */ "./apps/a
 const search_module_1 = __webpack_require__(/*! ./search/search.module */ "./apps/api-gateway/src/search/search.module.ts");
 const health_controller_1 = __webpack_require__(/*! ./health/health.controller */ "./apps/api-gateway/src/health/health.controller.ts");
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer
+            .apply(common_2.JwtMiddleware)
+            .exclude('/api/v1/auth/(.*)', '/api/v1/health', '/api/v1/health/(.*)', '/api/docs', '/api/docs/(.*)')
+            .forRoutes('*');
+    }
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
@@ -174,9 +180,32 @@ let AuthController = class AuthController {
     }
     async refreshToken(refreshTokenDto) {
         try {
-            return await (0, rxjs_1.lastValueFrom)(this.authService.RefreshToken(refreshTokenDto));
+            console.log('🔄 [API Gateway] Refresh token request received');
+            console.log('🔍 [API Gateway] Request body:', {
+                hasRefreshToken: !!refreshTokenDto.refreshToken,
+                tokenLength: refreshTokenDto.refreshToken?.length || 0,
+                tokenPreview: refreshTokenDto.refreshToken?.substring(0, 50)
+            });
+            const result = await (0, rxjs_1.lastValueFrom)(this.authService.RefreshToken(refreshTokenDto));
+            console.log('✅ [API Gateway] Token refresh successful');
+            return {
+                success: true,
+                data: {
+                    accessToken: result.accessToken,
+                    refreshToken: result.refreshToken,
+                    expiresIn: result.expiresIn,
+                    refreshExpiresIn: result.refreshExpiresIn,
+                },
+                message: 'Token refreshed successfully',
+                timestamp: new Date().toISOString(),
+            };
         }
         catch (error) {
+            console.error('❌ [API Gateway] Refresh token error:', {
+                errorCode: error.code,
+                errorDetails: error.details,
+                errorMessage: error.message
+            });
             const message = error.details || error.message || 'Token refresh failed';
             const statusCode = this.getHttpStatusFromGrpcError(error);
             throw new common_1.HttpException(message, statusCode);
@@ -492,7 +521,8 @@ async function bootstrap() {
         origin: corsOrigins,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'x-source', 'X-Source'],
+        exposedHeaders: ['X-Request-ID'],
     });
     app.setGlobalPrefix('api/v1');
     app.useGlobalPipes(new common_1.ValidationPipe({
@@ -789,7 +819,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -808,33 +838,49 @@ let PostController = class PostController {
     }
     async createPost(userId, createPostDto) {
         try {
-            return await (0, rxjs_1.lastValueFrom)(this.postService.CreatePost({
+            console.log('[API Gateway] Create post request received:', {
                 userId,
-                ...createPostDto,
+                hasContent: !!createPostDto.content,
+                contentLength: createPostDto.content?.length,
+                mediaUrls: createPostDto.mediaUrls,
+                privacy: createPostDto.privacy,
+                fullDto: createPostDto,
+            });
+            const result = await (0, rxjs_1.lastValueFrom)(this.postService.CreatePost({
+                userId,
+                content: createPostDto.content,
+                mediaUrls: createPostDto.mediaUrls || [],
+                visibility: createPostDto.privacy || 'PUBLIC',
             }));
+            console.log('[API Gateway] Post created successfully:', result);
+            return result;
         }
         catch (error) {
+            console.error('[API Gateway] Create post error:', error);
             throw new common_1.HttpException(error.message || 'Failed to create post', error.status || common_1.HttpStatus.BAD_REQUEST);
         }
     }
-    async getFeed(userId, pagination) {
+    async getFeed(page, limit) {
         try {
-            return await (0, rxjs_1.lastValueFrom)(this.postService.GetFeed({
-                userId,
-                page: pagination.page || 1,
-                limit: pagination.limit || 20,
+            const result = await (0, rxjs_1.lastValueFrom)(this.postService.GetFeed({
+                userId: '',
+                page: page || 1,
+                limit: limit || 20,
             }));
+            console.log('[API Gateway] Feed response:', JSON.stringify(result, null, 2));
+            return result;
         }
         catch (error) {
+            console.error('[API Gateway] Feed error:', error);
             throw new common_1.HttpException(error.message || 'Failed to get feed', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    async getUserPosts(targetUserId, pagination) {
+    async getUserPosts(targetUserId, page, limit) {
         try {
             return await (0, rxjs_1.lastValueFrom)(this.postService.GetUserPosts({
                 userId: targetUserId,
-                page: pagination.page || 1,
-                limit: pagination.limit || 20,
+                page: page || 1,
+                limit: limit || 20,
             }));
         }
         catch (error) {
@@ -908,12 +954,12 @@ let PostController = class PostController {
             throw new common_1.HttpException(error.message || 'Failed to create comment', error.status || common_1.HttpStatus.BAD_REQUEST);
         }
     }
-    async getPostComments(postId, pagination) {
+    async getPostComments(postId, page, limit) {
         try {
             return await (0, rxjs_1.lastValueFrom)(this.postService.GetComments({
                 postId,
-                page: pagination.page || 1,
-                limit: pagination.limit || 20,
+                page: page || 1,
+                limit: limit || 20,
             }));
         }
         catch (error) {
@@ -946,15 +992,13 @@ __decorate([
 ], PostController.prototype, "createPost", null);
 __decorate([
     (0, common_1.Get)('feed'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get user feed' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get public feed' }),
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
-    __param(0, (0, common_2.CurrentUser)('userId')),
-    __param(1, (0, common_1.Query)()),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_c = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getFeed", null);
 __decorate([
@@ -965,9 +1009,10 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
     __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Query)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_d = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [String, Number, Number]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getUserPosts", null);
 __decorate([
@@ -990,7 +1035,7 @@ __decorate([
     __param(1, (0, common_2.CurrentUser)('userId')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, typeof (_e = typeof dto_1.UpdatePostDto !== "undefined" && dto_1.UpdatePostDto) === "function" ? _e : Object]),
+    __metadata("design:paramtypes", [String, String, typeof (_c = typeof dto_1.UpdatePostDto !== "undefined" && dto_1.UpdatePostDto) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "updatePost", null);
 __decorate([
@@ -1035,7 +1080,7 @@ __decorate([
     __param(1, (0, common_2.CurrentUser)('userId')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, typeof (_f = typeof dto_1.CreateCommentDto !== "undefined" && dto_1.CreateCommentDto) === "function" ? _f : Object]),
+    __metadata("design:paramtypes", [String, String, typeof (_d = typeof dto_1.CreateCommentDto !== "undefined" && dto_1.CreateCommentDto) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "createComment", null);
 __decorate([
@@ -1046,9 +1091,10 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_g = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _g : Object]),
+    __metadata("design:paramtypes", [String, Number, Number]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getPostComments", null);
 __decorate([
@@ -1131,7 +1177,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SearchController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -1147,30 +1193,30 @@ let SearchController = class SearchController {
     onModuleInit() {
         this.searchService = this.client.getService(search_1.SEARCHSERVICE_SERVICE_NAME);
     }
-    async searchPosts(query, pagination) {
+    async searchPosts(query, page, limit) {
         if (!query || query.trim().length === 0) {
             throw new common_1.HttpException('Search query is required', common_1.HttpStatus.BAD_REQUEST);
         }
         try {
             return await (0, rxjs_1.lastValueFrom)(this.searchService.SearchPosts({
                 query,
-                page: pagination.page || 1,
-                limit: pagination.limit || 20,
+                page: page || 1,
+                limit: limit || 20,
             }));
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Search failed', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    async searchUsers(query, pagination) {
+    async searchUsers(query, page, limit) {
         if (!query || query.trim().length === 0) {
             throw new common_1.HttpException('Search query is required', common_1.HttpStatus.BAD_REQUEST);
         }
         try {
             return await (0, rxjs_1.lastValueFrom)(this.searchService.SearchUsers({
                 query,
-                page: pagination.page || 1,
-                limit: pagination.limit || 20,
+                page: page || 1,
+                limit: limit || 20,
             }));
         }
         catch (error) {
@@ -1188,9 +1234,10 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
     __param(0, (0, common_1.Query)('q')),
-    __param(1, (0, common_1.Query)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_b = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _b : Object]),
+    __metadata("design:paramtypes", [String, Number, Number]),
     __metadata("design:returntype", Promise)
 ], SearchController.prototype, "searchPosts", null);
 __decorate([
@@ -1202,9 +1249,10 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
     __param(0, (0, common_1.Query)('q')),
-    __param(1, (0, common_1.Query)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_c = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [String, Number, Number]),
     __metadata("design:returntype", Promise)
 ], SearchController.prototype, "searchUsers", null);
 exports.SearchController = SearchController = __decorate([
@@ -1357,7 +1405,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UserController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -1415,24 +1463,24 @@ let UserController = class UserController {
             throw new common_1.HttpException(error.message || 'Failed to unfollow user', error.status || common_1.HttpStatus.BAD_REQUEST);
         }
     }
-    async getFollowers(userId, pagination) {
+    async getFollowers(userId, page, limit) {
         try {
             return await (0, rxjs_1.lastValueFrom)(this.userService.GetFollowers({
                 userId,
-                page: pagination.page || 1,
-                limit: pagination.limit || 20,
+                page: page || 1,
+                limit: limit || 20,
             }));
         }
         catch (error) {
             throw new common_1.HttpException(error.message || 'Failed to get followers', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    async getFollowing(userId, pagination) {
+    async getFollowing(userId, page, limit) {
         try {
             return await (0, rxjs_1.lastValueFrom)(this.userService.GetFollowing({
                 userId,
-                page: pagination.page || 1,
-                limit: pagination.limit || 20,
+                page: page || 1,
+                limit: limit || 20,
             }));
         }
         catch (error) {
@@ -1492,9 +1540,10 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_c = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [String, Number, Number]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "getFollowers", null);
 __decorate([
@@ -1505,9 +1554,10 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)()),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_d = typeof common_2.PaginationDto !== "undefined" && common_2.PaginationDto) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [String, Number, Number]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "getFollowing", null);
 exports.UserController = UserController = __decorate([

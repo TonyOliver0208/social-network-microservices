@@ -132,8 +132,35 @@ export class AuthController implements OnModuleInit {
   @ApiOperation({ summary: 'Refresh access token' })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     try {
-      return await lastValueFrom(this.authService.RefreshToken(refreshTokenDto));
+      console.log('🔄 [API Gateway] Refresh token request received');
+      console.log('🔍 [API Gateway] Request body:', {
+        hasRefreshToken: !!refreshTokenDto.refreshToken,
+        tokenLength: refreshTokenDto.refreshToken?.length || 0,
+        tokenPreview: refreshTokenDto.refreshToken?.substring(0, 50)
+      });
+
+      const result = await lastValueFrom(this.authService.RefreshToken(refreshTokenDto));
+      
+      console.log('✅ [API Gateway] Token refresh successful');
+      
+      return {
+        success: true,
+        data: {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          expiresIn: result.expiresIn,
+          refreshExpiresIn: result.refreshExpiresIn,
+        },
+        message: 'Token refreshed successfully',
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
+      console.error('❌ [API Gateway] Refresh token error:', {
+        errorCode: error.code,
+        errorDetails: error.details,
+        errorMessage: error.message
+      });
+
       const message = error.details || error.message || 'Token refresh failed';
       const statusCode = this.getHttpStatusFromGrpcError(error);
       throw new HttpException(message, statusCode);

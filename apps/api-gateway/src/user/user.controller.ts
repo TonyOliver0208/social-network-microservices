@@ -126,14 +126,15 @@ export class UserController implements OnModuleInit {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getFollowers(
     @Param('id') userId: string,
-    @Query() pagination: PaginationDto,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     try {
       return await lastValueFrom(
         this.userService.GetFollowers({
           userId,
-          page: pagination.page || 1,
-          limit: pagination.limit || 20,
+          page: page || 1,
+          limit: limit || 20,
         }),
       );
     } catch (error) {
@@ -152,14 +153,15 @@ export class UserController implements OnModuleInit {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getFollowing(
     @Param('id') userId: string,
-    @Query() pagination: PaginationDto,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     try {
       return await lastValueFrom(
         this.userService.GetFollowing({
           userId,
-          page: pagination.page || 1,
-          limit: pagination.limit || 20,
+          page: page || 1,
+          limit: limit || 20,
         }),
       );
     } catch (error) {

@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { RedisModule } from '@app/common';
+import { RedisModule, JwtMiddleware } from '@app/common';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
@@ -30,4 +30,18 @@ import { HealthController } from './health/health.controller';
   ],
   controllers: [HealthController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // Apply JWT middleware to all routes except auth routes
+    consumer
+      .apply(JwtMiddleware)
+      .exclude(
+        '/api/v1/auth/(.*)',
+        '/api/v1/health',
+        '/api/v1/health/(.*)',
+        '/api/docs',
+        '/api/docs/(.*)',
+      )
+      .forRoutes('*');
+  }
+}

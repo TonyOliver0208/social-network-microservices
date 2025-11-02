@@ -23,4 +23,5 @@ __exportStar(require("./dto"), exports);
 __exportStar(require("./constants"), exports);
 __exportStar(require("./utils"), exports);
 __exportStar(require("./modules"), exports);
+__exportStar(require("./middlewares/jwt.middleware"), exports);
 //# sourceMappingURL=index.js.map

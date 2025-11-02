@@ -43,13 +43,28 @@ export class PostController implements OnModuleInit {
     @Body() createPostDto: CreatePostDto,
   ) {
     try {
-      return await lastValueFrom(
+      console.log('[API Gateway] Create post request received:', {
+        userId,
+        hasContent: !!createPostDto.content,
+        contentLength: createPostDto.content?.length,
+        mediaUrls: createPostDto.mediaUrls,
+        privacy: createPostDto.privacy,
+        fullDto: createPostDto,
+      });
+
+      const result = await lastValueFrom(
         this.postService.CreatePost({
           userId,
-          ...createPostDto,
+          content: createPostDto.content,
+          mediaUrls: createPostDto.mediaUrls || [],
+          visibility: createPostDto.privacy || 'PUBLIC',
         }),
       );
+
+      console.log('[API Gateway] Post created successfully:', result);
+      return result;
     } catch (error) {
+      console.error('[API Gateway] Create post error:', error);
       throw new HttpException(
         error.message || 'Failed to create post',
         error.status || HttpStatus.BAD_REQUEST,
@@ -58,24 +73,25 @@ export class PostController implements OnModuleInit {
   }
 
   @Get('feed')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get user feed' })
+  @ApiOperation({ summary: 'Get public feed' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getFeed(
-    @CurrentUser('userId') userId: string,
-    @Query() pagination: PaginationDto,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     try {
-      return await lastValueFrom(
+      const result = await lastValueFrom(
         this.postService.GetFeed({
-          userId,
-          page: pagination.page || 1,
-          limit: pagination.limit || 20,
+          userId: '', // Empty string for public feed
+          page: page || 1,
+          limit: limit || 20,
         }),
       );
+      console.log('[API Gateway] Feed response:', JSON.stringify(result, null, 2));
+      return result;
     } catch (error) {
+      console.error('[API Gateway] Feed error:', error);
       throw new HttpException(
         error.message || 'Failed to get feed',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
@@ -91,14 +107,15 @@ export class PostController implements OnModuleInit {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getUserPosts(
     @Param('userId') targetUserId: string,
-    @Query() pagination: PaginationDto,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     try {
       return await lastValueFrom(
         this.postService.GetUserPosts({
           userId: targetUserId,
-          page: pagination.page || 1,
-          limit: pagination.limit || 20,
+          page: page || 1,
+          limit: limit || 20,
         }),
       );
     } catch (error) {
@@ -250,7 +267,7 @@ export class PostController implements OnModuleInit {
     }
   }
 
-  @Get(':id/comments')
+    @Get(':id/comments')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get post comments' })
@@ -258,14 +275,15 @@ export class PostController implements OnModuleInit {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getPostComments(
     @Param('id') postId: string,
-    @Query() pagination: PaginationDto,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     try {
       return await lastValueFrom(
         this.postService.GetComments({
           postId,
-          page: pagination.page || 1,
-          limit: pagination.limit || 20,
+          page: page || 1,
+          limit: limit || 20,
         }),
       );
     } catch (error) {
