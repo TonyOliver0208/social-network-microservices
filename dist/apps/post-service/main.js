@@ -468,6 +468,7 @@ let PostService = class PostService {
             createdAt: post.createdAt,
         });
         await this.cacheManager.del(common_2.CACHE_KEYS.USER_FEED(userId));
+        await this.cacheManager.del(common_2.CACHE_KEYS.USER_FEED(''));
         return this.formatPostResponse(post);
     }
     async getPost(postId, userId) {

@@ -53,8 +53,9 @@ export class PostService {
       createdAt: post.createdAt,
     });
 
-    // Invalidate feed cache
+    // Invalidate feed cache for this user AND public feed
     await this.cacheManager.del(CACHE_KEYS.USER_FEED(userId));
+    await this.cacheManager.del(CACHE_KEYS.USER_FEED('')); // Invalidate public feed
 
     return this.formatPostResponse(post);
   }
