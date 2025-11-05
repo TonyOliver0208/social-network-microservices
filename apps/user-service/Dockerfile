@@ -52,7 +52,7 @@ COPY --from=builder /app/apps/user-service/package*.json ./
 COPY --from=builder /app/apps/user-service/prisma ./prisma
 
 # Expose port
-EXPOSE 3002
+EXPOSE 50052
 
 # Run migrations and start
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/apps/user-service/main.js"]

@@ -29,5 +29,5 @@ COPY --from=build /app/libs/common ./node_modules/@app/common
 COPY --from=build /app/proto ./proto
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
-EXPOSE 3005
+EXPOSE 50055
 CMD ["node", "dist/apps/search-service/main.js"]

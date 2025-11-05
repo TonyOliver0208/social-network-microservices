@@ -30,5 +30,5 @@ COPY --from=build /app/proto ./proto
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
 RUN mkdir -p /app/uploads
-EXPOSE 3004
+EXPOSE 50054
 CMD ["node", "dist/apps/media-service/main.js"]

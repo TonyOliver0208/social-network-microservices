@@ -52,7 +52,7 @@ COPY --from=builder /app/apps/auth-service/package*.json ./
 COPY --from=builder /app/apps/auth-service/prisma ./prisma
 
 # Expose port
-EXPOSE 3001
+EXPOSE 50051
 
 # Run migrations and start
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/apps/auth-service/main.js"]
