@@ -1,32 +1,11 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ([
-/* 0 */,
-/* 1 */
-/***/ ((module) => {
+/******/ 	var __webpack_modules__ = ({
 
-module.exports = require("@nestjs/core");
-
-/***/ }),
-/* 2 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/microservices");
-
-/***/ }),
-/* 3 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-/* 4 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/config");
-
-/***/ }),
-/* 5 */
+/***/ "./apps/media-service/src/app.module.ts":
+/*!**********************************************!*\
+  !*** ./apps/media-service/src/app.module.ts ***!
+  \**********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -38,10 +17,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
-const common_1 = __webpack_require__(3);
-const config_1 = __webpack_require__(4);
-const mongoose_1 = __webpack_require__(6);
-const media_module_1 = __webpack_require__(7);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const media_module_1 = __webpack_require__(/*! ./media/media.module */ "./apps/media-service/src/media/media.module.ts");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -65,46 +44,11 @@ exports.AppModule = AppModule = __decorate([
 
 
 /***/ }),
-/* 6 */
-/***/ ((module) => {
 
-module.exports = require("@nestjs/mongoose");
-
-/***/ }),
-/* 7 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MediaModule = void 0;
-const common_1 = __webpack_require__(3);
-const mongoose_1 = __webpack_require__(6);
-const media_controller_1 = __webpack_require__(8);
-const media_service_1 = __webpack_require__(9);
-const media_schema_1 = __webpack_require__(11);
-let MediaModule = class MediaModule {
-};
-exports.MediaModule = MediaModule;
-exports.MediaModule = MediaModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            mongoose_1.MongooseModule.forFeature([{ name: media_schema_1.Media.name, schema: media_schema_1.MediaSchema }]),
-        ],
-        controllers: [media_controller_1.MediaController],
-        providers: [media_service_1.MediaService],
-        exports: [media_service_1.MediaService],
-    })
-], MediaModule);
-
-
-/***/ }),
-/* 8 */
+/***/ "./apps/media-service/src/media/media.controller.ts":
+/*!**********************************************************!*\
+  !*** ./apps/media-service/src/media/media.controller.ts ***!
+  \**********************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -124,12 +68,12 @@ var MediaController_1;
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MediaController = void 0;
-const common_1 = __webpack_require__(3);
-const microservices_1 = __webpack_require__(2);
-const media_service_1 = __webpack_require__(9);
-const common_2 = __webpack_require__(15);
-const media_1 = __webpack_require__(16);
-const grpc_js_1 = __webpack_require__(17);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const media_service_1 = __webpack_require__(/*! ./media.service */ "./apps/media-service/src/media/media.service.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const media_1 = __webpack_require__(/*! @app/proto/media */ "./generated/media.ts");
+const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
 let MediaController = MediaController_1 = class MediaController {
     constructor(mediaService) {
         this.mediaService = mediaService;
@@ -280,7 +224,48 @@ exports.MediaController = MediaController = MediaController_1 = __decorate([
 
 
 /***/ }),
-/* 9 */
+
+/***/ "./apps/media-service/src/media/media.module.ts":
+/*!******************************************************!*\
+  !*** ./apps/media-service/src/media/media.module.ts ***!
+  \******************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MediaModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const media_controller_1 = __webpack_require__(/*! ./media.controller */ "./apps/media-service/src/media/media.controller.ts");
+const media_service_1 = __webpack_require__(/*! ./media.service */ "./apps/media-service/src/media/media.service.ts");
+const media_schema_1 = __webpack_require__(/*! ./schemas/media.schema */ "./apps/media-service/src/media/schemas/media.schema.ts");
+let MediaModule = class MediaModule {
+};
+exports.MediaModule = MediaModule;
+exports.MediaModule = MediaModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            mongoose_1.MongooseModule.forFeature([{ name: media_schema_1.Media.name, schema: media_schema_1.MediaSchema }]),
+        ],
+        controllers: [media_controller_1.MediaController],
+        providers: [media_service_1.MediaService],
+        exports: [media_service_1.MediaService],
+    })
+], MediaModule);
+
+
+/***/ }),
+
+/***/ "./apps/media-service/src/media/media.service.ts":
+/*!*******************************************************!*\
+  !*** ./apps/media-service/src/media/media.service.ts ***!
+  \*******************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -333,13 +318,13 @@ var MediaService_1;
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MediaService = void 0;
-const common_1 = __webpack_require__(3);
-const mongoose_1 = __webpack_require__(6);
-const mongoose_2 = __webpack_require__(10);
-const media_schema_1 = __webpack_require__(11);
-const fs = __importStar(__webpack_require__(12));
-const path = __importStar(__webpack_require__(13));
-const uuid_1 = __webpack_require__(14);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const mongoose_2 = __webpack_require__(/*! mongoose */ "mongoose");
+const media_schema_1 = __webpack_require__(/*! ./schemas/media.schema */ "./apps/media-service/src/media/schemas/media.schema.ts");
+const fs = __importStar(__webpack_require__(/*! fs/promises */ "fs/promises"));
+const path = __importStar(__webpack_require__(/*! path */ "path"));
+const uuid_1 = __webpack_require__(/*! uuid */ "uuid");
 let MediaService = MediaService_1 = class MediaService {
     constructor(mediaModel) {
         this.mediaModel = mediaModel;
@@ -518,13 +503,11 @@ exports.MediaService = MediaService = MediaService_1 = __decorate([
 
 
 /***/ }),
-/* 10 */
-/***/ ((module) => {
 
-module.exports = require("mongoose");
-
-/***/ }),
-/* 11 */
+/***/ "./apps/media-service/src/media/schemas/media.schema.ts":
+/*!**************************************************************!*\
+  !*** ./apps/media-service/src/media/schemas/media.schema.ts ***!
+  \**************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -540,7 +523,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MediaSchema = exports.Media = void 0;
-const mongoose_1 = __webpack_require__(6);
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
 let Media = class Media {
 };
 exports.Media = Media;
@@ -598,31 +581,11 @@ exports.MediaSchema.index({ isActive: 1 });
 
 
 /***/ }),
-/* 12 */
-/***/ ((module) => {
 
-module.exports = require("fs/promises");
-
-/***/ }),
-/* 13 */
-/***/ ((module) => {
-
-module.exports = require("path");
-
-/***/ }),
-/* 14 */
-/***/ ((module) => {
-
-module.exports = require("uuid");
-
-/***/ }),
-/* 15 */
-/***/ ((module) => {
-
-module.exports = require("@app/common");
-
-/***/ }),
-/* 16 */
+/***/ "./generated/media.ts":
+/*!****************************!*\
+  !*** ./generated/media.ts ***!
+  \****************************/
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -633,13 +596,118 @@ exports.MEDIASERVICE_SERVICE_NAME = 'MediaService';
 
 
 /***/ }),
-/* 17 */
+
+/***/ "@app/common":
+/*!******************************!*\
+  !*** external "@app/common" ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = require("@app/common");
+
+/***/ }),
+
+/***/ "@grpc/grpc-js":
+/*!********************************!*\
+  !*** external "@grpc/grpc-js" ***!
+  \********************************/
 /***/ ((module) => {
 
 module.exports = require("@grpc/grpc-js");
 
+/***/ }),
+
+/***/ "@nestjs/common":
+/*!*********************************!*\
+  !*** external "@nestjs/common" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/common");
+
+/***/ }),
+
+/***/ "@nestjs/config":
+/*!*********************************!*\
+  !*** external "@nestjs/config" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/config");
+
+/***/ }),
+
+/***/ "@nestjs/core":
+/*!*******************************!*\
+  !*** external "@nestjs/core" ***!
+  \*******************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/core");
+
+/***/ }),
+
+/***/ "@nestjs/microservices":
+/*!****************************************!*\
+  !*** external "@nestjs/microservices" ***!
+  \****************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/microservices");
+
+/***/ }),
+
+/***/ "@nestjs/mongoose":
+/*!***********************************!*\
+  !*** external "@nestjs/mongoose" ***!
+  \***********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/mongoose");
+
+/***/ }),
+
+/***/ "fs/promises":
+/*!******************************!*\
+  !*** external "fs/promises" ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = require("fs/promises");
+
+/***/ }),
+
+/***/ "mongoose":
+/*!***************************!*\
+  !*** external "mongoose" ***!
+  \***************************/
+/***/ ((module) => {
+
+module.exports = require("mongoose");
+
+/***/ }),
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("path");
+
+/***/ }),
+
+/***/ "uuid":
+/*!***********************!*\
+  !*** external "uuid" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("uuid");
+
 /***/ })
-/******/ 	]);
+
+/******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -670,14 +738,17 @@ var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
+/*!****************************************!*\
+  !*** ./apps/media-service/src/main.ts ***!
+  \****************************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(1);
-const microservices_1 = __webpack_require__(2);
-const common_1 = __webpack_require__(3);
-const config_1 = __webpack_require__(4);
-const app_module_1 = __webpack_require__(5);
-const path_1 = __webpack_require__(13);
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const app_module_1 = __webpack_require__(/*! ./app.module */ "./apps/media-service/src/app.module.ts");
+const path_1 = __webpack_require__(/*! path */ "path");
 async function bootstrap() {
     const logger = new common_1.Logger('MediaService');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);

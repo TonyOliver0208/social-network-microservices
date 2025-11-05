@@ -8,6 +8,7 @@
   "scripts": {
     "proto:gen": "node ./bin/proto-gen.cjs",
     "install:all": "npm install && cd apps/api-gateway && npm install && cd ../auth-service && npm install && cd ../user-service && npm install && cd ../post-service && npm install && cd ../media-service && npm install && cd ../search-service && npm install",
+    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:user\" \"npm run dev:post\" \"npm run dev:media\" \"npm run dev:search\" \"npm run dev:gateway\" --names \"AUTH,USER,POST,MEDIA,SEARCH,GATEWAY\" --prefix-colors \"blue,green,yellow,magenta,cyan,white\" --kill-others-on-fail",
     "dev:gateway": "nest start api-gateway --watch",
     "dev:auth": "nest start auth-service --watch",
     "dev:user": "nest start user-service --watch",
@@ -48,6 +49,7 @@
     "@nestjs/schematics": "^11.0.9",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.8.1",
+    "concurrently": "^9.2.1",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

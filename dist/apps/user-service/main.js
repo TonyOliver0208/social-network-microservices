@@ -59,8 +59,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PrismaService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const client_1 = __webpack_require__(/*! @prisma/client */ "@prisma/client");
-let PrismaService = class PrismaService extends client_1.PrismaClient {
+const client_user_1 = __webpack_require__(/*! .prisma/client-user */ ".prisma/client-user");
+let PrismaService = class PrismaService extends client_user_1.PrismaClient {
     async onModuleInit() {
         await this.$connect();
     }
@@ -746,6 +746,16 @@ exports.USERSERVICE_SERVICE_NAME = 'UserService';
 
 /***/ }),
 
+/***/ ".prisma/client-user":
+/*!**************************************!*\
+  !*** external ".prisma/client-user" ***!
+  \**************************************/
+/***/ ((module) => {
+
+module.exports = require(".prisma/client-user");
+
+/***/ }),
+
 /***/ "@app/common":
 /*!******************************!*\
   !*** external "@app/common" ***!
@@ -803,16 +813,6 @@ module.exports = require("@nestjs/core");
 /***/ ((module) => {
 
 module.exports = require("@nestjs/microservices");
-
-/***/ }),
-
-/***/ "@prisma/client":
-/*!*********************************!*\
-  !*** external "@prisma/client" ***!
-  \*********************************/
-/***/ ((module) => {
-
-module.exports = require("@prisma/client");
 
 /***/ }),
 
