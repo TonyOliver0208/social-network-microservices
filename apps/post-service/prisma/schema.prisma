@@ -20,6 +20,7 @@ model Post {
 
   comments Comment[]
   likes    Like[]
+  postTags PostTag[]
   
   @@index([authorId])
   @@index([createdAt])
@@ -59,6 +60,36 @@ model Like {
   @@index([postId])
   @@index([userId])
   @@map("likes")
+}
+
+model Tag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?  @db.Text
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  postTags    PostTag[]
+  
+  @@index([name])
+  @@map("tags")
+}
+
+model PostTag {
+  id     String @id @default(uuid())
+  postId String
+  tagId  String
+  
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, tagId])
+  @@index([postId])
+  @@index([tagId])
+  @@map("post_tags")
 }
 
 enum Privacy {

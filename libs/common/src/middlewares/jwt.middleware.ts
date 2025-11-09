@@ -19,7 +19,7 @@ export class JwtMiddleware implements NestMiddleware {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      this.logger.debug('[JWT Middleware] No authorization header found');
+      this.logger.debug('[JWT Middleware] No authorization header - request will proceed without authentication (public access)');
       return next(); // Continue without user - guards will handle unauthorized access
     }
 

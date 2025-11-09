@@ -661,8 +661,11 @@ let AuthService = AuthService_1 = class AuthService {
             }
             this.logger.log('🔄 [Auth Service] Generating new tokens...');
             const tokens = await this.generateTokens(storedToken.user.id, storedToken.user.email, storedToken.user.username);
+            this.logger.log(`🔑 [Auth Service] New refresh token created: ${tokens.refreshToken.substring(0, 50)}...`);
             await this.prisma.refreshToken.delete({ where: { id: storedToken.id } });
+            this.logger.log(`🗑️  [Auth Service] Old refresh token deleted: ${refreshToken.substring(0, 50)}...`);
             this.logger.log('✅ [Auth Service] Token refresh successful');
+            this.logger.log('📤 [Auth Service] Returning NEW tokens to client');
             return {
                 success: true,
                 data: tokens,
@@ -737,8 +740,10 @@ let AuthService = AuthService_1 = class AuthService {
             username,
             type: 'access',
         };
+        const accessExpiration = this.configService.get('JWT_ACCESS_EXPIRATION', '15m');
+        const refreshExpiration = this.configService.get('JWT_REFRESH_EXPIRATION', '7d');
         const accessToken = this.jwtService.sign(jwtPayload, {
-            expiresIn: this.configService.get('JWT_ACCESS_EXPIRATION', '15m'),
+            expiresIn: accessExpiration,
         });
         const refreshPayload = {
             ...jwtPayload,
@@ -746,7 +751,7 @@ let AuthService = AuthService_1 = class AuthService {
         };
         const refreshToken = this.jwtService.sign(refreshPayload, {
             secret: this.configService.get('JWT_REFRESH_SECRET'),
-            expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION', '7d'),
+            expiresIn: refreshExpiration,
         });
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
@@ -757,10 +762,14 @@ let AuthService = AuthService_1 = class AuthService {
                 expiresAt,
             },
         });
+        const accessExpiresIn = this.parseExpiration(accessExpiration);
+        const refreshExpiresIn = this.parseExpiration(refreshExpiration);
+        this.logger.log(`🔑 [Auth Service] Tokens generated: access=${accessExpiresIn}s, refresh=${refreshExpiresIn}s`);
         return {
             accessToken,
             refreshToken,
-            expiresIn: this.configService.get('JWT_ACCESS_EXPIRATION', '15m'),
+            expiresIn: accessExpiresIn,
+            refreshExpiresIn: refreshExpiresIn,
         };
     }
 };

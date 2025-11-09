@@ -12,6 +12,7 @@ export interface CreatePostRequest {
   content?: string;
   mediaUrls?: string[];
   visibility?: string;
+  tags?: string[];
 }
 
 export interface GetPostByIdRequest {
@@ -30,6 +31,13 @@ export interface DeletePostRequest {
   userId?: string;
 }
 
+export interface Author {
+  id?: string;
+  name?: string;
+  picture?: string;
+  reputation?: number;
+}
+
 export interface PostResponse {
   id?: string;
   userId?: string;
@@ -40,6 +48,8 @@ export interface PostResponse {
   visibility?: string;
   createdAt?: string;
   updatedAt?: string;
+  author?: Author;
+  tags?: TagResponse[];
 }
 
 export interface DeletePostResponse {
@@ -114,6 +124,39 @@ export interface DeleteCommentResponse {
   success?: boolean;
 }
 
+export interface TagResponse {
+  id?: string;
+  name?: string;
+  description?: string;
+  questionsCount?: number;
+  createdAt?: string;
+}
+
+export interface GetTagsRequest {
+  page?: number;
+  limit?: number;
+}
+
+export interface GetPopularTagsRequest {
+  limit?: number;
+}
+
+export interface TagsListResponse {
+  tags?: TagResponse[];
+  total?: number;
+}
+
+export interface GetPostsByTagRequest {
+  tagName?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CreateTagRequest {
+  name?: string;
+  description?: string;
+}
+
 export interface PostService {
   CreatePost(request: CreatePostRequest): Observable<PostResponse>;
   GetPostById(request: GetPostByIdRequest): Observable<PostResponse>;
@@ -126,6 +169,10 @@ export interface PostService {
   CreateComment(request: CreateCommentRequest): Observable<CommentResponse>;
   GetComments(request: GetCommentsRequest): Observable<CommentsListResponse>;
   DeleteComment(request: DeleteCommentRequest): Observable<DeleteCommentResponse>;
+  GetTags(request: GetTagsRequest): Observable<TagsListResponse>;
+  GetPopularTags(request: GetPopularTagsRequest): Observable<TagsListResponse>;
+  GetPostsByTag(request: GetPostsByTagRequest): Observable<PostsListResponse>;
+  CreateTag(request: CreateTagRequest): Observable<TagResponse>;
 }
 
 export const POSTSERVICE_SERVICE_NAME = 'PostService';

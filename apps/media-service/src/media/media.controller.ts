@@ -16,15 +16,23 @@ export class MediaController {
   @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'UploadMedia')
   async uploadMedia(payload: {
     userId: string;
-    file: {
-      buffer: Buffer;
-      originalname: string;
-      mimetype: string;
-      size: number;
-    };
+    file: Uint8Array;
+    filename: string;
+    mimetype: string;
+    type: string;
   }) {
-    this.logger.log(`Upload media request from user: ${payload.userId}`);
-    const result = await this.mediaService.uploadFile(payload.userId, payload.file);
+    this.logger.log(`Upload media request from user: ${payload.userId}, file: ${payload.filename}`);
+    
+    // Convert Uint8Array to Buffer for processing
+    const fileBuffer = Buffer.from(payload.file);
+    const fileObject = {
+      buffer: fileBuffer,
+      originalname: payload.filename,
+      mimetype: payload.mimetype,
+      size: fileBuffer.length,
+    };
+    
+    const result = await this.mediaService.uploadFile(payload.userId, fileObject);
     
     if (!result.success) {
       const grpcCode = this.getGrpcStatusCode((result as any).error, (result as any).statusCode);
@@ -39,11 +47,11 @@ export class MediaController {
 
   @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'DeleteMedia')
   async deleteMedia(payload: {
-    mediaId: string;
+    id: string;
     userId: string;
   }) {
-    this.logger.log(`Delete media request: ${payload.mediaId} by user: ${payload.userId}`);
-    const result = await this.mediaService.deleteFile(payload.mediaId, payload.userId);
+    this.logger.log(`Delete media request: ${payload.id} by user: ${payload.userId}`);
+    const result = await this.mediaService.deleteFile(payload.id, payload.userId);
     
     if (!result.success) {
       const grpcCode = this.getGrpcStatusCode((result as any).error, (result as any).statusCode);
@@ -57,9 +65,9 @@ export class MediaController {
   }
 
   @GrpcMethod(MEDIASERVICE_SERVICE_NAME, 'GetMedia')
-  async findMediaById(payload: { mediaId: string }) {
-    this.logger.log(`Find media by ID: ${payload.mediaId}`);
-    const result = await this.mediaService.findById(payload.mediaId);
+  async findMediaById(payload: { id: string }) {
+    this.logger.log(`Find media by ID: ${payload.id}`);
+    const result = await this.mediaService.findById(payload.id);
     
     if (!result.success) {
       const grpcCode = this.getGrpcStatusCode((result as any).error, (result as any).statusCode);

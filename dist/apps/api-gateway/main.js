@@ -188,6 +188,15 @@ let AuthController = class AuthController {
             });
             const result = await (0, rxjs_1.lastValueFrom)(this.authService.RefreshToken(refreshTokenDto));
             console.log('✅ [API Gateway] Token refresh successful');
+            console.log('🔍 [API Gateway] Result structure:', {
+                hasAccessToken: !!result.accessToken,
+                hasRefreshToken: !!result.refreshToken,
+                hasExpiresIn: result.expiresIn !== undefined,
+                hasRefreshExpiresIn: result.refreshExpiresIn !== undefined,
+                expiresIn: result.expiresIn,
+                refreshExpiresIn: result.refreshExpiresIn,
+                newRefreshTokenPreview: result.refreshToken?.substring(0, 50)
+            });
             return {
                 success: true,
                 data: {
@@ -521,7 +530,15 @@ async function bootstrap() {
         origin: corsOrigins,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'x-source', 'X-Source'],
+        allowedHeaders: [
+            'Content-Type',
+            'Authorization',
+            'X-Request-ID',
+            'X-User-ID',
+            'X-Request-Time',
+            'x-source',
+            'X-Source'
+        ],
         exposedHeaders: ['X-Request-ID'],
     });
     app.setGlobalPrefix('api/v1');
@@ -599,7 +616,7 @@ let MediaController = class MediaController {
         try {
             return await (0, rxjs_1.lastValueFrom)(this.mediaService.UploadMedia({
                 userId,
-                file: file.buffer,
+                file: new Uint8Array(file.buffer),
                 filename: file.originalname,
                 mimetype: file.mimetype,
                 type: file.mimetype.startsWith('image/') ? 'image' : 'video',
@@ -756,6 +773,13 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "privacy", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: ['javascript', 'react', 'nextjs'] }),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], CreatePostDto.prototype, "tags", void 0);
 class UpdatePostDto {
 }
 exports.UpdatePostDto = UpdatePostDto;
@@ -844,6 +868,7 @@ let PostController = class PostController {
                 contentLength: createPostDto.content?.length,
                 mediaUrls: createPostDto.mediaUrls,
                 privacy: createPostDto.privacy,
+                tags: createPostDto.tags,
                 fullDto: createPostDto,
             });
             const result = await (0, rxjs_1.lastValueFrom)(this.postService.CreatePost({
@@ -851,6 +876,7 @@ let PostController = class PostController {
                 content: createPostDto.content,
                 mediaUrls: createPostDto.mediaUrls || [],
                 visibility: createPostDto.privacy || 'PUBLIC',
+                tags: createPostDto.tags || [],
             }));
             console.log('[API Gateway] Post created successfully:', result);
             return result;
@@ -887,7 +913,40 @@ let PostController = class PostController {
             throw new common_1.HttpException(error.message || 'Failed to get user posts', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    async getPost(postId, userId) {
+    async getPopularTags(limit) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetPopularTags({
+                limit: limit || 5,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get popular tags', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async getPostsByTag(tagName, page, limit) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetPostsByTag({
+                tagName,
+                page: page || 1,
+                limit: limit || 20,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get posts by tag', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async getTags(page, limit) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetTags({
+                page: page || 1,
+                limit: limit || 20,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get tags', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async getPost(postId) {
         try {
             return await (0, rxjs_1.lastValueFrom)(this.postService.GetPostById({
                 id: postId,
@@ -992,7 +1051,7 @@ __decorate([
 ], PostController.prototype, "createPost", null);
 __decorate([
     (0, common_1.Get)('feed'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get public feed' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get public feed (no authentication required)' }),
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
     __param(0, (0, common_1.Query)('page')),
@@ -1016,14 +1075,43 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getUserPosts", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get post by ID' }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_2.CurrentUser)('userId')),
+    (0, common_1.Get)('tags/popular'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get popular tags' }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    __param(0, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getPopularTags", null);
+__decorate([
+    (0, common_1.Get)('tags/:tagName'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get posts by tag' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    __param(0, (0, common_1.Param)('tagName')),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number, Number]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getPostsByTag", null);
+__decorate([
+    (0, common_1.Get)('tags'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all tags' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getTags", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get post by ID (no authentication required)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getPost", null);
 __decorate([

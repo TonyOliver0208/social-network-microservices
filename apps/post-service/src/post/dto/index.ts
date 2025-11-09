@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsEnum, MaxLength, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsEnum, MaxLength, MinLength, IsNotEmpty } from 'class-validator';
 
 export enum Privacy {
   PUBLIC = 'PUBLIC',
@@ -8,18 +8,22 @@ export enum Privacy {
 
 export class CreatePostDto {
   @IsString()
-  @MinLength(1)
-  @MaxLength(5000)
+  @IsNotEmpty()
   content: string;
 
   @IsArray()
-  @IsString({ each: true })
   @IsOptional()
+  @IsString({ each: true })
   mediaUrls?: string[];
 
   @IsEnum(Privacy)
   @IsOptional()
   privacy?: Privacy;
+
+  @IsArray()
+  @IsOptional()
+  @IsString({ each: true })
+  tags?: string[];
 }
 
 export class UpdatePostDto {

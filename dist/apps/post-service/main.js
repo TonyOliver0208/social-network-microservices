@@ -82,11 +82,12 @@ let PostController = PostController_1 = class PostController {
     }
     async createPost(data) {
         try {
-            this.logger.log(`Creating post for user: ${data.userId}`);
+            this.logger.log(`Creating post for user: ${data.userId} with tags:`, data.tags);
             const createPostDto = {
                 content: data.content,
                 mediaUrls: data.mediaUrls,
                 privacy: data.visibility,
+                tags: data.tags,
             };
             return await this.postService.createPost(data.userId, createPostDto);
         }
@@ -245,8 +246,47 @@ let PostController = PostController_1 = class PostController {
                 return grpc_js_1.status.UNKNOWN;
         }
     }
-    async handleUserDeleted(data) {
-        this.logger.log(`Handling user deleted event: ${data.userId}`);
+    async getTags(data) {
+        try {
+            this.logger.log(`Getting tags: page ${data.page}, limit ${data.limit}`);
+            return await this.postService.getTags({ page: data.page, limit: data.limit });
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async getPopularTags(data) {
+        try {
+            this.logger.log(`Getting popular tags: limit ${data.limit}`);
+            return await this.postService.getPopularTags(data.limit || 5);
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async getPostsByTag(data) {
+        try {
+            this.logger.log(`Getting posts by tag: ${data.tagName}`);
+            return await this.postService.getPostsByTag(data.tagName, {
+                page: data.page,
+                limit: data.limit
+            });
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async createTag(data) {
+        try {
+            this.logger.log(`Creating tag: ${data.name}`);
+            return await this.postService.createTag(data.name, data.description);
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async handleUserDeletedEvent(data) {
+        this.logger.log(`[Event] User deleted: ${data.userId}`);
         await this.postService.handleUserDeleted(data.userId);
     }
     async handleMediaDeleted(data) {
@@ -338,12 +378,36 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getPostComments", null);
 __decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'GetTags'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getTags", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'GetPopularTags'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getPopularTags", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'GetPostsByTag'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getPostsByTag", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'CreateTag'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "createTag", null);
+__decorate([
     (0, microservices_1.EventPattern)(common_2.EVENTS.USER_DELETED),
     __param(0, (0, microservices_1.Payload)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], PostController.prototype, "handleUserDeleted", null);
+], PostController.prototype, "handleUserDeletedEvent", null);
 __decorate([
     (0, microservices_1.EventPattern)(common_2.EVENTS.MEDIA_DELETED),
     __param(0, (0, microservices_1.Payload)()),
@@ -385,12 +449,23 @@ const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const post_controller_1 = __webpack_require__(/*! ./post.controller */ "./apps/post-service/src/post/post.controller.ts");
 const post_service_1 = __webpack_require__(/*! ./post.service */ "./apps/post-service/src/post/post.service.ts");
 const prisma_module_1 = __webpack_require__(/*! ../prisma/prisma.module */ "./apps/post-service/src/prisma/prisma.module.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const user_1 = __webpack_require__(/*! @app/proto/user */ "./generated/user.ts");
 let PostModule = class PostModule {
 };
 exports.PostModule = PostModule;
 exports.PostModule = PostModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [
+            prisma_module_1.PrismaModule,
+            common_2.GrpcModule.register({
+                name: common_2.SERVICES.USER_SERVICE,
+                package: user_1.USER_PACKAGE_NAME,
+                protoFileName: 'user.proto',
+                urlConfigKey: 'USER_SERVICE_URL',
+                defaultUrl: 'localhost:50052',
+            }),
+        ],
         controllers: [post_controller_1.PostController],
         providers: [post_service_1.PostService],
     })
@@ -418,7 +493,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var PostService_1;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -427,13 +503,102 @@ const prisma_service_1 = __webpack_require__(/*! ../prisma/prisma.service */ "./
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
 const cache_manager_1 = __webpack_require__(/*! cache-manager */ "cache-manager");
 const cache_manager_2 = __webpack_require__(/*! @nestjs/cache-manager */ "@nestjs/cache-manager");
-let PostService = class PostService {
-    constructor(prisma, rabbitClient, cacheManager) {
+const user_1 = __webpack_require__(/*! @app/proto/user */ "./generated/user.ts");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+let PostService = PostService_1 = class PostService {
+    constructor(prisma, rabbitClient, cacheManager, userClient) {
         this.prisma = prisma;
         this.rabbitClient = rabbitClient;
         this.cacheManager = cacheManager;
+        this.userClient = userClient;
+        this.logger = new common_1.Logger(PostService_1.name);
+        this.userServiceInitialized = false;
+        this.prismaClient = this.prisma;
     }
-    formatPostResponse(post) {
+    async onModuleInit() {
+        this.logger.log('🔧 Initializing user service connection...');
+        try {
+            this.userService = this.userClient.getService(user_1.USERSERVICE_SERVICE_NAME);
+            this.logger.log('📡 User service client obtained');
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            this.logger.log('⏳ Waited 3s for user-service startup');
+            try {
+                const testResult = await (0, rxjs_1.lastValueFrom)(this.userService.GetUserById({ id: 'connection-test' })).catch(err => {
+                    this.logger.warn(`Connection test failed: ${err.message}`);
+                    return null;
+                });
+                this.userServiceInitialized = true;
+                this.logger.log('✅ User service connection established and ready!');
+            }
+            catch (error) {
+                this.logger.warn('⚠️  User service not yet ready, will retry on first request');
+            }
+        }
+        catch (error) {
+            this.logger.error(`❌ Failed to initialize user service: ${error.message}`);
+        }
+    }
+    async ensureUserServiceReady() {
+        if (!this.userService) {
+            this.logger.warn('⚠️  User service client not initialized');
+            return false;
+        }
+        if (this.userServiceInitialized) {
+            return true;
+        }
+        this.logger.log('🔄 Attempting lazy initialization of user service...');
+        try {
+            await (0, rxjs_1.lastValueFrom)(this.userService.GetUserById({ id: 'connection-test' })).catch(() => { });
+            this.userServiceInitialized = true;
+            this.logger.log('✅ User service connection verified (lazy init)');
+            return true;
+        }
+        catch (error) {
+            this.logger.warn(`⚠️  User service still not ready: ${error.message}`);
+            return false;
+        }
+    }
+    async getUserData(userId) {
+        const isReady = await this.ensureUserServiceReady();
+        if (!isReady) {
+            this.logger.warn(`⚠️  User service not ready, returning Anonymous for ${userId}`);
+            return {
+                id: userId,
+                name: 'Anonymous',
+                picture: undefined,
+                reputation: 0,
+            };
+        }
+        try {
+            const user = await (0, rxjs_1.lastValueFrom)(this.userService.GetUserById({ id: userId }));
+            const displayName = user.username || `${user.firstName} ${user.lastName}`.trim() || 'Anonymous';
+            this.logger.log(`✅ Fetched user: ${displayName}`);
+            return {
+                id: user.id,
+                name: displayName,
+                picture: user.avatar || undefined,
+                reputation: 0,
+            };
+        }
+        catch (error) {
+            this.logger.error(`❌ Failed to fetch user ${userId}: ${error.message}`);
+            return {
+                id: userId,
+                name: 'Anonymous',
+                picture: undefined,
+                reputation: 0,
+            };
+        }
+    }
+    async formatPostResponse(post) {
+        const author = await this.getUserData(post.authorId);
+        const tags = post.postTags?.map((pt) => ({
+            id: pt.tag.id,
+            name: pt.tag.name,
+            description: pt.tag.description || '',
+            questionsCount: 0,
+            createdAt: pt.tag.createdAt.toISOString(),
+        })) || [];
         return {
             id: post.id,
             userId: post.authorId,
@@ -444,12 +609,15 @@ let PostService = class PostService {
             visibility: post.privacy,
             createdAt: post.createdAt.toISOString(),
             updatedAt: post.updatedAt.toISOString(),
+            author: author,
+            tags: tags,
         };
     }
     async createPost(userId, createPostDto) {
+        const { tags, ...postData } = createPostDto;
         const post = await this.prisma.post.create({
             data: {
-                ...createPostDto,
+                ...postData,
                 authorId: userId,
             },
             include: {
@@ -461,6 +629,9 @@ let PostService = class PostService {
                 },
             },
         });
+        if (tags && tags.length > 0) {
+            await this.handlePostTags(post.id, tags);
+        }
         this.rabbitClient.emit(common_2.EVENTS.POST_CREATED, {
             postId: post.id,
             authorId: userId,
@@ -469,7 +640,7 @@ let PostService = class PostService {
         });
         await this.cacheManager.del(common_2.CACHE_KEYS.USER_FEED(userId));
         await this.cacheManager.del(common_2.CACHE_KEYS.USER_FEED(''));
-        return this.formatPostResponse(post);
+        return await this.formatPostResponse(post);
     }
     async getPost(postId, userId) {
         const cacheKey = common_2.CACHE_KEYS.POST(postId);
@@ -477,7 +648,7 @@ let PostService = class PostService {
         if (cached) {
             return cached;
         }
-        const post = await this.prisma.post.findUnique({
+        const post = await this.prismaClient.post.findUnique({
             where: { id: postId },
             include: {
                 _count: {
@@ -490,14 +661,41 @@ let PostService = class PostService {
                     where: { userId },
                     select: { id: true },
                 } : false,
+                postTags: {
+                    include: {
+                        tag: true,
+                    },
+                },
             },
         });
         if (!post) {
             throw new common_1.NotFoundException('Post not found');
         }
-        const result = this.formatPostResponse(post);
+        const result = await this.formatPostResponse(post);
         await this.cacheManager.set(cacheKey, result, common_2.CACHE_TTL.MEDIUM);
         return result;
+    }
+    async deletePost(postId, userId) {
+        const post = await this.prisma.post.findUnique({
+            where: { id: postId },
+        });
+        if (!post) {
+            throw new common_1.NotFoundException('Post not found');
+        }
+        if (post.authorId !== userId) {
+            throw new common_1.ForbiddenException('You can only delete your own posts');
+        }
+        await this.prisma.post.delete({
+            where: { id: postId },
+        });
+        this.rabbitClient.emit(common_2.EVENTS.POST_DELETED, {
+            postId,
+            authorId: userId,
+            mediaUrls: post.mediaUrls,
+        });
+        await this.cacheManager.del(common_2.CACHE_KEYS.POST(postId));
+        await this.cacheManager.del(common_2.CACHE_KEYS.USER_FEED(userId));
+        return { message: 'Post deleted successfully' };
     }
     async updatePost(postId, userId, updatePostDto) {
         const post = await this.prisma.post.findUnique({
@@ -523,29 +721,7 @@ let PostService = class PostService {
         });
         await this.cacheManager.del(common_2.CACHE_KEYS.POST(postId));
         await this.cacheManager.del(common_2.CACHE_KEYS.USER_FEED(userId));
-        return this.formatPostResponse(updatedPost);
-    }
-    async deletePost(postId, userId) {
-        const post = await this.prisma.post.findUnique({
-            where: { id: postId },
-        });
-        if (!post) {
-            throw new common_1.NotFoundException('Post not found');
-        }
-        if (post.authorId !== userId) {
-            throw new common_1.ForbiddenException('You can only delete your own posts');
-        }
-        await this.prisma.post.delete({
-            where: { id: postId },
-        });
-        this.rabbitClient.emit(common_2.EVENTS.POST_DELETED, {
-            postId,
-            authorId: userId,
-            mediaUrls: post.mediaUrls,
-        });
-        await this.cacheManager.del(common_2.CACHE_KEYS.POST(postId));
-        await this.cacheManager.del(common_2.CACHE_KEYS.USER_FEED(userId));
-        return { message: 'Post deleted successfully' };
+        return await this.formatPostResponse(updatedPost);
     }
     async getFeed(userId, pagination) {
         const cacheKey = common_2.CACHE_KEYS.USER_FEED(userId);
@@ -575,8 +751,9 @@ let PostService = class PostService {
             }),
             this.prisma.post.count(),
         ]);
+        const formattedPosts = await Promise.all(posts.map(post => this.formatPostResponse(post)));
         const result = {
-            posts: posts.map(post => this.formatPostResponse(post)),
+            posts: formattedPosts,
             total,
             page,
             limit,
@@ -606,8 +783,9 @@ let PostService = class PostService {
                 where: { authorId: userId },
             }),
         ]);
+        const formattedPosts = await Promise.all(posts.map(post => this.formatPostResponse(post)));
         return {
-            posts: posts.map(post => this.formatPostResponse(post)),
+            posts: formattedPosts,
             total,
             page,
             limit,
@@ -803,6 +981,192 @@ let PostService = class PostService {
             total,
         };
     }
+    async getTags(pagination) {
+        const { page = 1, limit = 20 } = pagination;
+        const skip = (page - 1) * limit;
+        const [tags, total] = await Promise.all([
+            this.prismaClient.tag.findMany({
+                skip,
+                take: limit,
+                orderBy: { name: 'asc' },
+                include: {
+                    _count: {
+                        select: {
+                            postTags: true,
+                        },
+                    },
+                },
+            }),
+            this.prismaClient.tag.count(),
+        ]);
+        return {
+            tags: tags.map(tag => ({
+                id: tag.id,
+                name: tag.name,
+                description: tag.description || '',
+                questionsCount: tag._count.postTags,
+                createdAt: tag.createdAt.toISOString(),
+            })),
+            total,
+        };
+    }
+    async getPopularTags(limit = 5) {
+        const tags = await this.prismaClient.tag.findMany({
+            take: limit,
+            include: {
+                _count: {
+                    select: {
+                        postTags: true,
+                    },
+                },
+            },
+            orderBy: {
+                postTags: {
+                    _count: 'desc',
+                },
+            },
+        });
+        return {
+            tags: tags.map(tag => ({
+                id: tag.id,
+                name: tag.name,
+                description: tag.description || '',
+                questionsCount: tag._count.postTags,
+                createdAt: tag.createdAt.toISOString(),
+            })),
+            total: tags.length,
+        };
+    }
+    async getPostsByTag(tagName, pagination) {
+        const { page = 1, limit = 20 } = pagination;
+        const skip = (page - 1) * limit;
+        const tag = await this.prismaClient.tag.findFirst({
+            where: {
+                name: {
+                    equals: tagName,
+                    mode: 'insensitive',
+                },
+            },
+        });
+        if (!tag) {
+            return {
+                posts: [],
+                total: 0,
+                page,
+                limit,
+            };
+        }
+        const [postTags, total] = await Promise.all([
+            this.prismaClient.postTag.findMany({
+                where: { tagId: tag.id },
+                skip,
+                take: limit,
+                include: {
+                    post: {
+                        include: {
+                            _count: {
+                                select: {
+                                    likes: true,
+                                    comments: true,
+                                },
+                            },
+                            postTags: {
+                                include: {
+                                    tag: true,
+                                },
+                            },
+                        },
+                    },
+                },
+                orderBy: {
+                    post: {
+                        createdAt: 'desc',
+                    },
+                },
+            }),
+            this.prismaClient.postTag.count({
+                where: { tagId: tag.id },
+            }),
+        ]);
+        const posts = await Promise.all(postTags.map(async (pt) => await this.formatPostResponse(pt.post)));
+        return {
+            posts,
+            total,
+            page,
+            limit,
+        };
+    }
+    async createTag(name, description) {
+        const existingTag = await this.prismaClient.tag.findFirst({
+            where: {
+                name: {
+                    equals: name,
+                    mode: 'insensitive',
+                },
+            },
+        });
+        if (existingTag) {
+            return {
+                id: existingTag.id,
+                name: existingTag.name,
+                description: existingTag.description || '',
+                questionsCount: 0,
+                createdAt: existingTag.createdAt.toISOString(),
+            };
+        }
+        const tag = await this.prismaClient.tag.create({
+            data: {
+                name: name.toLowerCase(),
+                description,
+            },
+        });
+        return {
+            id: tag.id,
+            name: tag.name,
+            description: tag.description || '',
+            questionsCount: 0,
+            createdAt: tag.createdAt.toISOString(),
+        };
+    }
+    async handlePostTags(postId, tagNames) {
+        if (!tagNames || tagNames.length === 0)
+            return;
+        for (const tagName of tagNames) {
+            try {
+                let tag = await this.prismaClient.tag.findFirst({
+                    where: {
+                        name: {
+                            equals: tagName.toLowerCase(),
+                            mode: 'insensitive',
+                        },
+                    },
+                });
+                if (!tag) {
+                    tag = await this.prismaClient.tag.create({
+                        data: {
+                            name: tagName.toLowerCase(),
+                        },
+                    });
+                }
+                await this.prismaClient.postTag.upsert({
+                    where: {
+                        postId_tagId: {
+                            postId,
+                            tagId: tag.id,
+                        },
+                    },
+                    create: {
+                        postId,
+                        tagId: tag.id,
+                    },
+                    update: {},
+                });
+            }
+            catch (error) {
+                this.logger.warn(`Failed to handle tag "${tagName}" for post ${postId}:`, error.message);
+            }
+        }
+    }
     async handleUserDeleted(userId) {
         await this.prisma.post.deleteMany({
             where: { authorId: userId },
@@ -816,11 +1180,12 @@ let PostService = class PostService {
     }
 };
 exports.PostService = PostService;
-exports.PostService = PostService = __decorate([
+exports.PostService = PostService = PostService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(1, (0, common_1.Inject)('POST_SERVICE')),
     __param(2, (0, common_1.Inject)(cache_manager_2.CACHE_MANAGER)),
-    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _b : Object, typeof (_c = typeof cache_manager_1.Cache !== "undefined" && cache_manager_1.Cache) === "function" ? _c : Object])
+    __param(3, (0, common_1.Inject)(common_2.SERVICES.USER_SERVICE)),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientProxy !== "undefined" && microservices_1.ClientProxy) === "function" ? _b : Object, typeof (_c = typeof cache_manager_1.Cache !== "undefined" && cache_manager_1.Cache) === "function" ? _c : Object, typeof (_d = typeof microservices_1.ClientGrpc !== "undefined" && microservices_1.ClientGrpc) === "function" ? _d : Object])
 ], PostService);
 
 
@@ -900,6 +1265,21 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.POSTSERVICE_SERVICE_NAME = exports.POST_PACKAGE_NAME = void 0;
 exports.POST_PACKAGE_NAME = 'post';
 exports.POSTSERVICE_SERVICE_NAME = 'PostService';
+
+
+/***/ }),
+
+/***/ "./generated/user.ts":
+/*!***************************!*\
+  !*** ./generated/user.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.USERSERVICE_SERVICE_NAME = exports.USER_PACKAGE_NAME = void 0;
+exports.USER_PACKAGE_NAME = 'user';
+exports.USERSERVICE_SERVICE_NAME = 'UserService';
 
 
 /***/ }),
@@ -1001,6 +1381,16 @@ module.exports = require("cache-manager");
 /***/ ((module) => {
 
 module.exports = require("path");
+
+/***/ }),
+
+/***/ "rxjs":
+/*!***********************!*\
+  !*** external "rxjs" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("rxjs");
 
 /***/ })
 

@@ -24,6 +24,7 @@ export interface MediaResponse {
   type?: string;
   size?: number;
   createdAt?: string;
+  publicId?: string;
 }
 
 export interface GetMediaRequest {

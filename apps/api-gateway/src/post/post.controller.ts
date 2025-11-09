@@ -49,6 +49,7 @@ export class PostController implements OnModuleInit {
         contentLength: createPostDto.content?.length,
         mediaUrls: createPostDto.mediaUrls,
         privacy: createPostDto.privacy,
+        tags: createPostDto.tags,
         fullDto: createPostDto,
       });
 
@@ -58,6 +59,7 @@ export class PostController implements OnModuleInit {
           content: createPostDto.content,
           mediaUrls: createPostDto.mediaUrls || [],
           visibility: createPostDto.privacy || 'PUBLIC',
+          tags: createPostDto.tags || [],
         }),
       );
 
@@ -73,7 +75,7 @@ export class PostController implements OnModuleInit {
   }
 
   @Get('feed')
-  @ApiOperation({ summary: 'Get public feed' })
+  @ApiOperation({ summary: 'Get public feed (no authentication required)' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getFeed(
@@ -126,13 +128,78 @@ export class PostController implements OnModuleInit {
     }
   }
 
+  // ========== Tag Endpoints (must come before :id route) ==========
+
+  @Get('tags/popular')
+  @ApiOperation({ summary: 'Get popular tags' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getPopularTags(@Query('limit') limit?: number) {
+    try {
+      return await lastValueFrom(
+        this.postService.GetPopularTags({
+          limit: limit || 5,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get popular tags',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('tags/:tagName')
+  @ApiOperation({ summary: 'Get posts by tag' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getPostsByTag(
+    @Param('tagName') tagName: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.GetPostsByTag({
+          tagName,
+          page: page || 1,
+          limit: limit || 20,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get posts by tag',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('tags')
+  @ApiOperation({ summary: 'Get all tags' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getTags(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.GetTags({
+          page: page || 1,
+          limit: limit || 20,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get tags',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get post by ID' })
+  @ApiOperation({ summary: 'Get post by ID (no authentication required)' })
   async getPost(
     @Param('id') postId: string,
-    @CurrentUser('userId') userId: string,
   ) {
     try {
       return await lastValueFrom(

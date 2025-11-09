@@ -142,6 +142,15 @@ export class AuthController implements OnModuleInit {
       const result = await lastValueFrom(this.authService.RefreshToken(refreshTokenDto));
       
       console.log('✅ [API Gateway] Token refresh successful');
+      console.log('🔍 [API Gateway] Result structure:', {
+        hasAccessToken: !!result.accessToken,
+        hasRefreshToken: !!result.refreshToken,
+        hasExpiresIn: result.expiresIn !== undefined,
+        hasRefreshExpiresIn: result.refreshExpiresIn !== undefined,
+        expiresIn: result.expiresIn,
+        refreshExpiresIn: result.refreshExpiresIn,
+        newRefreshTokenPreview: result.refreshToken?.substring(0, 50)
+      });
       
       return {
         success: true,

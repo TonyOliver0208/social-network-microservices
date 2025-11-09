@@ -26,6 +26,7 @@ message MediaResponse {
   string type = 6;
   int64 size = 7;
   string createdAt = 8;
+  string publicId = 9;
 }
 
 message GetMediaRequest {

@@ -14,6 +14,12 @@ service PostService {
   rpc CreateComment (CreateCommentRequest) returns (CommentResponse);
   rpc GetComments (GetCommentsRequest) returns (CommentsListResponse);
   rpc DeleteComment (DeleteCommentRequest) returns (DeleteCommentResponse);
+  
+  // Tag operations
+  rpc GetTags (GetTagsRequest) returns (TagsListResponse);
+  rpc GetPopularTags (GetPopularTagsRequest) returns (TagsListResponse);
+  rpc GetPostsByTag (GetPostsByTagRequest) returns (PostsListResponse);
+  rpc CreateTag (CreateTagRequest) returns (TagResponse);
 }
 
 message CreatePostRequest {
@@ -21,6 +27,7 @@ message CreatePostRequest {
   string content = 2;
   repeated string mediaUrls = 3;
   optional string visibility = 4;
+  repeated string tags = 5;
 }
 
 message GetPostByIdRequest {
@@ -39,6 +46,13 @@ message DeletePostRequest {
   string userId = 2;
 }
 
+message Author {
+  string id = 1;
+  string name = 2;
+  optional string picture = 3;
+  int32 reputation = 4;
+}
+
 message PostResponse {
   string id = 1;
   string userId = 2;
@@ -49,6 +63,8 @@ message PostResponse {
   string visibility = 7;
   string createdAt = 8;
   string updatedAt = 9;
+  optional Author author = 10;
+  repeated TagResponse tags = 11;
 }
 
 message DeletePostResponse {
@@ -121,4 +137,38 @@ message DeleteCommentRequest {
 
 message DeleteCommentResponse {
   bool success = 1;
+}
+
+// Tag messages
+message TagResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 questionsCount = 4;
+  string createdAt = 5;
+}
+
+message GetTagsRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+message GetPopularTagsRequest {
+  int32 limit = 1;
+}
+
+message TagsListResponse {
+  repeated TagResponse tags = 1;
+  int32 total = 2;
+}
+
+message GetPostsByTagRequest {
+  string tagName = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message CreateTagRequest {
+  string name = 1;
+  string description = 2;
 }

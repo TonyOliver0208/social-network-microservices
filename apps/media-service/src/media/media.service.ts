@@ -2,31 +2,17 @@ import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nest
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Media, MediaDocument } from './schemas/media.schema';
+import { CloudinaryService } from './cloudinary.service';
 import { ServiceResponse } from '@app/common';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
-  private readonly uploadDir = process.env.UPLOAD_DIR || './uploads';
-  private readonly baseUrl = process.env.MEDIA_BASE_URL || 'http://localhost:3004';
 
   constructor(
     @InjectModel(Media.name) private mediaModel: Model<MediaDocument>,
-  ) {
-    this.ensureUploadDir();
-  }
-
-  private async ensureUploadDir() {
-    try {
-      await fs.mkdir(this.uploadDir, { recursive: true });
-      this.logger.log(`Upload directory ready: ${this.uploadDir}`);
-    } catch (error) {
-      this.logger.error(`Failed to create upload directory: ${error.message}`);
-    }
-  }
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   private getFileType(mimeType: string): string {
     if (mimeType.startsWith('image/')) return 'image';
@@ -46,28 +32,27 @@ export class MediaService {
     },
   ): Promise<ServiceResponse> {
     try {
-      // Generate unique filename
-      const ext = path.extname(file.originalname);
-      const filename = `${uuidv4()}${ext}`;
-      const filePath = path.join(this.uploadDir, filename);
-
-      // Save file to disk
-      await fs.writeFile(filePath, file.buffer);
+      // Upload to Cloudinary
+      const uploadResult = await this.cloudinaryService.uploadImage(
+        file as Express.Multer.File,
+        'devcoll/posts'
+      );
 
       // Create media record
       const media = await this.mediaModel.create({
         userId,
-        filename,
+        filename: uploadResult.public_id,
         originalName: file.originalname,
         mimeType: file.mimetype,
         size: file.size,
-        url: `${this.baseUrl}/media/${filename}`,
+        url: uploadResult.secure_url,
         type: this.getFileType(file.mimetype),
-        storage: 'local',
+        storage: 'cloudinary',
+        cloudinaryPublicId: uploadResult.public_id,
         isActive: true,
       });
 
-      this.logger.log(`Media uploaded successfully: ${media._id}`);
+      this.logger.log(`Media uploaded successfully to Cloudinary: ${media._id}`);
 
       return {
         success: true,
@@ -76,6 +61,7 @@ export class MediaService {
           url: media.url,
           type: media.type,
           filename: media.filename,
+          publicId: uploadResult.public_id,
         },
       };
     } catch (error) {
@@ -99,12 +85,13 @@ export class MediaService {
         throw new ForbiddenException('You do not have permission to delete this media');
       }
 
-      // Delete file from disk
-      try {
-        const filePath = path.join(this.uploadDir, media.filename);
-        await fs.unlink(filePath);
-      } catch (error) {
-        this.logger.warn(`Failed to delete file from disk: ${error.message}`);
+      // Delete from Cloudinary if it's stored there
+      if (media.storage === 'cloudinary' && media.cloudinaryPublicId) {
+        try {
+          await this.cloudinaryService.deleteImage(media.cloudinaryPublicId);
+        } catch (error) {
+          this.logger.warn(`Failed to delete file from Cloudinary: ${error.message}`);
+        }
       }
 
       // Soft delete: mark as inactive
@@ -191,15 +178,18 @@ export class MediaService {
     try {
       const media = await this.mediaModel.find({ userId, isActive: true });
 
+      // Delete from Cloudinary
       for (const item of media) {
-        try {
-          const filePath = path.join(this.uploadDir, item.filename);
-          await fs.unlink(filePath);
-        } catch (error) {
-          this.logger.warn(`Failed to delete file: ${item.filename}`);
+        if (item.storage === 'cloudinary' && item.cloudinaryPublicId) {
+          try {
+            await this.cloudinaryService.deleteImage(item.cloudinaryPublicId);
+          } catch (error) {
+            this.logger.warn(`Failed to delete Cloudinary file: ${item.cloudinaryPublicId}`);
+          }
         }
       }
 
+      // Soft delete in database
       await this.mediaModel.updateMany(
         { userId },
         { $set: { isActive: false } },

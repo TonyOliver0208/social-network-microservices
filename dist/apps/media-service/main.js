@@ -45,6 +45,103 @@ exports.AppModule = AppModule = __decorate([
 
 /***/ }),
 
+/***/ "./apps/media-service/src/media/cloudinary.service.ts":
+/*!************************************************************!*\
+  !*** ./apps/media-service/src/media/cloudinary.service.ts ***!
+  \************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var CloudinaryService_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CloudinaryService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const cloudinary_1 = __webpack_require__(/*! cloudinary */ "cloudinary");
+let CloudinaryService = CloudinaryService_1 = class CloudinaryService {
+    constructor(configService) {
+        this.configService = configService;
+        this.logger = new common_1.Logger(CloudinaryService_1.name);
+        const cloudName = this.configService.get('CLOUDINARY_CLOUD_NAME');
+        const apiKey = this.configService.get('CLOUDINARY_API_KEY');
+        const apiSecret = this.configService.get('CLOUDINARY_API_SECRET');
+        if (!cloudName || !apiKey || !apiSecret) {
+            this.logger.error('Cloudinary credentials not found in environment variables!');
+            this.logger.error('Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET');
+            throw new Error('Cloudinary configuration missing');
+        }
+        cloudinary_1.v2.config({
+            cloud_name: cloudName,
+            api_key: apiKey,
+            api_secret: apiSecret,
+        });
+        this.logger.log(`Cloudinary configured successfully for cloud: ${cloudName}`);
+    }
+    async uploadImage(file, folder = 'devcoll') {
+        return new Promise((resolve, reject) => {
+            const uploadStream = cloudinary_1.v2.uploader.upload_stream({
+                folder: folder,
+                resource_type: 'auto',
+                transformation: [
+                    { width: 1200, height: 1200, crop: 'limit' },
+                    { quality: 'auto:good' },
+                    { fetch_format: 'auto' },
+                ],
+            }, (error, result) => {
+                if (error) {
+                    this.logger.error('Cloudinary upload error:', error);
+                    return reject(error);
+                }
+                this.logger.log(`Image uploaded successfully: ${result.secure_url}`);
+                resolve(result);
+            });
+            uploadStream.end(file.buffer);
+        });
+    }
+    async deleteImage(publicId) {
+        try {
+            const result = await cloudinary_1.v2.uploader.destroy(publicId);
+            this.logger.log(`Image deleted: ${publicId}`);
+            return result;
+        }
+        catch (error) {
+            this.logger.error(`Error deleting image ${publicId}:`, error);
+            throw error;
+        }
+    }
+    async uploadMultipleImages(files, folder = 'devcoll') {
+        const uploadPromises = files.map((file) => this.uploadImage(file, folder));
+        return Promise.all(uploadPromises);
+    }
+    getOptimizedUrl(publicId, width, height) {
+        return cloudinary_1.v2.url(publicId, {
+            width: width || 800,
+            height: height || 600,
+            crop: 'fill',
+            quality: 'auto',
+            fetch_format: 'auto',
+        });
+    }
+};
+exports.CloudinaryService = CloudinaryService;
+exports.CloudinaryService = CloudinaryService = CloudinaryService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object])
+], CloudinaryService);
+
+
+/***/ }),
+
 /***/ "./apps/media-service/src/media/media.controller.ts":
 /*!**********************************************************!*\
   !*** ./apps/media-service/src/media/media.controller.ts ***!
@@ -80,8 +177,15 @@ let MediaController = MediaController_1 = class MediaController {
         this.logger = new common_1.Logger(MediaController_1.name);
     }
     async uploadMedia(payload) {
-        this.logger.log(`Upload media request from user: ${payload.userId}`);
-        const result = await this.mediaService.uploadFile(payload.userId, payload.file);
+        this.logger.log(`Upload media request from user: ${payload.userId}, file: ${payload.filename}`);
+        const fileBuffer = Buffer.from(payload.file);
+        const fileObject = {
+            buffer: fileBuffer,
+            originalname: payload.filename,
+            mimetype: payload.mimetype,
+            size: fileBuffer.length,
+        };
+        const result = await this.mediaService.uploadFile(payload.userId, fileObject);
         if (!result.success) {
             const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
             throw new microservices_1.RpcException({
@@ -92,8 +196,8 @@ let MediaController = MediaController_1 = class MediaController {
         return result.data;
     }
     async deleteMedia(payload) {
-        this.logger.log(`Delete media request: ${payload.mediaId} by user: ${payload.userId}`);
-        const result = await this.mediaService.deleteFile(payload.mediaId, payload.userId);
+        this.logger.log(`Delete media request: ${payload.id} by user: ${payload.userId}`);
+        const result = await this.mediaService.deleteFile(payload.id, payload.userId);
         if (!result.success) {
             const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
             throw new microservices_1.RpcException({
@@ -104,8 +208,8 @@ let MediaController = MediaController_1 = class MediaController {
         return result.data;
     }
     async findMediaById(payload) {
-        this.logger.log(`Find media by ID: ${payload.mediaId}`);
-        const result = await this.mediaService.findById(payload.mediaId);
+        this.logger.log(`Find media by ID: ${payload.id}`);
+        const result = await this.mediaService.findById(payload.id);
         if (!result.success) {
             const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
             throw new microservices_1.RpcException({
@@ -242,8 +346,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MediaModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const media_controller_1 = __webpack_require__(/*! ./media.controller */ "./apps/media-service/src/media/media.controller.ts");
 const media_service_1 = __webpack_require__(/*! ./media.service */ "./apps/media-service/src/media/media.service.ts");
+const cloudinary_service_1 = __webpack_require__(/*! ./cloudinary.service */ "./apps/media-service/src/media/cloudinary.service.ts");
 const media_schema_1 = __webpack_require__(/*! ./schemas/media.schema */ "./apps/media-service/src/media/schemas/media.schema.ts");
 let MediaModule = class MediaModule {
 };
@@ -251,11 +357,12 @@ exports.MediaModule = MediaModule;
 exports.MediaModule = MediaModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            config_1.ConfigModule,
             mongoose_1.MongooseModule.forFeature([{ name: media_schema_1.Media.name, schema: media_schema_1.MediaSchema }]),
         ],
         controllers: [media_controller_1.MediaController],
-        providers: [media_service_1.MediaService],
-        exports: [media_service_1.MediaService],
+        providers: [media_service_1.MediaService, cloudinary_service_1.CloudinaryService],
+        exports: [media_service_1.MediaService, cloudinary_service_1.CloudinaryService],
     })
 ], MediaModule);
 
@@ -269,45 +376,12 @@ exports.MediaModule = MediaModule = __decorate([
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -315,32 +389,19 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var MediaService_1;
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MediaService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
 const mongoose_2 = __webpack_require__(/*! mongoose */ "mongoose");
 const media_schema_1 = __webpack_require__(/*! ./schemas/media.schema */ "./apps/media-service/src/media/schemas/media.schema.ts");
-const fs = __importStar(__webpack_require__(/*! fs/promises */ "fs/promises"));
-const path = __importStar(__webpack_require__(/*! path */ "path"));
-const uuid_1 = __webpack_require__(/*! uuid */ "uuid");
+const cloudinary_service_1 = __webpack_require__(/*! ./cloudinary.service */ "./apps/media-service/src/media/cloudinary.service.ts");
 let MediaService = MediaService_1 = class MediaService {
-    constructor(mediaModel) {
+    constructor(mediaModel, cloudinaryService) {
         this.mediaModel = mediaModel;
+        this.cloudinaryService = cloudinaryService;
         this.logger = new common_1.Logger(MediaService_1.name);
-        this.uploadDir = process.env.UPLOAD_DIR || './uploads';
-        this.baseUrl = process.env.MEDIA_BASE_URL || 'http://localhost:3004';
-        this.ensureUploadDir();
-    }
-    async ensureUploadDir() {
-        try {
-            await fs.mkdir(this.uploadDir, { recursive: true });
-            this.logger.log(`Upload directory ready: ${this.uploadDir}`);
-        }
-        catch (error) {
-            this.logger.error(`Failed to create upload directory: ${error.message}`);
-        }
     }
     getFileType(mimeType) {
         if (mimeType.startsWith('image/'))
@@ -355,22 +416,20 @@ let MediaService = MediaService_1 = class MediaService {
     }
     async uploadFile(userId, file) {
         try {
-            const ext = path.extname(file.originalname);
-            const filename = `${(0, uuid_1.v4)()}${ext}`;
-            const filePath = path.join(this.uploadDir, filename);
-            await fs.writeFile(filePath, file.buffer);
+            const uploadResult = await this.cloudinaryService.uploadImage(file, 'devcoll/posts');
             const media = await this.mediaModel.create({
                 userId,
-                filename,
+                filename: uploadResult.public_id,
                 originalName: file.originalname,
                 mimeType: file.mimetype,
                 size: file.size,
-                url: `${this.baseUrl}/media/${filename}`,
+                url: uploadResult.secure_url,
                 type: this.getFileType(file.mimetype),
-                storage: 'local',
+                storage: 'cloudinary',
+                cloudinaryPublicId: uploadResult.public_id,
                 isActive: true,
             });
-            this.logger.log(`Media uploaded successfully: ${media._id}`);
+            this.logger.log(`Media uploaded successfully to Cloudinary: ${media._id}`);
             return {
                 success: true,
                 data: {
@@ -378,6 +437,7 @@ let MediaService = MediaService_1 = class MediaService {
                     url: media.url,
                     type: media.type,
                     filename: media.filename,
+                    publicId: uploadResult.public_id,
                 },
             };
         }
@@ -398,12 +458,13 @@ let MediaService = MediaService_1 = class MediaService {
             if (media.userId !== userId) {
                 throw new common_1.ForbiddenException('You do not have permission to delete this media');
             }
-            try {
-                const filePath = path.join(this.uploadDir, media.filename);
-                await fs.unlink(filePath);
-            }
-            catch (error) {
-                this.logger.warn(`Failed to delete file from disk: ${error.message}`);
+            if (media.storage === 'cloudinary' && media.cloudinaryPublicId) {
+                try {
+                    await this.cloudinaryService.deleteImage(media.cloudinaryPublicId);
+                }
+                catch (error) {
+                    this.logger.warn(`Failed to delete file from Cloudinary: ${error.message}`);
+                }
             }
             media.isActive = false;
             await media.save();
@@ -478,12 +539,13 @@ let MediaService = MediaService_1 = class MediaService {
         try {
             const media = await this.mediaModel.find({ userId, isActive: true });
             for (const item of media) {
-                try {
-                    const filePath = path.join(this.uploadDir, item.filename);
-                    await fs.unlink(filePath);
-                }
-                catch (error) {
-                    this.logger.warn(`Failed to delete file: ${item.filename}`);
+                if (item.storage === 'cloudinary' && item.cloudinaryPublicId) {
+                    try {
+                        await this.cloudinaryService.deleteImage(item.cloudinaryPublicId);
+                    }
+                    catch (error) {
+                        this.logger.warn(`Failed to delete Cloudinary file: ${item.cloudinaryPublicId}`);
+                    }
                 }
             }
             await this.mediaModel.updateMany({ userId }, { $set: { isActive: false } });
@@ -498,7 +560,7 @@ exports.MediaService = MediaService;
 exports.MediaService = MediaService = MediaService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(media_schema_1.Media.name)),
-    __metadata("design:paramtypes", [typeof (_a = typeof mongoose_2.Model !== "undefined" && mongoose_2.Model) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof mongoose_2.Model !== "undefined" && mongoose_2.Model) === "function" ? _a : Object, typeof (_b = typeof cloudinary_service_1.CloudinaryService !== "undefined" && cloudinary_service_1.CloudinaryService) === "function" ? _b : Object])
 ], MediaService);
 
 
@@ -563,6 +625,10 @@ __decorate([
     (0, mongoose_1.Prop)({ default: 'local' }),
     __metadata("design:type", String)
 ], Media.prototype, "storage", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Media.prototype, "cloudinaryPublicId", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ type: Object }),
     __metadata("design:type", typeof (_a = typeof Record !== "undefined" && Record) === "function" ? _a : Object)
@@ -667,13 +733,13 @@ module.exports = require("@nestjs/mongoose");
 
 /***/ }),
 
-/***/ "fs/promises":
-/*!******************************!*\
-  !*** external "fs/promises" ***!
-  \******************************/
+/***/ "cloudinary":
+/*!*****************************!*\
+  !*** external "cloudinary" ***!
+  \*****************************/
 /***/ ((module) => {
 
-module.exports = require("fs/promises");
+module.exports = require("cloudinary");
 
 /***/ }),
 
@@ -694,16 +760,6 @@ module.exports = require("mongoose");
 /***/ ((module) => {
 
 module.exports = require("path");
-
-/***/ }),
-
-/***/ "uuid":
-/*!***********************!*\
-  !*** external "uuid" ***!
-  \***********************/
-/***/ ((module) => {
-
-module.exports = require("uuid");
 
 /***/ })
 

@@ -24,6 +24,12 @@ export class CreatePostDto {
   @IsEnum(Privacy)
   @IsOptional()
   privacy?: Privacy;
+
+  @ApiProperty({ required: false, example: ['javascript', 'react', 'nextjs'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
 }
 
 export class UpdatePostDto {

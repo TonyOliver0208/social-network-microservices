@@ -15,13 +15,14 @@ export class PostController {
   // ========== gRPC Methods (Gateway → Post Service) ==========
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'CreatePost')
-  async createPost(data: { userId: string; content: string; mediaUrls?: string[]; visibility?: string }) {
+  async createPost(data: { userId: string; content: string; mediaUrls?: string[]; visibility?: string; tags?: string[] }) {
     try {
-      this.logger.log(`Creating post for user: ${data.userId}`);
+      this.logger.log(`Creating post for user: ${data.userId} with tags:`, data.tags);
       const createPostDto: CreatePostDto = {
         content: data.content,
         mediaUrls: data.mediaUrls,
         privacy: data.visibility as any,
+        tags: data.tags,
       };
       return await this.postService.createPost(data.userId, createPostDto);
     } catch (error) {
@@ -201,10 +202,56 @@ export class PostController {
 
   // ========== RabbitMQ Event Handlers (Service → Service) ==========
 
+  // ========== Tag Methods ==========
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetTags')
+  async getTags(data: { page: number; limit: number }) {
+    try {
+      this.logger.log(`Getting tags: page ${data.page}, limit ${data.limit}`);
+      return await this.postService.getTags({ page: data.page, limit: data.limit });
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetPopularTags')
+  async getPopularTags(data: { limit: number }) {
+    try {
+      this.logger.log(`Getting popular tags: limit ${data.limit}`);
+      return await this.postService.getPopularTags(data.limit || 5);
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetPostsByTag')
+  async getPostsByTag(data: { tagName: string; page: number; limit: number }) {
+    try {
+      this.logger.log(`Getting posts by tag: ${data.tagName}`);
+      return await this.postService.getPostsByTag(data.tagName, { 
+        page: data.page, 
+        limit: data.limit 
+      });
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'CreateTag')
+  async createTag(data: { name: string; description?: string }) {
+    try {
+      this.logger.log(`Creating tag: ${data.name}`);
+      return await this.postService.createTag(data.name, data.description);
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  // ========== RabbitMQ Event Handlers (Service → Service) ==========
+
   @EventPattern(EVENTS.USER_DELETED)
-  async handleUserDeleted(@Payload() data: { userId: string }) {
-    this.logger.log(`Handling user deleted event: ${data.userId}`);
-    // Delete all posts by this user
+  async handleUserDeletedEvent(@Payload() data: { userId: string }) {
+    this.logger.log(`[Event] User deleted: ${data.userId}`);
     await this.postService.handleUserDeleted(data.userId);
   }
 
