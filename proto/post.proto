@@ -20,6 +20,15 @@ service PostService {
   rpc GetPopularTags (GetPopularTagsRequest) returns (TagsListResponse);
   rpc GetPostsByTag (GetPostsByTagRequest) returns (PostsListResponse);
   rpc CreateTag (CreateTagRequest) returns (TagResponse);
+  
+  // Question voting operations
+  rpc VoteQuestion (VoteQuestionRequest) returns (VoteQuestionResponse);
+  rpc GetQuestionVotes (GetQuestionVotesRequest) returns (QuestionVotesResponse);
+  
+  // Favorite operations
+  rpc FavoriteQuestion (FavoriteQuestionRequest) returns (FavoriteQuestionResponse);
+  rpc UnfavoriteQuestion (UnfavoriteQuestionRequest) returns (FavoriteQuestionResponse);
+  rpc GetUserFavorites (GetUserFavoritesRequest) returns (FavoriteQuestionsListResponse);
 }
 
 message CreatePostRequest {
@@ -65,6 +74,11 @@ message PostResponse {
   string updatedAt = 9;
   optional Author author = 10;
   repeated TagResponse tags = 11;
+  int32 upvotes = 12;
+  int32 downvotes = 13;
+  int32 totalVotes = 14; // upvotes - downvotes
+  optional string userVote = 15; // "up", "down", or null
+  bool isFavorited = 16; // Whether current user favorited this question
 }
 
 message DeletePostResponse {
@@ -171,4 +185,70 @@ message GetPostsByTagRequest {
 message CreateTagRequest {
   string name = 1;
   string description = 2;
+}
+
+// Question voting messages
+message VoteQuestionRequest {
+  string questionId = 1;
+  string userId = 2;
+  string voteType = 3; // "up" or "down" - toggle if same, change if different, remove if null
+}
+
+message VoteQuestionResponse {
+  bool success = 1;
+  int32 upvotes = 2;
+  int32 downvotes = 3;
+  int32 totalVotes = 4; // upvotes - downvotes
+  optional string userVote = 5; // "up", "down", or null
+}
+
+message GetQuestionVotesRequest {
+  string questionId = 1;
+  optional string userId = 2; // Optional - to check user's vote
+}
+
+message QuestionVotesResponse {
+  int32 upvotes = 1;
+  int32 downvotes = 2;
+  int32 totalVotes = 3;
+  optional string userVote = 4; // "up", "down", or null if userId provided
+}
+
+// Favorite messages
+message FavoriteQuestionRequest {
+  string questionId = 1;
+  string userId = 2;
+  optional string listName = 3; // Optional list name, defaults to "default"
+}
+
+message UnfavoriteQuestionRequest {
+  string questionId = 1;
+  string userId = 2;
+}
+
+message FavoriteQuestionResponse {
+  bool success = 1;
+  bool isFavorited = 2;
+}
+
+message GetUserFavoritesRequest {
+  string userId = 1;
+  optional string listName = 2; // Optional filter by list
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message FavoriteQuestionItem {
+  string id = 1;
+  string questionId = 2;
+  string listName = 3;
+  string createdAt = 4;
+  optional PostResponse question = 5; // Include the full question data
+}
+
+message FavoriteQuestionsListResponse {
+  repeated FavoriteQuestionItem favorites = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
 }

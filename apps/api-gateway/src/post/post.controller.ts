@@ -383,4 +383,132 @@ export class PostController implements OnModuleInit {
       );
     }
   }
+
+  // ========== Question Voting Endpoints ==========
+
+  @Post(':id/vote')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Vote on a question (up/down) - toggles if same vote' })
+  async voteQuestion(
+    @Param('id') questionId: string,
+    @CurrentUser('userId') userId: string,
+    @Body() body: { voteType: 'up' | 'down' },
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.VoteQuestion({
+          questionId,
+          userId,
+          voteType: body.voteType,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to vote on question',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get(':id/votes')
+  @ApiOperation({ summary: 'Get vote counts for a question' })
+  async getQuestionVotes(
+    @Param('id') questionId: string,
+    @CurrentUser('userId') userId?: string,
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.GetQuestionVotes({
+          questionId,
+          userId,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get question votes',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // ========== Favorite Questions Endpoints ==========
+
+  @Post(':id/favorite')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Toggle favorite on a question' })
+  async favoriteQuestion(
+    @Param('id') questionId: string,
+    @CurrentUser('userId') userId: string,
+    @Body() body?: { listName?: string },
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.FavoriteQuestion({
+          questionId,
+          userId,
+          listName: body?.listName,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to favorite question',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Delete(':id/favorite')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Remove favorite from a question' })
+  async unfavoriteQuestion(
+    @Param('id') questionId: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.UnfavoriteQuestion({
+          questionId,
+          userId,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to unfavorite question',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get('favorites')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user favorite questions' })
+  @ApiQuery({ name: 'listName', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getUserFavorites(
+    @CurrentUser('userId') userId: string,
+    @Query('listName') listName?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.GetUserFavorites({
+          userId,
+          listName,
+          page: page || 1,
+          limit: limit || 20,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get favorites',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

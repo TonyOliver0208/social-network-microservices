@@ -1,6 +1,12 @@
 import { Module } from '@nestjs/common';
-import { PostController } from './post.controller';
-import { PostService } from './post.service';
+import { PostPublicController } from './controllers/post-public.controller';
+import { PostProtectedController } from './controllers/post-protected.controller';
+import { PostLogicService } from './services/logic/post-logic.service';
+import { LikeLogicService } from './services/logic/like-logic.service';
+import { CommentLogicService } from './services/logic/comment-logic.service';
+import { TagLogicService } from './services/logic/tag-logic.service';
+import { VoteLogicService } from './services/logic/vote-logic.service';
+import { PostViewService } from './services/view/post-view.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { GrpcModule, SERVICES } from '@app/common';
 import { USER_PACKAGE_NAME } from '@app/proto/user';
@@ -16,7 +22,14 @@ import { USER_PACKAGE_NAME } from '@app/proto/user';
       defaultUrl: 'localhost:50052',
     }),
   ],
-  controllers: [PostController],
-  providers: [PostService],
+  controllers: [PostPublicController, PostProtectedController],
+  providers: [
+    PostLogicService,
+    LikeLogicService,
+    CommentLogicService,
+    TagLogicService,
+    VoteLogicService,
+    PostViewService,
+  ],
 })
 export class PostModule {}

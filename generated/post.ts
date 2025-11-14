@@ -50,6 +50,11 @@ export interface PostResponse {
   updatedAt?: string;
   author?: Author;
   tags?: TagResponse[];
+  upvotes?: number;
+  downvotes?: number;
+  totalVotes?: number;
+  userVote?: string;
+  isFavorited?: boolean;
 }
 
 export interface DeletePostResponse {
@@ -157,6 +162,70 @@ export interface CreateTagRequest {
   description?: string;
 }
 
+export interface VoteQuestionRequest {
+  questionId?: string;
+  userId?: string;
+  voteType?: string;
+}
+
+export interface VoteQuestionResponse {
+  success?: boolean;
+  upvotes?: number;
+  downvotes?: number;
+  totalVotes?: number;
+  userVote?: string;
+}
+
+export interface GetQuestionVotesRequest {
+  questionId?: string;
+  userId?: string;
+}
+
+export interface QuestionVotesResponse {
+  upvotes?: number;
+  downvotes?: number;
+  totalVotes?: number;
+  userVote?: string;
+}
+
+export interface FavoriteQuestionRequest {
+  questionId?: string;
+  userId?: string;
+  listName?: string;
+}
+
+export interface UnfavoriteQuestionRequest {
+  questionId?: string;
+  userId?: string;
+}
+
+export interface FavoriteQuestionResponse {
+  success?: boolean;
+  isFavorited?: boolean;
+}
+
+export interface GetUserFavoritesRequest {
+  userId?: string;
+  listName?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface FavoriteQuestionItem {
+  id?: string;
+  questionId?: string;
+  listName?: string;
+  createdAt?: string;
+  question?: PostResponse;
+}
+
+export interface FavoriteQuestionsListResponse {
+  favorites?: FavoriteQuestionItem[];
+  total?: number;
+  page?: number;
+  limit?: number;
+}
+
 export interface PostService {
   CreatePost(request: CreatePostRequest): Observable<PostResponse>;
   GetPostById(request: GetPostByIdRequest): Observable<PostResponse>;
@@ -173,6 +242,11 @@ export interface PostService {
   GetPopularTags(request: GetPopularTagsRequest): Observable<TagsListResponse>;
   GetPostsByTag(request: GetPostsByTagRequest): Observable<PostsListResponse>;
   CreateTag(request: CreateTagRequest): Observable<TagResponse>;
+  VoteQuestion(request: VoteQuestionRequest): Observable<VoteQuestionResponse>;
+  GetQuestionVotes(request: GetQuestionVotesRequest): Observable<QuestionVotesResponse>;
+  FavoriteQuestion(request: FavoriteQuestionRequest): Observable<FavoriteQuestionResponse>;
+  UnfavoriteQuestion(request: UnfavoriteQuestionRequest): Observable<FavoriteQuestionResponse>;
+  GetUserFavorites(request: GetUserFavoritesRequest): Observable<FavoriteQuestionsListResponse>;
 }
 
 export const POSTSERVICE_SERVICE_NAME = 'PostService';

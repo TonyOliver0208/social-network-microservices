@@ -1,114 +1,19 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ServiceResponse, PaginatedResponse, calculatePagination } from '@app/common';
-import { UpdateProfileDto } from './dto';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { ServiceResponse, calculatePagination } from '@app/common';
 
 @Injectable()
-export class UserService {
-  private readonly logger = new Logger(UserService.name);
+export class FollowLogicService {
+  private readonly logger = new Logger(FollowLogicService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
-  // Create user profile (triggered by user registration event)
-  async createUserProfile(userId: string, email: string, username: string): Promise<void> {
-    try {
-      await this.prisma.$transaction([
-        this.prisma.profile.create({
-          data: {
-            userId,
-            fullName: username,
-          },
-        }),
-        this.prisma.userStats.create({
-          data: {
-            userId,
-            followersCount: 0,
-            followingCount: 0,
-            postsCount: 0,
-          },
-        }),
-      ]);
-
-      this.logger.log(`Created profile and stats for user: ${userId}`);
-    } catch (error) {
-      this.logger.error(`Failed to create profile: ${error.message}`);
-      throw error;
-    }
-  }
-
-  // Get user profile
-  async getProfile(userId: string): Promise<ServiceResponse> {
-    try {
-      const profile = await this.prisma.profile.findUnique({
-        where: { userId },
-      });
-
-      if (!profile) {
-        throw new NotFoundException('Profile not found');
-      }
-
-      const stats = await this.prisma.userStats.findUnique({
-        where: { userId },
-      });
-
-      return {
-        success: true,
-        data: {
-          ...profile,
-          stats,
-        },
-      };
-    } catch (error) {
-      this.logger.error(`Get profile error: ${error.message}`);
-      return {
-        success: false,
-        error: error.message,
-        statusCode: error.status || 500,
-      };
-    }
-  }
-
-  // Update user profile
-  async updateProfile(userId: string, data: UpdateProfileDto): Promise<ServiceResponse> {
-    try {
-      const profile = await this.prisma.profile.update({
-        where: { userId },
-        data: {
-          ...data,
-          updatedAt: new Date(),
-        },
-      });
-
-      this.logger.log(`Updated profile for user: ${userId}`);
-
-      return {
-        success: true,
-        data: profile,
-        message: 'Profile updated successfully',
-      };
-    } catch (error) {
-      this.logger.error(`Update profile error: ${error.message}`);
-      return {
-        success: false,
-        error: error.message,
-        statusCode: error.status || 500,
-      };
-    }
-  }
-
-  // Follow user
   async followUser(followerId: string, followingId: string): Promise<ServiceResponse> {
     try {
       if (followerId === followingId) {
         throw new BadRequestException('Cannot follow yourself');
       }
 
-      // Check if already following
       const existing = await this.prisma.follow.findUnique({
         where: {
           followerId_followingId: {
@@ -122,7 +27,6 @@ export class UserService {
         throw new BadRequestException('Already following this user');
       }
 
-      // Create follow relationship and update stats
       await this.prisma.$transaction([
         this.prisma.follow.create({
           data: {
@@ -156,7 +60,6 @@ export class UserService {
     }
   }
 
-  // Unfollow user
   async unfollowUser(followerId: string, followingId: string): Promise<ServiceResponse> {
     try {
       const follow = await this.prisma.follow.findUnique({
@@ -172,7 +75,6 @@ export class UserService {
         throw new NotFoundException('Not following this user');
       }
 
-      // Delete follow relationship and update stats
       await this.prisma.$transaction([
         this.prisma.follow.delete({
           where: { id: follow.id },
@@ -203,8 +105,7 @@ export class UserService {
     }
   }
 
-  // Get followers
-  async getFollowers(userId: string, page = 1, limit = 20): Promise<PaginatedResponse<any> | ServiceResponse> {
+  async getFollowers(userId: string, page = 1, limit = 20) {
     try {
       const skip = (page - 1) * limit;
 
@@ -239,8 +140,7 @@ export class UserService {
     }
   }
 
-  // Get following
-  async getFollowing(userId: string, page = 1, limit = 20): Promise<PaginatedResponse<any> | ServiceResponse> {
+  async getFollowing(userId: string, page = 1, limit = 20) {
     try {
       const skip = (page - 1) * limit;
 
@@ -267,53 +167,6 @@ export class UserService {
       };
     } catch (error) {
       this.logger.error(`Get following error: ${error.message}`);
-      return {
-        success: false,
-        error: error.message,
-        statusCode: 500,
-      };
-    }
-  }
-
-  // Search users
-  async searchUsers(query: string, page = 1, limit = 20): Promise<PaginatedResponse<any> | ServiceResponse> {
-    try {
-      const skip = (page - 1) * limit;
-
-      const [users, total] = await Promise.all([
-        this.prisma.profile.findMany({
-          where: {
-            OR: [
-              { fullName: { contains: query, mode: 'insensitive' } },
-              { bio: { contains: query, mode: 'insensitive' } },
-            ],
-          },
-          skip,
-          take: limit,
-          select: {
-            userId: true,
-            fullName: true,
-            avatar: true,
-            bio: true,
-          },
-        }),
-        this.prisma.profile.count({
-          where: {
-            OR: [
-              { fullName: { contains: query, mode: 'insensitive' } },
-              { bio: { contains: query, mode: 'insensitive' } },
-            ],
-          },
-        }),
-      ]);
-
-      return {
-        success: true,
-        data: users,
-        pagination: calculatePagination(page, limit, total),
-      };
-    } catch (error) {
-      this.logger.error(`Search users error: ${error.message}`);
       return {
         success: false,
         error: error.message,

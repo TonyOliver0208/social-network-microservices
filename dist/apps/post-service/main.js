@@ -285,6 +285,51 @@ let PostController = PostController_1 = class PostController {
             throw this.handleException(error);
         }
     }
+    async voteQuestion(data) {
+        try {
+            this.logger.log(`User ${data.userId} voting ${data.voteType} on question ${data.questionId}`);
+            return await this.postService.voteQuestion(data.questionId, data.userId, data.voteType);
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async getQuestionVotes(data) {
+        try {
+            this.logger.log(`Getting votes for question ${data.questionId}`);
+            return await this.postService.getQuestionVotes(data.questionId, data.userId);
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async favoriteQuestion(data) {
+        try {
+            this.logger.log(`User ${data.userId} favoriting question ${data.questionId}`);
+            return await this.postService.favoriteQuestion(data.questionId, data.userId, data.listName);
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async unfavoriteQuestion(data) {
+        try {
+            this.logger.log(`User ${data.userId} unfavoriting question ${data.questionId}`);
+            return await this.postService.unfavoriteQuestion(data.questionId, data.userId);
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async getUserFavorites(data) {
+        try {
+            this.logger.log(`Getting favorites for user ${data.userId}`);
+            return await this.postService.getUserFavorites(data.userId, data.listName, data.page || 1, data.limit || 20);
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
     async handleUserDeletedEvent(data) {
         this.logger.log(`[Event] User deleted: ${data.userId}`);
         await this.postService.handleUserDeleted(data.userId);
@@ -401,6 +446,36 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "createTag", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'VoteQuestion'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "voteQuestion", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'GetQuestionVotes'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getQuestionVotes", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'FavoriteQuestion'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "favoriteQuestion", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'UnfavoriteQuestion'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "unfavoriteQuestion", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'GetUserFavorites'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getUserFavorites", null);
 __decorate([
     (0, microservices_1.EventPattern)(common_2.EVENTS.USER_DELETED),
     __param(0, (0, microservices_1.Payload)()),
@@ -590,7 +665,7 @@ let PostService = PostService_1 = class PostService {
             };
         }
     }
-    async formatPostResponse(post) {
+    async formatPostResponse(post, userId) {
         const author = await this.getUserData(post.authorId);
         const tags = post.postTags?.map((pt) => ({
             id: pt.tag.id,
@@ -599,6 +674,23 @@ let PostService = PostService_1 = class PostService {
             questionsCount: 0,
             createdAt: pt.tag.createdAt.toISOString(),
         })) || [];
+        let upvotes = 0;
+        let downvotes = 0;
+        let userVote = null;
+        if (post.questionVotes) {
+            upvotes = post.questionVotes.filter((v) => v.voteType === 'UP').length;
+            downvotes = post.questionVotes.filter((v) => v.voteType === 'DOWN').length;
+            if (userId) {
+                const vote = post.questionVotes.find((v) => v.userId === userId);
+                if (vote) {
+                    userVote = vote.voteType.toLowerCase();
+                }
+            }
+        }
+        let isFavorited = false;
+        if (post.favoriteQuestions && userId) {
+            isFavorited = post.favoriteQuestions.some((f) => f.userId === userId);
+        }
         return {
             id: post.id,
             userId: post.authorId,
@@ -611,6 +703,11 @@ let PostService = PostService_1 = class PostService {
             updatedAt: post.updatedAt.toISOString(),
             author: author,
             tags: tags,
+            upvotes,
+            downvotes,
+            totalVotes: upvotes - downvotes,
+            userVote: userVote || undefined,
+            isFavorited,
         };
     }
     async createPost(userId, createPostDto) {
@@ -666,12 +763,18 @@ let PostService = PostService_1 = class PostService {
                         tag: true,
                     },
                 },
+                questionVotes: userId ? {
+                    where: { userId },
+                } : true,
+                favoriteQuestions: userId ? {
+                    where: { userId },
+                } : false,
             },
         });
         if (!post) {
             throw new common_1.NotFoundException('Post not found');
         }
-        const result = await this.formatPostResponse(post);
+        const result = await this.formatPostResponse(post, userId);
         await this.cacheManager.set(cacheKey, result, common_2.CACHE_TTL.MEDIUM);
         return result;
     }
@@ -1177,6 +1280,235 @@ let PostService = PostService_1 = class PostService {
         await this.prisma.like.deleteMany({
             where: { userId },
         });
+        await this.prismaClient.questionVote.deleteMany({
+            where: { userId },
+        });
+        await this.prismaClient.favoriteQuestion.deleteMany({
+            where: { userId },
+        });
+    }
+    async voteQuestion(questionId, userId, voteType) {
+        try {
+            const post = await this.prismaClient.post.findUnique({
+                where: { id: questionId },
+            });
+            if (!post) {
+                throw new common_1.NotFoundException('Question not found');
+            }
+            const existingVote = await this.prismaClient.questionVote.findUnique({
+                where: {
+                    postId_userId: {
+                        postId: questionId,
+                        userId,
+                    },
+                },
+            });
+            const normalizedVoteType = voteType?.toUpperCase();
+            if (existingVote && existingVote.voteType === normalizedVoteType) {
+                await this.prismaClient.questionVote.delete({
+                    where: { id: existingVote.id },
+                });
+                await this.cacheManager.del(common_2.CACHE_KEYS.POST(questionId));
+                return await this.getQuestionVotes(questionId, userId);
+            }
+            if (normalizedVoteType === 'UP' || normalizedVoteType === 'DOWN') {
+                await this.prismaClient.questionVote.upsert({
+                    where: {
+                        postId_userId: {
+                            postId: questionId,
+                            userId,
+                        },
+                    },
+                    create: {
+                        postId: questionId,
+                        userId,
+                        voteType: normalizedVoteType,
+                    },
+                    update: {
+                        voteType: normalizedVoteType,
+                        updatedAt: new Date(),
+                    },
+                });
+                await this.cacheManager.del(common_2.CACHE_KEYS.POST(questionId));
+                return await this.getQuestionVotes(questionId, userId);
+            }
+            throw new Error('Invalid vote type. Must be "up" or "down"');
+        }
+        catch (error) {
+            this.logger.error(`Failed to vote on question ${questionId}:`, error);
+            throw error;
+        }
+    }
+    async getQuestionVotes(questionId, userId) {
+        try {
+            const [upvotes, downvotes, userVote] = await Promise.all([
+                this.prismaClient.questionVote.count({
+                    where: {
+                        postId: questionId,
+                        voteType: 'UP',
+                    },
+                }),
+                this.prismaClient.questionVote.count({
+                    where: {
+                        postId: questionId,
+                        voteType: 'DOWN',
+                    },
+                }),
+                userId
+                    ? this.prismaClient.questionVote.findUnique({
+                        where: {
+                            postId_userId: {
+                                postId: questionId,
+                                userId,
+                            },
+                        },
+                    })
+                    : null,
+            ]);
+            return {
+                success: true,
+                upvotes,
+                downvotes,
+                totalVotes: upvotes - downvotes,
+                userVote: userVote ? userVote.voteType.toLowerCase() : null,
+            };
+        }
+        catch (error) {
+            this.logger.error(`Failed to get votes for question ${questionId}:`, error);
+            throw error;
+        }
+    }
+    async favoriteQuestion(questionId, userId, listName) {
+        try {
+            const post = await this.prismaClient.post.findUnique({
+                where: { id: questionId },
+            });
+            if (!post) {
+                throw new common_1.NotFoundException('Question not found');
+            }
+            const effectiveListName = listName || 'default';
+            const existingFavorite = await this.prismaClient.favoriteQuestion.findUnique({
+                where: {
+                    postId_userId: {
+                        postId: questionId,
+                        userId,
+                    },
+                },
+            });
+            if (existingFavorite) {
+                await this.prismaClient.favoriteQuestion.delete({
+                    where: { id: existingFavorite.id },
+                });
+                await this.cacheManager.del(common_2.CACHE_KEYS.POST(questionId));
+                return {
+                    success: true,
+                    isFavorited: false,
+                };
+            }
+            await this.prismaClient.favoriteQuestion.create({
+                data: {
+                    postId: questionId,
+                    userId,
+                    listName: effectiveListName,
+                },
+            });
+            await this.cacheManager.del(common_2.CACHE_KEYS.POST(questionId));
+            return {
+                success: true,
+                isFavorited: true,
+            };
+        }
+        catch (error) {
+            this.logger.error(`Failed to favorite question ${questionId}:`, error);
+            throw error;
+        }
+    }
+    async unfavoriteQuestion(questionId, userId) {
+        try {
+            const favorite = await this.prismaClient.favoriteQuestion.findUnique({
+                where: {
+                    postId_userId: {
+                        postId: questionId,
+                        userId,
+                    },
+                },
+            });
+            if (favorite) {
+                await this.prismaClient.favoriteQuestion.delete({
+                    where: { id: favorite.id },
+                });
+                await this.cacheManager.del(common_2.CACHE_KEYS.POST(questionId));
+            }
+            return {
+                success: true,
+                isFavorited: false,
+            };
+        }
+        catch (error) {
+            this.logger.error(`Failed to unfavorite question ${questionId}:`, error);
+            throw error;
+        }
+    }
+    async getUserFavorites(userId, listName, page = 1, limit = 20) {
+        try {
+            const skip = (page - 1) * limit;
+            const where = { userId };
+            if (listName) {
+                where.listName = listName;
+            }
+            const [favorites, total] = await Promise.all([
+                this.prismaClient.favoriteQuestion.findMany({
+                    where,
+                    include: {
+                        post: {
+                            include: {
+                                _count: {
+                                    select: {
+                                        likes: true,
+                                        comments: true,
+                                        questionVotes: true,
+                                    },
+                                },
+                                postTags: {
+                                    include: {
+                                        tag: true,
+                                    },
+                                },
+                                questionVotes: {
+                                    where: { userId },
+                                },
+                                favoriteQuestions: {
+                                    where: { userId },
+                                },
+                            },
+                        },
+                    },
+                    orderBy: {
+                        createdAt: 'desc',
+                    },
+                    skip,
+                    take: limit,
+                }),
+                this.prismaClient.favoriteQuestion.count({ where }),
+            ]);
+            const formattedFavorites = await Promise.all(favorites.map(async (favorite) => ({
+                id: favorite.id,
+                questionId: favorite.postId,
+                listName: favorite.listName || 'default',
+                createdAt: favorite.createdAt.toISOString(),
+                question: await this.formatPostResponse(favorite.post),
+            })));
+            return {
+                favorites: formattedFavorites,
+                total,
+                page,
+                limit,
+            };
+        }
+        catch (error) {
+            this.logger.error(`Failed to get favorites for user ${userId}:`, error);
+            throw error;
+        }
     }
 };
 exports.PostService = PostService;

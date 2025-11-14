@@ -1036,6 +1036,65 @@ let PostController = class PostController {
             throw new common_1.HttpException(error.message || 'Failed to delete comment', error.status || common_1.HttpStatus.BAD_REQUEST);
         }
     }
+    async voteQuestion(questionId, userId, body) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.VoteQuestion({
+                questionId,
+                userId,
+                voteType: body.voteType,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to vote on question', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async getQuestionVotes(questionId, userId) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetQuestionVotes({
+                questionId,
+                userId,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get question votes', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async favoriteQuestion(questionId, userId, body) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.FavoriteQuestion({
+                questionId,
+                userId,
+                listName: body?.listName,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to favorite question', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async unfavoriteQuestion(questionId, userId) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.UnfavoriteQuestion({
+                questionId,
+                userId,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to unfavorite question', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async getUserFavorites(userId, listName, page, limit) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetUserFavorites({
+                userId,
+                listName,
+                page: page || 1,
+                limit: limit || 20,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get favorites', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 };
 exports.PostController = PostController;
 __decorate([
@@ -1196,6 +1255,66 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "deleteComment", null);
+__decorate([
+    (0, common_1.Post)(':id/vote'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Vote on a question (up/down) - toggles if same vote' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "voteQuestion", null);
+__decorate([
+    (0, common_1.Get)(':id/votes'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get vote counts for a question' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getQuestionVotes", null);
+__decorate([
+    (0, common_1.Post)(':id/favorite'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Toggle favorite on a question' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "favoriteQuestion", null);
+__decorate([
+    (0, common_1.Delete)(':id/favorite'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Remove favorite from a question' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "unfavoriteQuestion", null);
+__decorate([
+    (0, common_1.Get)('favorites'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get user favorite questions' }),
+    (0, swagger_1.ApiQuery)({ name: 'listName', required: false, type: String }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    __param(0, (0, common_2.CurrentUser)('userId')),
+    __param(1, (0, common_1.Query)('listName')),
+    __param(2, (0, common_1.Query)('page')),
+    __param(3, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Number, Number]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getUserFavorites", null);
 exports.PostController = PostController = __decorate([
     (0, swagger_1.ApiTags)('posts'),
     (0, common_1.Controller)('posts'),

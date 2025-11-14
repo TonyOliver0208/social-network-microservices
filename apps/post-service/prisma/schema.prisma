@@ -18,9 +18,11 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  comments Comment[]
-  likes    Like[]
-  postTags PostTag[]
+  comments          Comment[]
+  likes             Like[]
+  postTags          PostTag[]
+  questionVotes     QuestionVote[]
+  favoriteQuestions FavoriteQuestion[]
   
   @@index([authorId])
   @@index([createdAt])
@@ -62,6 +64,40 @@ model Like {
   @@map("likes")
 }
 
+model QuestionVote {
+  id         String   @id @default(uuid())
+  postId     String
+  userId     String
+  voteType   VoteType // UP or DOWN
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("question_votes")
+}
+
+model FavoriteQuestion {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  listName  String?  @default("default") // Optional list organization
+  
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@index([userId, listName])
+  @@map("favorite_questions")
+}
+
 model Tag {
   id          String   @id @default(uuid())
   name        String   @unique
@@ -96,4 +132,9 @@ enum Privacy {
   PUBLIC
   FRIENDS
   PRIVATE
+}
+
+enum VoteType {
+  UP
+  DOWN
 }
