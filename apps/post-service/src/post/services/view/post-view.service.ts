@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { SERVICES } from '@app/common';
 import { UserService, USERSERVICE_SERVICE_NAME } from '@app/proto/user';
+import { AuthService, AUTHSERVICE_SERVICE_NAME } from '@app/proto/auth';
 import { lastValueFrom } from 'rxjs';
 import type { Post as PrismaPost, Like as PrismaLike, Tag as PrismaTag, PostTag as PrismaPostTag } from '../../../../../../node_modules/.prisma/client-post';
 import type { PostResponse } from '../../../../../../generated/post';
@@ -23,93 +24,68 @@ type PostWithRelations = PrismaPost & {
 @Injectable()
 export class PostViewService implements OnModuleInit {
   private readonly logger = new Logger(PostViewService.name);
-  private userService: UserService;
-  private userServiceInitialized = false;
+  private authService: AuthService;
 
   constructor(
-    @Inject(SERVICES.USER_SERVICE) private readonly userClient: ClientGrpc,
-  ) {}
+    @Inject(SERVICES.AUTH_SERVICE) private readonly authClient: ClientGrpc,
+  ) {
+    this.logger.log('📦 PostViewService constructor called');
+  }
 
-  async onModuleInit() {
-    this.logger.log('🔧 Initializing user service connection...');
-    
+  onModuleInit() {
+    this.logger.log('🔧 PostViewService onModuleInit - Initializing auth service...');
     try {
-      this.userService = this.userClient.getService<UserService>(USERSERVICE_SERVICE_NAME);
-      this.logger.log('📡 User service client obtained');
-      
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      this.logger.log('⏳ Waited 3s for user-service startup');
-      
-      try {
-        await lastValueFrom(
-          this.userService.GetUserById({ id: 'connection-test' })
-        ).catch(err => {
-          this.logger.warn(`Connection test failed: ${err.message}`);
-          return null;
-        });
-        
-        this.userServiceInitialized = true;
-        this.logger.log('✅ User service connection established and ready!');
-      } catch (error) {
-        this.logger.warn('⚠️  User service not yet ready, will retry on first request');
-      }
+      this.authService = this.authClient.getService<AuthService>(AUTHSERVICE_SERVICE_NAME);
+      this.logger.log('✅ Auth service obtained from client');
     } catch (error) {
-      this.logger.error(`❌ Failed to initialize user service: ${error.message}`);
+      this.logger.error(`❌ Failed to get auth service: ${error.message}`, error.stack);
     }
   }
-  
-  private async ensureUserServiceReady() {
-    if (!this.userService) {
-      this.logger.warn('⚠️  User service client not initialized');
-      return false;
+
+  private getAuthService(): AuthService {
+    if (!this.authService) {
+      this.logger.log('⚡ Lazy initialization of auth service');
+      this.authService = this.authClient.getService<AuthService>(AUTHSERVICE_SERVICE_NAME);
     }
-    
-    if (this.userServiceInitialized) {
-      return true;
-    }
-    
-    this.logger.log('🔄 Attempting lazy initialization of user service...');
-    try {
-      await lastValueFrom(
-        this.userService.GetUserById({ id: 'connection-test' })
-      ).catch(() => null);
-      
-      this.userServiceInitialized = true;
-      this.logger.log('✅ User service ready after lazy initialization');
-      return true;
-    } catch (error) {
-      this.logger.error(`Failed lazy initialization: ${error.message}`);
-      return false;
-    }
+    return this.authService;
   }
 
   async getUserData(userId: string) {
-    const isReady = await this.ensureUserServiceReady();
+    this.logger.log(`[getUserData] 🔍 Fetching user data for: ${userId}`);
     
-    if (!isReady) {
-      return {
-        id: userId,
-        email: 'unavailable@example.com',
-        username: 'User',
-        bio: '',
-        avatarUrl: '',
-      };
-    }
-
     try {
+      const authSvc = this.getAuthService();
+      this.logger.log(`[getUserData] 📞 Calling auth service GetUserById...`);
+      
       const user = await lastValueFrom(
-        this.userService.GetUserById({ id: userId })
+        authSvc.GetUserById({ id: userId })
       );
+      
+      this.logger.log(`[getUserData] ✅ Received user data:`, {
+        id: user.id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      });
+      
+      // Construct full name from firstName and lastName, fallback to username
+      let displayName = user.username || 'User';
+      if (user.firstName || user.lastName) {
+        displayName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+      }
+      
+      this.logger.log(`[getUserData] ✅ Constructed display name: "${displayName}"`);
       
       return {
         id: user.id,
         email: user.email,
-        username: user.username,
-        bio: user.bio || '',
-        avatarUrl: user.avatar || '',
+        username: displayName,
+        bio: '',
+        avatarUrl: user.profileImage || '',
       };
     } catch (error) {
-      this.logger.error(`Error fetching user ${userId}: ${error.message}`);
+      this.logger.error(`[getUserData] ❌ Error fetching user ${userId}:`, error.message);
+      this.logger.error(`[getUserData] Stack:`, error.stack);
       return {
         id: userId,
         email: 'unavailable@example.com',
@@ -121,7 +97,14 @@ export class PostViewService implements OnModuleInit {
   }
 
   async formatPostResponse(post: PostWithRelations, userId?: string): Promise<PostResponse> {
-    const author = await this.getUserData(post.authorId);
+    const authorData = await this.getUserData(post.authorId);
+    
+    const author = {
+      id: authorData.id,
+      name: authorData.username || 'Anonymous',
+      reputation: 0,
+      avatar: authorData.avatarUrl || '',
+    };
     
     const tags = post.postTags?.map((pt) => ({
       id: pt.tag.id,
@@ -136,13 +119,15 @@ export class PostViewService implements OnModuleInit {
     let userVote: string | null = null;
     
     if (post.questionVotes) {
-      upvotes = post.questionVotes.filter((v: any) => v.voteType === 'upvote').length;
-      downvotes = post.questionVotes.filter((v: any) => v.voteType === 'downvote').length;
+      // Database stores votes as 'UP' and 'DOWN' (uppercase)
+      upvotes = post.questionVotes.filter((v: any) => v.voteType === 'UP').length;
+      downvotes = post.questionVotes.filter((v: any) => v.voteType === 'DOWN').length;
       
       if (userId) {
         const vote = post.questionVotes.find((v: any) => v.userId === userId);
         if (vote) {
-          userVote = vote.voteType;
+          // Map backend voteType ('UP'/'DOWN') to frontend format ('up'/'down')
+          userVote = vote.voteType === 'UP' ? 'up' : vote.voteType === 'DOWN' ? 'down' : null;
         }
       }
     }

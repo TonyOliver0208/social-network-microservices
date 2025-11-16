@@ -44,6 +44,10 @@ export interface User {
   isVerified?: boolean;
 }
 
+export interface GetUserByIdRequest {
+  id?: string;
+}
+
 export interface ValidateTokenRequest {
   token?: string;
 }
@@ -83,6 +87,7 @@ export interface AuthService {
   RefreshToken(request: RefreshTokenRequest): Observable<AuthResponse>;
   Logout(request: LogoutRequest): Observable<LogoutResponse>;
   ResetPassword(request: ResetPasswordRequest): Observable<ResetPasswordResponse>;
+  GetUserById(request: GetUserByIdRequest): Observable<User>;
 }
 
 export const AUTHSERVICE_SERVICE_NAME = 'AuthService';

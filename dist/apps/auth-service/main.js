@@ -220,6 +220,18 @@ let AuthController = AuthController_1 = class AuthController {
             email: result.data.email,
         };
     }
+    async getUserById(payload) {
+        this.logger.log(`Get user by ID request: ${payload.id}`);
+        const result = await this.authService.getUserById(payload.id);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return result.data;
+    }
     async handleUserDeleted(data) {
         this.logger.log(`Handling user deleted event: ${data.userId}`);
         await this.authService.logout(data.userId);
@@ -265,6 +277,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "validateToken", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(auth_1.AUTHSERVICE_SERVICE_NAME, 'GetUserById'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getUserById", null);
 __decorate([
     (0, microservices_1.EventPattern)(common_2.EVENTS.USER_DELETED),
     __param(0, (0, microservices_1.Payload)()),
@@ -730,6 +748,42 @@ let AuthService = AuthService_1 = class AuthService {
                 success: false,
                 error: 'Invalid token',
                 statusCode: 401,
+            };
+        }
+    }
+    async getUserById(userId) {
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: {
+                    id: true,
+                    email: true,
+                    username: true,
+                    firstName: true,
+                    lastName: true,
+                    profileImage: true,
+                    provider: true,
+                    isVerified: true,
+                },
+            });
+            if (!user) {
+                return {
+                    success: false,
+                    error: 'User not found',
+                    statusCode: 404,
+                };
+            }
+            return {
+                success: true,
+                data: user,
+            };
+        }
+        catch (error) {
+            this.logger.error(`Error fetching user ${userId}: ${error.message}`);
+            return {
+                success: false,
+                error: error.message,
+                statusCode: 500,
             };
         }
     }

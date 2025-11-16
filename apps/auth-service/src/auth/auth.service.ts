@@ -494,6 +494,44 @@ export class AuthService {
     }
   }
 
+  async getUserById(userId: string): Promise<ServiceResponse> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          profileImage: true,
+          provider: true,
+          isVerified: true,
+        },
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not found',
+          statusCode: 404,
+        };
+      }
+
+      return {
+        success: true,
+        data: user,
+      };
+    } catch (error) {
+      this.logger.error(`Error fetching user ${userId}: ${error.message}`);
+      return {
+        success: false,
+        error: error.message,
+        statusCode: 500,
+      };
+    }
+  }
+
   private async generateTokens(userId: string, email: string, username: string) {
     const jwtPayload: JwtPayload = {
       sub: userId,

@@ -196,15 +196,51 @@ export class PostController implements OnModuleInit {
     }
   }
 
+  // ========== Favorite Questions Endpoints (must come before :id route) ==========
+
+  @Get('favorites')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user favorite questions' })
+  @ApiQuery({ name: 'listName', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getUserFavorites(
+    @CurrentUser('userId') userId: string,
+    @Query('listName') listName?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.GetUserFavorites({
+          userId,
+          listName,
+          page: page || 1,
+          limit: limit || 20,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get favorites',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // ========== Individual Post Endpoints (must come after specific routes) ==========
+
   @Get(':id')
-  @ApiOperation({ summary: 'Get post by ID (no authentication required)' })
+  @ApiOperation({ summary: 'Get post by ID (no authentication required, but userId for favorite status)' })
   async getPost(
     @Param('id') postId: string,
+    @CurrentUser('userId') userId?: string,
   ) {
     try {
       return await lastValueFrom(
         this.postService.GetPostById({
           id: postId,
+          userId: userId || undefined,
         }),
       );
     } catch (error) {
@@ -323,7 +359,7 @@ export class PostController implements OnModuleInit {
         this.postService.CreateComment({
           postId,
           userId,
-          ...createCommentDto,
+          content: createCommentDto.content,
         }),
       );
     } catch (error) {
@@ -482,31 +518,170 @@ export class PostController implements OnModuleInit {
     }
   }
 
-  @Get('favorites')
+  // ========== Answer Endpoints ==========
+
+  @Post(':id/answers')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get user favorite questions' })
-  @ApiQuery({ name: 'listName', required: false, type: String })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  async getUserFavorites(
+  @ApiOperation({ summary: 'Create an answer to a question' })
+  async createAnswer(
+    @Param('id') questionId: string,
     @CurrentUser('userId') userId: string,
-    @Query('listName') listName?: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
+    @Body() body: { content: string },
+  ) {
+    try {
+      console.log('[API Gateway] Creating answer:', { questionId, userId, contentLength: body.content?.length });
+      const result = await lastValueFrom(
+        this.postService.CreateAnswer({
+          questionId,
+          userId,
+          content: body.content,
+        }),
+      );
+      console.log('[API Gateway] Answer created successfully');
+      return result;
+    } catch (error) {
+      console.error('[API Gateway] Failed to create answer:', error);
+      throw new HttpException(
+        error.message || 'Failed to create answer',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get(':id/answers')
+  @ApiOperation({ summary: 'Get all answers for a question' })
+  async getQuestionAnswers(
+    @Param('id') questionId: string,
+    @CurrentUser('userId') userId?: string,
   ) {
     try {
       return await lastValueFrom(
-        this.postService.GetUserFavorites({
+        this.postService.GetQuestionAnswers({
+          questionId,
           userId,
-          listName,
-          page: page || 1,
-          limit: limit || 20,
         }),
       );
     } catch (error) {
       throw new HttpException(
-        error.message || 'Failed to get favorites',
+        error.message || 'Failed to get answers',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch('answers/:answerId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update an answer' })
+  async updateAnswer(
+    @Param('answerId') answerId: string,
+    @CurrentUser('userId') userId: string,
+    @Body() body: { content: string },
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.UpdateAnswer({
+          answerId,
+          userId,
+          content: body.content,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to update answer',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Delete('answers/:answerId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete an answer' })
+  async deleteAnswer(
+    @Param('answerId') answerId: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.DeleteAnswer({
+          answerId,
+          userId,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to delete answer',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('answers/:answerId/vote')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Vote on an answer (up/down)' })
+  async voteAnswer(
+    @Param('answerId') answerId: string,
+    @CurrentUser('userId') userId: string,
+    @Body() body: { voteType: 'up' | 'down' },
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.VoteAnswer({
+          answerId,
+          userId,
+          voteType: body.voteType,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to vote on answer',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('answers/:answerId/accept')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Accept an answer (question author only)' })
+  async acceptAnswer(
+    @Param('answerId') answerId: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.AcceptAnswer({
+          answerId,
+          userId,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to accept answer',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get('answers/:answerId/votes')
+  @ApiOperation({ summary: 'Get vote counts for an answer' })
+  async getAnswerVotes(
+    @Param('answerId') answerId: string,
+    @CurrentUser('userId') userId?: string,
+  ) {
+    try {
+      return await lastValueFrom(
+        this.postService.GetAnswerVotes({
+          answerId,
+          userId,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get answer votes',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

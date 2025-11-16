@@ -17,6 +17,7 @@ export interface CreatePostRequest {
 
 export interface GetPostByIdRequest {
   id?: string;
+  userId?: string;
 }
 
 export interface UpdatePostRequest {
@@ -226,6 +227,89 @@ export interface FavoriteQuestionsListResponse {
   limit?: number;
 }
 
+export interface CreateAnswerRequest {
+  questionId?: string;
+  userId?: string;
+  content?: string;
+}
+
+export interface UpdateAnswerRequest {
+  answerId?: string;
+  userId?: string;
+  content?: string;
+}
+
+export interface DeleteAnswerRequest {
+  answerId?: string;
+  userId?: string;
+}
+
+export interface GetQuestionAnswersRequest {
+  questionId?: string;
+  userId?: string;
+}
+
+export interface VoteAnswerRequest {
+  answerId?: string;
+  userId?: string;
+  voteType?: string;
+}
+
+export interface AcceptAnswerRequest {
+  answerId?: string;
+  userId?: string;
+}
+
+export interface GetAnswerVotesRequest {
+  answerId?: string;
+  userId?: string;
+}
+
+export interface AnswerResponse {
+  id?: string;
+  questionId?: string;
+  authorId?: string;
+  content?: string;
+  isAccepted?: boolean;
+  totalVotes?: number;
+  upvotes?: number;
+  downvotes?: number;
+  userVote?: string;
+  commentCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AnswersListResponse {
+  answers?: AnswerResponse[];
+  total?: number;
+}
+
+export interface DeleteAnswerResponse {
+  success?: boolean;
+  message?: string;
+}
+
+export interface VoteAnswerResponse {
+  success?: boolean;
+  message?: string;
+  voteType?: string;
+}
+
+export interface AcceptAnswerResponse {
+  success?: boolean;
+  message?: string;
+  isAccepted?: boolean;
+}
+
+export interface AnswerVotesResponse {
+  answerId?: string;
+  totalVotes?: number;
+  upvotes?: number;
+  downvotes?: number;
+  userVote?: string;
+}
+
 export interface PostService {
   CreatePost(request: CreatePostRequest): Observable<PostResponse>;
   GetPostById(request: GetPostByIdRequest): Observable<PostResponse>;
@@ -247,6 +331,13 @@ export interface PostService {
   FavoriteQuestion(request: FavoriteQuestionRequest): Observable<FavoriteQuestionResponse>;
   UnfavoriteQuestion(request: UnfavoriteQuestionRequest): Observable<FavoriteQuestionResponse>;
   GetUserFavorites(request: GetUserFavoritesRequest): Observable<FavoriteQuestionsListResponse>;
+  CreateAnswer(request: CreateAnswerRequest): Observable<AnswerResponse>;
+  GetQuestionAnswers(request: GetQuestionAnswersRequest): Observable<AnswersListResponse>;
+  UpdateAnswer(request: UpdateAnswerRequest): Observable<AnswerResponse>;
+  DeleteAnswer(request: DeleteAnswerRequest): Observable<DeleteAnswerResponse>;
+  VoteAnswer(request: VoteAnswerRequest): Observable<VoteAnswerResponse>;
+  AcceptAnswer(request: AcceptAnswerRequest): Observable<AcceptAnswerResponse>;
+  GetAnswerVotes(request: GetAnswerVotesRequest): Observable<AnswerVotesResponse>;
 }
 
 export const POSTSERVICE_SERVICE_NAME = 'PostService';

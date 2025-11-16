@@ -73,14 +73,15 @@ export class PostLogicService {
   }
 
   async getPost(postId: string, userId?: string): Promise<PostResponse> {
-    const cacheKey = CACHE_KEYS.POST(postId);
+    // Include userId in cache key to ensure user-specific data (votes, favorites) is cached separately
+    const cacheKey = userId ? `${CACHE_KEYS.POST(postId)}:user:${userId}` : CACHE_KEYS.POST(postId);
     const cached = await this.cacheManager.get(cacheKey);
     
     if (cached) {
       return cached as PostResponse;
     }
 
-    const post = await this.prismaClient.post.findUnique({
+    const post = await (this.prismaClient.post.findUnique({
       where: { id: postId },
       include: {
         _count: {
@@ -98,14 +99,13 @@ export class PostLogicService {
             tag: true,
           },
         },
-        questionVotes: userId ? {
-          where: { userId },
-        } : true,
+        // Get ALL votes to calculate totals, not just user's vote
+        questionVotes: true,
         favoriteQuestions: userId ? {
           where: { userId },
         } : false,
       },
-    }) as PostWithRelations | null;
+    }) as any) as PostWithRelations | null;
 
     if (!post) {
       throw new NotFoundException('Post not found');

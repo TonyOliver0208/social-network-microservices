@@ -45,7 +45,9 @@ export class VoteLogicService {
           where: { id: existingVote.id },
         });
         
+        // Clear both general and user-specific cache
         await this.cacheManager.del(CACHE_KEYS.POST(questionId));
+        await this.cacheManager.del(`${CACHE_KEYS.POST(questionId)}:user:${userId}`);
         
         return await this.getQuestionVotes(questionId, userId);
       }
@@ -69,7 +71,9 @@ export class VoteLogicService {
           },
         });
 
+        // Clear both general and user-specific cache
         await this.cacheManager.del(CACHE_KEYS.POST(questionId));
+        await this.cacheManager.del(`${CACHE_KEYS.POST(questionId)}:user:${userId}`);
         
         return await this.getQuestionVotes(questionId, userId);
       }
@@ -147,7 +151,9 @@ export class VoteLogicService {
           where: { id: existingFavorite.id },
         });
         
+        // Clear both general and user-specific cache
         await this.cacheManager.del(CACHE_KEYS.POST(questionId));
+        await this.cacheManager.del(`${CACHE_KEYS.POST(questionId)}:user:${userId}`);
         
         return {
           success: true,
@@ -163,7 +169,9 @@ export class VoteLogicService {
         },
       });
 
+      // Clear both general and user-specific cache
       await this.cacheManager.del(CACHE_KEYS.POST(questionId));
+      await this.cacheManager.del(`${CACHE_KEYS.POST(questionId)}:user:${userId}`);
 
       return {
         success: true,

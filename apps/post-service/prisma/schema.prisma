@@ -23,27 +23,68 @@ model Post {
   postTags          PostTag[]
   questionVotes     QuestionVote[]
   favoriteQuestions FavoriteQuestion[]
+  answers           Answer[]  // Answers to this question
   
   @@index([authorId])
   @@index([createdAt])
   @@map("posts")
 }
 
+model Answer {
+  id         String   @id @default(uuid())
+  content    String   @db.Text
+  questionId String   // The question (Post) this answers
+  authorId   String
+  isAccepted Boolean  @default(false)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  question      Post         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  votes         AnswerVote[]
+  comments      Comment[]    @relation("AnswerComments")
+  
+  @@index([questionId])
+  @@index([authorId])
+  @@index([isAccepted])
+  @@map("answers")
+}
+
+model AnswerVote {
+  id       String   @id @default(uuid())
+  answerId String
+  userId   String
+  voteType VoteType // UP or DOWN
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  answer Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  
+  @@unique([answerId, userId])
+  @@index([answerId])
+  @@index([userId])
+  @@map("answer_votes")
+}
+
 model Comment {
-  id       String @id @default(uuid())
-  content  String @db.Text
-  postId   String
+  id       String  @id @default(uuid())
+  content  String  @db.Text
+  postId   String? // Optional - for question comments
+  answerId String? // Optional - for answer comments
   authorId String
   parentId String?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post     Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  answer   Answer?   @relation("AnswerComments", fields: [answerId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   
   @@index([postId])
+  @@index([answerId])
   @@index([authorId])
   @@index([parentId])
   @@map("comments")

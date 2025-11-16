@@ -173,6 +173,22 @@ export class AuthController {
     };
   }
 
+  @GrpcMethod(AUTHSERVICE_SERVICE_NAME, 'GetUserById')
+  async getUserById(payload: { id: string }) {
+    this.logger.log(`Get user by ID request: ${payload.id}`);
+    const result = await this.authService.getUserById(payload.id);
+    
+    if (!result.success) {
+      const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+      throw new RpcException({
+        code: grpcCode,
+        message: result.error,
+      });
+    }
+    
+    return result.data;
+  }
+
   // ========== RabbitMQ Event Handlers (Service → Service) ==========
   
   @EventPattern(EVENTS.USER_DELETED)

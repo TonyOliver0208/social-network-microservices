@@ -5,6 +5,7 @@ import { LikeLogicService } from '../services/logic/like-logic.service';
 import { CommentLogicService } from '../services/logic/comment-logic.service';
 import { TagLogicService } from '../services/logic/tag-logic.service';
 import { VoteLogicService } from '../services/logic/vote-logic.service';
+import { AnswerLogicService } from '../services/logic/answer-logic.service';
 import { CreatePostDto, UpdatePostDto, CreateCommentDto } from '../dto';
 import { EVENTS } from '@app/common';
 import { POSTSERVICE_SERVICE_NAME } from '@app/proto/post';
@@ -20,6 +21,7 @@ export class PostProtectedController {
     private readonly commentLogic: CommentLogicService,
     private readonly tagLogic: TagLogicService,
     private readonly voteLogic: VoteLogicService,
+    private readonly answerLogic: AnswerLogicService,
   ) {}
 
   // ========== Post Operations ==========
@@ -95,10 +97,13 @@ export class PostProtectedController {
   // ========== Comment Operations ==========
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'CreateComment')
-  async createComment(data: { postId: string; userId: string; createCommentDto: CreateCommentDto }) {
+  async createComment(data: { postId: string; userId: string; content: string }) {
     try {
       this.logger.log(`User ${data.userId} commenting on post: ${data.postId}`);
-      return await this.commentLogic.createComment(data.postId, data.userId, data.createCommentDto);
+      return await this.commentLogic.createComment(data.userId, { 
+        content: data.content,
+        postId: data.postId 
+      });
     } catch (error) {
       throw this.handleException(error);
     }
@@ -200,6 +205,79 @@ export class PostProtectedController {
         data.page || 1,
         data.limit || 20
       );
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  // ========== Answer Operations ==========
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'CreateAnswer')
+  async createAnswer(data: { questionId: string; userId: string; content: string }) {
+    try {
+      this.logger.log(`User ${data.userId} creating answer for question ${data.questionId}`);
+      return await this.answerLogic.createAnswer(data.questionId, data.userId, data.content);
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'UpdateAnswer')
+  async updateAnswer(data: { answerId: string; userId: string; content: string }) {
+    try {
+      this.logger.log(`User ${data.userId} updating answer ${data.answerId}`);
+      return await this.answerLogic.updateAnswer(data.answerId, data.userId, data.content);
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'DeleteAnswer')
+  async deleteAnswer(data: { answerId: string; userId: string }) {
+    try {
+      this.logger.log(`User ${data.userId} deleting answer ${data.answerId}`);
+      return await this.answerLogic.deleteAnswer(data.answerId, data.userId);
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'AcceptAnswer')
+  async acceptAnswer(data: { answerId: string; userId: string }) {
+    try {
+      this.logger.log(`User ${data.userId} accepting answer ${data.answerId}`);
+      return await this.answerLogic.acceptAnswer(data.answerId, data.userId);
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'VoteAnswer')
+  async voteAnswer(data: { answerId: string; userId: string; voteType: string }) {
+    try {
+      this.logger.log(`User ${data.userId} voting ${data.voteType} on answer ${data.answerId}`);
+      return await this.answerLogic.voteAnswer(data.answerId, data.userId, data.voteType);
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetAnswerVotes')
+  async getAnswerVotes(data: { answerId: string; userId?: string }) {
+    try {
+      this.logger.log(`Getting votes for answer ${data.answerId}`);
+      return await this.answerLogic.getAnswerVotes(data.answerId, data.userId);
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetQuestionAnswers')
+  async getQuestionAnswers(data: { questionId: string; userId?: string }) {
+    try {
+      this.logger.log(`Getting answers for question ${data.questionId}`);
+      const answers = await this.answerLogic.getQuestionAnswers(data.questionId, data.userId);
+      return { answers }; // Wrap in AnswersListResponse structure
     } catch (error) {
       throw this.handleException(error);
     }

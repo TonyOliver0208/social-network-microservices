@@ -19,8 +19,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
-const user_controller_1 = __webpack_require__(/*! ./user/user.controller */ "./apps/user-service/src/user/user.controller.ts");
-const user_service_1 = __webpack_require__(/*! ./user/user.service */ "./apps/user-service/src/user/user.service.ts");
+const user_public_controller_1 = __webpack_require__(/*! ./user/controllers/user-public.controller */ "./apps/user-service/src/user/controllers/user-public.controller.ts");
+const user_protected_controller_1 = __webpack_require__(/*! ./user/controllers/user-protected.controller */ "./apps/user-service/src/user/controllers/user-protected.controller.ts");
+const profile_logic_service_1 = __webpack_require__(/*! ./user/services/logic/profile-logic.service */ "./apps/user-service/src/user/services/logic/profile-logic.service.ts");
+const follow_logic_service_1 = __webpack_require__(/*! ./user/services/logic/follow-logic.service */ "./apps/user-service/src/user/services/logic/follow-logic.service.ts");
 const prisma_service_1 = __webpack_require__(/*! ./prisma/prisma.service */ "./apps/user-service/src/prisma/prisma.service.ts");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
 let AppModule = class AppModule {
@@ -35,8 +37,8 @@ exports.AppModule = AppModule = __decorate([
             }),
             common_2.RedisModule.register(),
         ],
-        controllers: [user_controller_1.UserController],
-        providers: [user_service_1.UserService, prisma_service_1.PrismaService],
+        controllers: [user_public_controller_1.UserPublicController, user_protected_controller_1.UserProtectedController],
+        providers: [profile_logic_service_1.ProfileLogicService, follow_logic_service_1.FollowLogicService, prisma_service_1.PrismaService],
     })
 ], AppModule);
 
@@ -72,6 +74,309 @@ exports.PrismaService = PrismaService;
 exports.PrismaService = PrismaService = __decorate([
     (0, common_1.Injectable)()
 ], PrismaService);
+
+
+/***/ }),
+
+/***/ "./apps/user-service/src/user/controllers/user-protected.controller.ts":
+/*!*****************************************************************************!*\
+  !*** ./apps/user-service/src/user/controllers/user-protected.controller.ts ***!
+  \*****************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var UserProtectedController_1;
+var _a, _b, _c, _d;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserProtectedController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const profile_logic_service_1 = __webpack_require__(/*! ../services/logic/profile-logic.service */ "./apps/user-service/src/user/services/logic/profile-logic.service.ts");
+const follow_logic_service_1 = __webpack_require__(/*! ../services/logic/follow-logic.service */ "./apps/user-service/src/user/services/logic/follow-logic.service.ts");
+const dto_1 = __webpack_require__(/*! ../dto */ "./apps/user-service/src/user/dto/index.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const user_1 = __webpack_require__(/*! @app/proto/user */ "./generated/user.ts");
+const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
+let UserProtectedController = UserProtectedController_1 = class UserProtectedController {
+    constructor(profileLogic, followLogic) {
+        this.profileLogic = profileLogic;
+        this.followLogic = followLogic;
+        this.logger = new common_1.Logger(UserProtectedController_1.name);
+    }
+    async updateProfile(payload) {
+        this.logger.log(`Updating profile for user: ${payload.userId}`);
+        const result = await this.profileLogic.updateProfile(payload.userId, payload.data);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return result.data;
+    }
+    async followUser(payload) {
+        this.logger.log(`User ${payload.followerId} following ${payload.followingId}`);
+        const result = await this.followLogic.followUser(payload.followerId, payload.followingId);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return result.data;
+    }
+    async unfollowUser(payload) {
+        this.logger.log(`User ${payload.followerId} unfollowing ${payload.followingId}`);
+        const result = await this.followLogic.unfollowUser(payload.followerId, payload.followingId);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return result.data;
+    }
+    async handleUserRegistered(data) {
+        this.logger.log(`Creating profile for registered user: ${data.userId}`);
+        await this.profileLogic.createUserProfile(data.userId, data.email, data.username);
+    }
+    async handlePostCreated(data) {
+        this.logger.log(`Handling post created event by user: ${data.userId}`);
+    }
+    async handlePostDeleted(data) {
+        this.logger.log(`Handling post deleted event by user: ${data.userId}`);
+    }
+    getGrpcStatusCode(error, httpStatusCode) {
+        if (error?.includes('not found')) {
+            return grpc_js_1.status.NOT_FOUND;
+        }
+        if (error?.includes('already exists')) {
+            return grpc_js_1.status.ALREADY_EXISTS;
+        }
+        if (error?.includes('invalid') || error?.includes('Cannot')) {
+            return grpc_js_1.status.INVALID_ARGUMENT;
+        }
+        switch (httpStatusCode) {
+            case 404:
+                return grpc_js_1.status.NOT_FOUND;
+            case 400:
+                return grpc_js_1.status.INVALID_ARGUMENT;
+            default:
+                return grpc_js_1.status.UNKNOWN;
+        }
+    }
+};
+exports.UserProtectedController = UserProtectedController;
+__decorate([
+    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'UpdateProfile'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserProtectedController.prototype, "updateProfile", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'FollowUser'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_c = typeof dto_1.FollowUserDto !== "undefined" && dto_1.FollowUserDto) === "function" ? _c : Object]),
+    __metadata("design:returntype", Promise)
+], UserProtectedController.prototype, "followUser", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'UnfollowUser'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_d = typeof dto_1.FollowUserDto !== "undefined" && dto_1.FollowUserDto) === "function" ? _d : Object]),
+    __metadata("design:returntype", Promise)
+], UserProtectedController.prototype, "unfollowUser", null);
+__decorate([
+    (0, microservices_1.EventPattern)(common_2.EVENTS.USER_REGISTERED),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserProtectedController.prototype, "handleUserRegistered", null);
+__decorate([
+    (0, microservices_1.EventPattern)(common_2.EVENTS.POST_CREATED),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserProtectedController.prototype, "handlePostCreated", null);
+__decorate([
+    (0, microservices_1.EventPattern)(common_2.EVENTS.POST_DELETED),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserProtectedController.prototype, "handlePostDeleted", null);
+exports.UserProtectedController = UserProtectedController = UserProtectedController_1 = __decorate([
+    (0, common_1.Controller)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof profile_logic_service_1.ProfileLogicService !== "undefined" && profile_logic_service_1.ProfileLogicService) === "function" ? _a : Object, typeof (_b = typeof follow_logic_service_1.FollowLogicService !== "undefined" && follow_logic_service_1.FollowLogicService) === "function" ? _b : Object])
+], UserProtectedController);
+
+
+/***/ }),
+
+/***/ "./apps/user-service/src/user/controllers/user-public.controller.ts":
+/*!**************************************************************************!*\
+  !*** ./apps/user-service/src/user/controllers/user-public.controller.ts ***!
+  \**************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var UserPublicController_1;
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserPublicController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const profile_logic_service_1 = __webpack_require__(/*! ../services/logic/profile-logic.service */ "./apps/user-service/src/user/services/logic/profile-logic.service.ts");
+const follow_logic_service_1 = __webpack_require__(/*! ../services/logic/follow-logic.service */ "./apps/user-service/src/user/services/logic/follow-logic.service.ts");
+const dto_1 = __webpack_require__(/*! ../dto */ "./apps/user-service/src/user/dto/index.ts");
+const user_1 = __webpack_require__(/*! @app/proto/user */ "./generated/user.ts");
+const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
+let UserPublicController = UserPublicController_1 = class UserPublicController {
+    constructor(profileLogic, followLogic) {
+        this.profileLogic = profileLogic;
+        this.followLogic = followLogic;
+        this.logger = new common_1.Logger(UserPublicController_1.name);
+    }
+    async getProfile(payload) {
+        this.logger.log(`Getting profile for user: ${payload.userId}`);
+        const result = await this.profileLogic.getProfile(payload.userId);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return result.data;
+    }
+    async getFollowers(payload) {
+        this.logger.log(`Getting followers for user: ${payload.userId}`);
+        const result = await this.followLogic.getFollowers(payload.userId, payload.page, payload.limit);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return result.data;
+    }
+    async getFollowing(payload) {
+        this.logger.log(`Getting following for user: ${payload.userId}`);
+        const result = await this.followLogic.getFollowing(payload.userId, payload.page, payload.limit);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return result.data;
+    }
+    async searchUsers(payload) {
+        this.logger.log(`Searching users: ${payload.query}`);
+        const result = await this.profileLogic.searchUsers(payload.query, payload.page, payload.limit);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return result.data;
+    }
+    async findById(payload) {
+        this.logger.log(`Finding user by ID: ${payload.userId}`);
+        const result = await this.profileLogic.getProfile(payload.userId);
+        if (!result.success) {
+            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
+            throw new microservices_1.RpcException({
+                code: grpcCode,
+                message: result.error,
+            });
+        }
+        return result.data;
+    }
+    getGrpcStatusCode(error, httpStatusCode) {
+        if (error?.includes('not found')) {
+            return grpc_js_1.status.NOT_FOUND;
+        }
+        if (error?.includes('already exists')) {
+            return grpc_js_1.status.ALREADY_EXISTS;
+        }
+        if (error?.includes('invalid') || error?.includes('Cannot')) {
+            return grpc_js_1.status.INVALID_ARGUMENT;
+        }
+        switch (httpStatusCode) {
+            case 404:
+                return grpc_js_1.status.NOT_FOUND;
+            case 400:
+                return grpc_js_1.status.INVALID_ARGUMENT;
+            default:
+                return grpc_js_1.status.UNKNOWN;
+        }
+    }
+};
+exports.UserPublicController = UserPublicController;
+__decorate([
+    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'GetProfile'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_c = typeof dto_1.GetUserDto !== "undefined" && dto_1.GetUserDto) === "function" ? _c : Object]),
+    __metadata("design:returntype", Promise)
+], UserPublicController.prototype, "getProfile", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'GetFollowers'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserPublicController.prototype, "getFollowers", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'GetFollowing'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserPublicController.prototype, "getFollowing", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'SearchUsers'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserPublicController.prototype, "searchUsers", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'GetUserById'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserPublicController.prototype, "findById", null);
+exports.UserPublicController = UserPublicController = UserPublicController_1 = __decorate([
+    (0, common_1.Controller)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof profile_logic_service_1.ProfileLogicService !== "undefined" && profile_logic_service_1.ProfileLogicService) === "function" ? _a : Object, typeof (_b = typeof follow_logic_service_1.FollowLogicService !== "undefined" && follow_logic_service_1.FollowLogicService) === "function" ? _b : Object])
+], UserPublicController);
 
 
 /***/ }),
@@ -166,10 +471,10 @@ __decorate([
 
 /***/ }),
 
-/***/ "./apps/user-service/src/user/user.controller.ts":
-/*!*******************************************************!*\
-  !*** ./apps/user-service/src/user/user.controller.ts ***!
-  \*******************************************************/
+/***/ "./apps/user-service/src/user/services/logic/follow-logic.service.ts":
+/*!***************************************************************************!*\
+  !*** ./apps/user-service/src/user/services/logic/follow-logic.service.ts ***!
+  \***************************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -182,346 +487,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var UserController_1;
-var _a, _b, _c, _d;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserController = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const user_service_1 = __webpack_require__(/*! ./user.service */ "./apps/user-service/src/user/user.service.ts");
-const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
-const dto_1 = __webpack_require__(/*! ./dto */ "./apps/user-service/src/user/dto/index.ts");
-const user_1 = __webpack_require__(/*! @app/proto/user */ "./generated/user.ts");
-const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
-let UserController = UserController_1 = class UserController {
-    constructor(userService) {
-        this.userService = userService;
-        this.logger = new common_1.Logger(UserController_1.name);
-    }
-    async getProfile(payload) {
-        this.logger.log(`Getting profile for user: ${payload.userId}`);
-        const result = await this.userService.getProfile(payload.userId);
-        if (!result.success) {
-            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
-            throw new microservices_1.RpcException({
-                code: grpcCode,
-                message: result.error,
-            });
-        }
-        return result.data;
-    }
-    async updateProfile(payload) {
-        this.logger.log(`Updating profile for user: ${payload.userId}`);
-        const result = await this.userService.updateProfile(payload.userId, payload.data);
-        if (!result.success) {
-            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
-            throw new microservices_1.RpcException({
-                code: grpcCode,
-                message: result.error,
-            });
-        }
-        return result.data;
-    }
-    async followUser(payload) {
-        this.logger.log(`User ${payload.followerId} following ${payload.followingId}`);
-        const result = await this.userService.followUser(payload.followerId, payload.followingId);
-        if (!result.success) {
-            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
-            throw new microservices_1.RpcException({
-                code: grpcCode,
-                message: result.error,
-            });
-        }
-        return result.data;
-    }
-    async unfollowUser(payload) {
-        this.logger.log(`User ${payload.followerId} unfollowing ${payload.followingId}`);
-        const result = await this.userService.unfollowUser(payload.followerId, payload.followingId);
-        if (!result.success) {
-            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
-            throw new microservices_1.RpcException({
-                code: grpcCode,
-                message: result.error,
-            });
-        }
-        return result.data;
-    }
-    async getFollowers(payload) {
-        this.logger.log(`Getting followers for user: ${payload.userId}`);
-        const result = await this.userService.getFollowers(payload.userId, payload.page, payload.limit);
-        if (!result.success) {
-            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
-            throw new microservices_1.RpcException({
-                code: grpcCode,
-                message: result.error,
-            });
-        }
-        return result.data;
-    }
-    async getFollowing(payload) {
-        this.logger.log(`Getting following for user: ${payload.userId}`);
-        const result = await this.userService.getFollowing(payload.userId, payload.page, payload.limit);
-        if (!result.success) {
-            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
-            throw new microservices_1.RpcException({
-                code: grpcCode,
-                message: result.error,
-            });
-        }
-        return result.data;
-    }
-    async searchUsers(payload) {
-        this.logger.log(`Searching users with query: ${payload.query}`);
-        const result = await this.userService.searchUsers(payload.query, payload.page, payload.limit);
-        if (!result.success) {
-            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
-            throw new microservices_1.RpcException({
-                code: grpcCode,
-                message: result.error,
-            });
-        }
-        return result.data;
-    }
-    async findById(payload) {
-        this.logger.log(`Finding user by ID: ${payload.userId}`);
-        const result = await this.userService.getProfile(payload.userId);
-        if (!result.success) {
-            const grpcCode = this.getGrpcStatusCode(result.error, result.statusCode);
-            throw new microservices_1.RpcException({
-                code: grpcCode,
-                message: result.error,
-            });
-        }
-        return result.data;
-    }
-    getGrpcStatusCode(error, httpStatusCode) {
-        if (error?.includes('already exists') || error?.includes('duplicate') || error?.includes('already following')) {
-            return grpc_js_1.status.ALREADY_EXISTS;
-        }
-        if (error?.includes('not found')) {
-            return grpc_js_1.status.NOT_FOUND;
-        }
-        if (error?.includes('Unauthorized')) {
-            return grpc_js_1.status.UNAUTHENTICATED;
-        }
-        if (error?.includes('forbidden') || error?.includes('permission') || error?.includes('cannot follow yourself')) {
-            return grpc_js_1.status.PERMISSION_DENIED;
-        }
-        if (error?.includes('invalid') || error?.includes('validation')) {
-            return grpc_js_1.status.INVALID_ARGUMENT;
-        }
-        switch (httpStatusCode) {
-            case 409:
-                return grpc_js_1.status.ALREADY_EXISTS;
-            case 404:
-                return grpc_js_1.status.NOT_FOUND;
-            case 401:
-                return grpc_js_1.status.UNAUTHENTICATED;
-            case 403:
-                return grpc_js_1.status.PERMISSION_DENIED;
-            case 400:
-                return grpc_js_1.status.INVALID_ARGUMENT;
-            default:
-                return grpc_js_1.status.UNKNOWN;
-        }
-    }
-    async handleUserRegistered(data) {
-        this.logger.log(`Handling user registered event: ${data.userId}`);
-        await this.userService.createUserProfile(data.userId, data.email, data.username);
-    }
-    async handlePostCreated(data) {
-        this.logger.log(`Handling post created event by user: ${data.userId}`);
-    }
-    async handlePostDeleted(data) {
-        this.logger.log(`Handling post deleted event by user: ${data.userId}`);
-    }
-};
-exports.UserController = UserController;
-__decorate([
-    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'GetProfile'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_b = typeof dto_1.GetUserDto !== "undefined" && dto_1.GetUserDto) === "function" ? _b : Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "getProfile", null);
-__decorate([
-    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'UpdateProfile'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "updateProfile", null);
-__decorate([
-    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'FollowUser'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof dto_1.FollowUserDto !== "undefined" && dto_1.FollowUserDto) === "function" ? _c : Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "followUser", null);
-__decorate([
-    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'UnfollowUser'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof dto_1.FollowUserDto !== "undefined" && dto_1.FollowUserDto) === "function" ? _d : Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "unfollowUser", null);
-__decorate([
-    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'GetFollowers'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "getFollowers", null);
-__decorate([
-    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'GetFollowing'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "getFollowing", null);
-__decorate([
-    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'SearchUsers'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "searchUsers", null);
-__decorate([
-    (0, microservices_1.GrpcMethod)(user_1.USERSERVICE_SERVICE_NAME, 'GetUserById'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "findById", null);
-__decorate([
-    (0, microservices_1.EventPattern)(common_2.EVENTS.USER_REGISTERED),
-    __param(0, (0, microservices_1.Payload)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "handleUserRegistered", null);
-__decorate([
-    (0, microservices_1.EventPattern)(common_2.EVENTS.POST_CREATED),
-    __param(0, (0, microservices_1.Payload)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "handlePostCreated", null);
-__decorate([
-    (0, microservices_1.EventPattern)(common_2.EVENTS.POST_DELETED),
-    __param(0, (0, microservices_1.Payload)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "handlePostDeleted", null);
-exports.UserController = UserController = UserController_1 = __decorate([
-    (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof user_service_1.UserService !== "undefined" && user_service_1.UserService) === "function" ? _a : Object])
-], UserController);
-
-
-/***/ }),
-
-/***/ "./apps/user-service/src/user/user.service.ts":
-/*!****************************************************!*\
-  !*** ./apps/user-service/src/user/user.service.ts ***!
-  \****************************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var UserService_1;
+var FollowLogicService_1;
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserService = void 0;
+exports.FollowLogicService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const prisma_service_1 = __webpack_require__(/*! ../prisma/prisma.service */ "./apps/user-service/src/prisma/prisma.service.ts");
+const prisma_service_1 = __webpack_require__(/*! ../../../prisma/prisma.service */ "./apps/user-service/src/prisma/prisma.service.ts");
 const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
-let UserService = UserService_1 = class UserService {
+let FollowLogicService = FollowLogicService_1 = class FollowLogicService {
     constructor(prisma) {
         this.prisma = prisma;
-        this.logger = new common_1.Logger(UserService_1.name);
-    }
-    async createUserProfile(userId, email, username) {
-        try {
-            await this.prisma.$transaction([
-                this.prisma.profile.create({
-                    data: {
-                        userId,
-                        fullName: username,
-                    },
-                }),
-                this.prisma.userStats.create({
-                    data: {
-                        userId,
-                        followersCount: 0,
-                        followingCount: 0,
-                        postsCount: 0,
-                    },
-                }),
-            ]);
-            this.logger.log(`Created profile and stats for user: ${userId}`);
-        }
-        catch (error) {
-            this.logger.error(`Failed to create profile: ${error.message}`);
-            throw error;
-        }
-    }
-    async getProfile(userId) {
-        try {
-            const profile = await this.prisma.profile.findUnique({
-                where: { userId },
-            });
-            if (!profile) {
-                throw new common_1.NotFoundException('Profile not found');
-            }
-            const stats = await this.prisma.userStats.findUnique({
-                where: { userId },
-            });
-            return {
-                success: true,
-                data: {
-                    ...profile,
-                    stats,
-                },
-            };
-        }
-        catch (error) {
-            this.logger.error(`Get profile error: ${error.message}`);
-            return {
-                success: false,
-                error: error.message,
-                statusCode: error.status || 500,
-            };
-        }
-    }
-    async updateProfile(userId, data) {
-        try {
-            const profile = await this.prisma.profile.update({
-                where: { userId },
-                data: {
-                    ...data,
-                    updatedAt: new Date(),
-                },
-            });
-            this.logger.log(`Updated profile for user: ${userId}`);
-            return {
-                success: true,
-                data: profile,
-                message: 'Profile updated successfully',
-            };
-        }
-        catch (error) {
-            this.logger.error(`Update profile error: ${error.message}`);
-            return {
-                success: false,
-                error: error.message,
-                statusCode: error.status || 500,
-            };
-        }
+        this.logger = new common_1.Logger(FollowLogicService_1.name);
     }
     async followUser(followerId, followingId) {
         try {
@@ -677,6 +653,122 @@ let UserService = UserService_1 = class UserService {
             };
         }
     }
+};
+exports.FollowLogicService = FollowLogicService;
+exports.FollowLogicService = FollowLogicService = FollowLogicService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
+], FollowLogicService);
+
+
+/***/ }),
+
+/***/ "./apps/user-service/src/user/services/logic/profile-logic.service.ts":
+/*!****************************************************************************!*\
+  !*** ./apps/user-service/src/user/services/logic/profile-logic.service.ts ***!
+  \****************************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var ProfileLogicService_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProfileLogicService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ../../../prisma/prisma.service */ "./apps/user-service/src/prisma/prisma.service.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+let ProfileLogicService = ProfileLogicService_1 = class ProfileLogicService {
+    constructor(prisma) {
+        this.prisma = prisma;
+        this.logger = new common_1.Logger(ProfileLogicService_1.name);
+    }
+    async createUserProfile(userId, email, username) {
+        try {
+            await this.prisma.$transaction([
+                this.prisma.profile.create({
+                    data: {
+                        userId,
+                        fullName: username,
+                    },
+                }),
+                this.prisma.userStats.create({
+                    data: {
+                        userId,
+                        followersCount: 0,
+                        followingCount: 0,
+                        postsCount: 0,
+                    },
+                }),
+            ]);
+            this.logger.log(`Created profile and stats for user: ${userId}`);
+        }
+        catch (error) {
+            this.logger.error(`Failed to create profile: ${error.message}`);
+            throw error;
+        }
+    }
+    async getProfile(userId) {
+        try {
+            const profile = await this.prisma.profile.findUnique({
+                where: { userId },
+            });
+            if (!profile) {
+                throw new common_1.NotFoundException('Profile not found');
+            }
+            const stats = await this.prisma.userStats.findUnique({
+                where: { userId },
+            });
+            return {
+                success: true,
+                data: {
+                    ...profile,
+                    stats,
+                },
+            };
+        }
+        catch (error) {
+            this.logger.error(`Get profile error: ${error.message}`);
+            return {
+                success: false,
+                error: error.message,
+                statusCode: error.status || 500,
+            };
+        }
+    }
+    async updateProfile(userId, data) {
+        try {
+            const profile = await this.prisma.profile.update({
+                where: { userId },
+                data: {
+                    ...data,
+                    updatedAt: new Date(),
+                },
+            });
+            this.logger.log(`Updated profile for user: ${userId}`);
+            return {
+                success: true,
+                data: profile,
+                message: 'Profile updated successfully',
+            };
+        }
+        catch (error) {
+            this.logger.error(`Update profile error: ${error.message}`);
+            return {
+                success: false,
+                error: error.message,
+                statusCode: error.status || 500,
+            };
+        }
+    }
     async searchUsers(query, page = 1, limit = 20) {
         try {
             const skip = (page - 1) * limit;
@@ -722,11 +814,11 @@ let UserService = UserService_1 = class UserService {
         }
     }
 };
-exports.UserService = UserService;
-exports.UserService = UserService = UserService_1 = __decorate([
+exports.ProfileLogicService = ProfileLogicService;
+exports.ProfileLogicService = ProfileLogicService = ProfileLogicService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
-], UserService);
+], ProfileLogicService);
 
 
 /***/ }),

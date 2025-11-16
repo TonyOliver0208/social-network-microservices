@@ -29,6 +29,15 @@ service PostService {
   rpc FavoriteQuestion (FavoriteQuestionRequest) returns (FavoriteQuestionResponse);
   rpc UnfavoriteQuestion (UnfavoriteQuestionRequest) returns (FavoriteQuestionResponse);
   rpc GetUserFavorites (GetUserFavoritesRequest) returns (FavoriteQuestionsListResponse);
+  
+  // Answer operations
+  rpc CreateAnswer (CreateAnswerRequest) returns (AnswerResponse);
+  rpc GetQuestionAnswers (GetQuestionAnswersRequest) returns (AnswersListResponse);
+  rpc UpdateAnswer (UpdateAnswerRequest) returns (AnswerResponse);
+  rpc DeleteAnswer (DeleteAnswerRequest) returns (DeleteAnswerResponse);
+  rpc VoteAnswer (VoteAnswerRequest) returns (VoteAnswerResponse);
+  rpc AcceptAnswer (AcceptAnswerRequest) returns (AcceptAnswerResponse);
+  rpc GetAnswerVotes (GetAnswerVotesRequest) returns (AnswerVotesResponse);
 }
 
 message CreatePostRequest {
@@ -41,6 +50,7 @@ message CreatePostRequest {
 
 message GetPostByIdRequest {
   string id = 1;
+  optional string userId = 2;
 }
 
 message UpdatePostRequest {
@@ -251,4 +261,88 @@ message FavoriteQuestionsListResponse {
   int32 total = 2;
   int32 page = 3;
   int32 limit = 4;
+}
+
+// Answer messages
+message CreateAnswerRequest {
+  string questionId = 1;
+  string userId = 2;
+  string content = 3;
+}
+
+message UpdateAnswerRequest {
+  string answerId = 1;
+  string userId = 2;
+  string content = 3;
+}
+
+message DeleteAnswerRequest {
+  string answerId = 1;
+  string userId = 2;
+}
+
+message GetQuestionAnswersRequest {
+  string questionId = 1;
+  optional string userId = 2; // Optional - to check user's vote
+}
+
+message VoteAnswerRequest {
+  string answerId = 1;
+  string userId = 2;
+  string voteType = 3; // "up" or "down"
+}
+
+message AcceptAnswerRequest {
+  string answerId = 1;
+  string userId = 2;
+}
+
+message GetAnswerVotesRequest {
+  string answerId = 1;
+  optional string userId = 2;
+}
+
+message AnswerResponse {
+  string id = 1;
+  string questionId = 2;
+  string authorId = 3;
+  string content = 4;
+  bool isAccepted = 5;
+  int32 totalVotes = 6;
+  int32 upvotes = 7;
+  int32 downvotes = 8;
+  optional string userVote = 9; // "up", "down", or null
+  int32 commentCount = 10;
+  string createdAt = 11;
+  string updatedAt = 12;
+}
+
+message AnswersListResponse {
+  repeated AnswerResponse answers = 1;
+  int32 total = 2;
+}
+
+message DeleteAnswerResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message VoteAnswerResponse {
+  bool success = 1;
+  string message = 2;
+  optional string voteType = 3; // "up", "down", or null if removed
+}
+
+message AcceptAnswerResponse {
+  bool success = 1;
+  string message = 2;
+  bool isAccepted = 3;
+}
+
+message AnswerVotesResponse {
+  string answerId = 1;
+  int32 totalVotes = 2;
+  int32 upvotes = 3;
+  int32 downvotes = 4;
+  optional string userVote = 5; // "up", "down", or null
 }

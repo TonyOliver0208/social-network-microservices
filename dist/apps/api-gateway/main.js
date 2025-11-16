@@ -946,10 +946,24 @@ let PostController = class PostController {
             throw new common_1.HttpException(error.message || 'Failed to get tags', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    async getPost(postId) {
+    async getUserFavorites(userId, listName, page, limit) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetUserFavorites({
+                userId,
+                listName,
+                page: page || 1,
+                limit: limit || 20,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get favorites', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async getPost(postId, userId) {
         try {
             return await (0, rxjs_1.lastValueFrom)(this.postService.GetPostById({
                 id: postId,
+                userId: userId || undefined,
             }));
         }
         catch (error) {
@@ -1006,7 +1020,7 @@ let PostController = class PostController {
             return await (0, rxjs_1.lastValueFrom)(this.postService.CreateComment({
                 postId,
                 userId,
-                ...createCommentDto,
+                content: createCommentDto.content,
             }));
         }
         catch (error) {
@@ -1082,17 +1096,88 @@ let PostController = class PostController {
             throw new common_1.HttpException(error.message || 'Failed to unfavorite question', error.status || common_1.HttpStatus.BAD_REQUEST);
         }
     }
-    async getUserFavorites(userId, listName, page, limit) {
+    async createAnswer(questionId, userId, body) {
         try {
-            return await (0, rxjs_1.lastValueFrom)(this.postService.GetUserFavorites({
+            console.log('[API Gateway] Creating answer:', { questionId, userId, contentLength: body.content?.length });
+            const result = await (0, rxjs_1.lastValueFrom)(this.postService.CreateAnswer({
+                questionId,
                 userId,
-                listName,
-                page: page || 1,
-                limit: limit || 20,
+                content: body.content,
+            }));
+            console.log('[API Gateway] Answer created successfully');
+            return result;
+        }
+        catch (error) {
+            console.error('[API Gateway] Failed to create answer:', error);
+            throw new common_1.HttpException(error.message || 'Failed to create answer', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async getQuestionAnswers(questionId, userId) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetQuestionAnswers({
+                questionId,
+                userId,
             }));
         }
         catch (error) {
-            throw new common_1.HttpException(error.message || 'Failed to get favorites', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new common_1.HttpException(error.message || 'Failed to get answers', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async updateAnswer(answerId, userId, body) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.UpdateAnswer({
+                answerId,
+                userId,
+                content: body.content,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to update answer', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async deleteAnswer(answerId, userId) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.DeleteAnswer({
+                answerId,
+                userId,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to delete answer', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async voteAnswer(answerId, userId, body) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.VoteAnswer({
+                answerId,
+                userId,
+                voteType: body.voteType,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to vote on answer', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async acceptAnswer(answerId, userId) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.AcceptAnswer({
+                answerId,
+                userId,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to accept answer', error.status || common_1.HttpStatus.BAD_REQUEST);
+        }
+    }
+    async getAnswerVotes(answerId, userId) {
+        try {
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetAnswerVotes({
+                answerId,
+                userId,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get answer votes', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 };
@@ -1166,11 +1251,28 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getTags", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get post by ID (no authentication required)' }),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Get)('favorites'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get user favorite questions' }),
+    (0, swagger_1.ApiQuery)({ name: 'listName', required: false, type: String }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    __param(0, (0, common_2.CurrentUser)('userId')),
+    __param(1, (0, common_1.Query)('listName')),
+    __param(2, (0, common_1.Query)('page')),
+    __param(3, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, Number, Number]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getUserFavorites", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get post by ID (no authentication required, but userId for favorite status)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getPost", null);
 __decorate([
@@ -1300,21 +1402,81 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "unfavoriteQuestion", null);
 __decorate([
-    (0, common_1.Get)('favorites'),
+    (0, common_1.Post)(':id/answers'),
     (0, common_1.UseGuards)(common_2.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get user favorite questions' }),
-    (0, swagger_1.ApiQuery)({ name: 'listName', required: false, type: String }),
-    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
-    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
-    __param(0, (0, common_2.CurrentUser)('userId')),
-    __param(1, (0, common_1.Query)('listName')),
-    __param(2, (0, common_1.Query)('page')),
-    __param(3, (0, common_1.Query)('limit')),
+    (0, swagger_1.ApiOperation)({ summary: 'Create an answer to a question' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Number, Number]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
-], PostController.prototype, "getUserFavorites", null);
+], PostController.prototype, "createAnswer", null);
+__decorate([
+    (0, common_1.Get)(':id/answers'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all answers for a question' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getQuestionAnswers", null);
+__decorate([
+    (0, common_1.Patch)('answers/:answerId'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Update an answer' }),
+    __param(0, (0, common_1.Param)('answerId')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "updateAnswer", null);
+__decorate([
+    (0, common_1.Delete)('answers/:answerId'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete an answer' }),
+    __param(0, (0, common_1.Param)('answerId')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "deleteAnswer", null);
+__decorate([
+    (0, common_1.Post)('answers/:answerId/vote'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Vote on an answer (up/down)' }),
+    __param(0, (0, common_1.Param)('answerId')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "voteAnswer", null);
+__decorate([
+    (0, common_1.Post)('answers/:answerId/accept'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Accept an answer (question author only)' }),
+    __param(0, (0, common_1.Param)('answerId')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "acceptAnswer", null);
+__decorate([
+    (0, common_1.Get)('answers/:answerId/votes'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get vote counts for an answer' }),
+    __param(0, (0, common_1.Param)('answerId')),
+    __param(1, (0, common_2.CurrentUser)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getAnswerVotes", null);
 exports.PostController = PostController = __decorate([
     (0, swagger_1.ApiTags)('posts'),
     (0, common_1.Controller)('posts'),

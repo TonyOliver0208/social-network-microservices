@@ -10,6 +10,7 @@ service AuthService {
   rpc RefreshToken (RefreshTokenRequest) returns (AuthResponse);
   rpc Logout (LogoutRequest) returns (LogoutResponse);
   rpc ResetPassword (ResetPasswordRequest) returns (ResetPasswordResponse);
+  rpc GetUserById (GetUserByIdRequest) returns (User);
 }
 
 message RegisterRequest {
@@ -47,6 +48,10 @@ message User {
   string profileImage = 6;
   string provider = 7;
   bool isVerified = 8;
+}
+
+message GetUserByIdRequest {
+  string id = 1;
 }
 
 message ValidateTokenRequest {
