@@ -11,6 +11,7 @@ type PostWithRelations = PrismaPost & {
   _count?: {
     likes: number;
     comments: number;
+    answers?: number; // Add answers count
     questionVotes?: number;
   };
   likes?: Partial<PrismaLike>[];
@@ -144,6 +145,7 @@ export class PostViewService implements OnModuleInit {
       mediaUrls: post.mediaUrls || [],
       likesCount: post._count?.likes || 0,
       commentsCount: post._count?.comments || 0,
+      answersCount: (post._count as any)?.answers || 0, // Add answers count
       visibility: post.privacy,
       createdAt: post.createdAt.toISOString(),
       updatedAt: post.updatedAt.toISOString(),

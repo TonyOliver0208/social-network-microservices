@@ -89,6 +89,7 @@ message PostResponse {
   int32 totalVotes = 14; // upvotes - downvotes
   optional string userVote = 15; // "up", "down", or null
   bool isFavorited = 16; // Whether current user favorited this question
+  int32 answersCount = 17; // Number of answers to this question
 }
 
 message DeletePostResponse {
@@ -141,6 +142,8 @@ message CommentResponse {
   string userId = 3;
   string content = 4;
   string createdAt = 5;
+  string authorName = 6;
+  string authorAvatar = 7;
 }
 
 message GetCommentsRequest {
@@ -315,6 +318,9 @@ message AnswerResponse {
   int32 commentCount = 10;
   string createdAt = 11;
   string updatedAt = 12;
+  string authorName = 13;
+  string authorAvatar = 14;
+  repeated CommentResponse comments = 15;
 }
 
 message AnswersListResponse {

@@ -2,6 +2,8 @@ import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { PostLogicService } from '../services/logic/post-logic.service';
 import { TagLogicService } from '../services/logic/tag-logic.service';
+import { AnswerLogicService } from '../services/logic/answer-logic.service';
+import { CommentLogicService } from '../services/logic/comment-logic.service';
 import { POSTSERVICE_SERVICE_NAME } from '@app/proto/post';
 import { status as GrpcStatus } from '@grpc/grpc-js';
 
@@ -12,6 +14,8 @@ export class PostPublicController {
   constructor(
     private readonly postLogic: PostLogicService,
     private readonly tagLogic: TagLogicService,
+    private readonly answerLogic: AnswerLogicService,
+    private readonly commentLogic: CommentLogicService,
   ) {}
 
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetPostById')
@@ -75,6 +79,27 @@ export class PostPublicController {
         page: data.page, 
         limit: data.limit 
       });
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetQuestionAnswers')
+  async getQuestionAnswers(data: { questionId: string; userId?: string }) {
+    try {
+      this.logger.log(`Getting answers for question ${data.questionId}`);
+      const answers = await this.answerLogic.getQuestionAnswers(data.questionId, data.userId);
+      return { answers }; // Wrap in AnswersListResponse structure
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetComments')
+  async getPostComments(data: { postId: string; page: number; limit: number }) {
+    try {
+      this.logger.log(`Getting comments for post: ${data.postId}`);
+      return await this.commentLogic.getPostComments(data.postId, { page: data.page, limit: data.limit });
     } catch (error) {
       throw this.handleException(error);
     }

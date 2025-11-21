@@ -543,19 +543,23 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var PostPublicController_1;
-var _a, _b;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PostPublicController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const post_logic_service_1 = __webpack_require__(/*! ../services/logic/post-logic.service */ "./apps/post-service/src/post/services/logic/post-logic.service.ts");
 const tag_logic_service_1 = __webpack_require__(/*! ../services/logic/tag-logic.service */ "./apps/post-service/src/post/services/logic/tag-logic.service.ts");
+const answer_logic_service_1 = __webpack_require__(/*! ../services/logic/answer-logic.service */ "./apps/post-service/src/post/services/logic/answer-logic.service.ts");
+const comment_logic_service_1 = __webpack_require__(/*! ../services/logic/comment-logic.service */ "./apps/post-service/src/post/services/logic/comment-logic.service.ts");
 const post_1 = __webpack_require__(/*! @app/proto/post */ "./generated/post.ts");
 const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
 let PostPublicController = PostPublicController_1 = class PostPublicController {
-    constructor(postLogic, tagLogic) {
+    constructor(postLogic, tagLogic, answerLogic, commentLogic) {
         this.postLogic = postLogic;
         this.tagLogic = tagLogic;
+        this.answerLogic = answerLogic;
+        this.commentLogic = commentLogic;
         this.logger = new common_1.Logger(PostPublicController_1.name);
     }
     async getPost(data) {
@@ -613,6 +617,25 @@ let PostPublicController = PostPublicController_1 = class PostPublicController {
                 page: data.page,
                 limit: data.limit
             });
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async getQuestionAnswers(data) {
+        try {
+            this.logger.log(`Getting answers for question ${data.questionId}`);
+            const answers = await this.answerLogic.getQuestionAnswers(data.questionId, data.userId);
+            return { answers };
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
+    async getPostComments(data) {
+        try {
+            this.logger.log(`Getting comments for post: ${data.postId}`);
+            return await this.commentLogic.getPostComments(data.postId, { page: data.page, limit: data.limit });
         }
         catch (error) {
             throw this.handleException(error);
@@ -696,9 +719,21 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], PostPublicController.prototype, "getPostsByTag", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'GetQuestionAnswers'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostPublicController.prototype, "getQuestionAnswers", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'GetComments'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostPublicController.prototype, "getPostComments", null);
 exports.PostPublicController = PostPublicController = PostPublicController_1 = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof post_logic_service_1.PostLogicService !== "undefined" && post_logic_service_1.PostLogicService) === "function" ? _a : Object, typeof (_b = typeof tag_logic_service_1.TagLogicService !== "undefined" && tag_logic_service_1.TagLogicService) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof post_logic_service_1.PostLogicService !== "undefined" && post_logic_service_1.PostLogicService) === "function" ? _a : Object, typeof (_b = typeof tag_logic_service_1.TagLogicService !== "undefined" && tag_logic_service_1.TagLogicService) === "function" ? _b : Object, typeof (_c = typeof answer_logic_service_1.AnswerLogicService !== "undefined" && answer_logic_service_1.AnswerLogicService) === "function" ? _c : Object, typeof (_d = typeof comment_logic_service_1.CommentLogicService !== "undefined" && comment_logic_service_1.CommentLogicService) === "function" ? _d : Object])
 ], PostPublicController);
 
 
@@ -1580,6 +1615,7 @@ let PostLogicService = PostLogicService_1 = class PostLogicService {
                         select: {
                             likes: true,
                             comments: true,
+                            answers: true,
                         },
                     },
                     likes: {
@@ -2267,6 +2303,7 @@ let PostViewService = PostViewService_1 = class PostViewService {
             mediaUrls: post.mediaUrls || [],
             likesCount: post._count?.likes || 0,
             commentsCount: post._count?.comments || 0,
+            answersCount: post._count?.answers || 0,
             visibility: post.privacy,
             createdAt: post.createdAt.toISOString(),
             updatedAt: post.updatedAt.toISOString(),

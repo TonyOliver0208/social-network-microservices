@@ -199,8 +199,9 @@ export class PostLogicService {
             select: {
               likes: true,
               comments: true,
+              answers: true, // Add answers count
             },
-          },
+          } as any, // Type assertion for _count to include answers
           likes: {
             where: { userId },
             select: { id: true },
@@ -211,7 +212,7 @@ export class PostLogicService {
     ]);
 
     const formattedPosts = await Promise.all(
-      posts.map(post => this.viewService.formatPostResponse(post))
+      posts.map(post => this.viewService.formatPostResponse(post as any))
     );
 
     const result = {

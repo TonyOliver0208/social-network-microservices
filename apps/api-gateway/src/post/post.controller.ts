@@ -371,9 +371,7 @@ export class PostController implements OnModuleInit {
   }
 
     @Get(':id/comments')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get post comments' })
+  @ApiOperation({ summary: 'Get post comments (no authentication required)' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getPostComments(

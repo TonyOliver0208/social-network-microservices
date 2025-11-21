@@ -56,6 +56,7 @@ export interface PostResponse {
   totalVotes?: number;
   userVote?: string;
   isFavorited?: boolean;
+  answersCount?: number;
 }
 
 export interface DeletePostResponse {
@@ -108,6 +109,8 @@ export interface CommentResponse {
   userId?: string;
   content?: string;
   createdAt?: string;
+  authorName?: string;
+  authorAvatar?: string;
 }
 
 export interface GetCommentsRequest {
@@ -278,6 +281,9 @@ export interface AnswerResponse {
   commentCount?: number;
   createdAt?: string;
   updatedAt?: string;
+  authorName?: string;
+  authorAvatar?: string;
+  comments?: CommentResponse[];
 }
 
 export interface AnswersListResponse {
