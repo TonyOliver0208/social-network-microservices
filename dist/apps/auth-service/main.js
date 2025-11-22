@@ -1,32 +1,11 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ([
-/* 0 */,
-/* 1 */
-/***/ ((module) => {
+/******/ 	var __webpack_modules__ = ({
 
-module.exports = require("@nestjs/core");
-
-/***/ }),
-/* 2 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/microservices");
-
-/***/ }),
-/* 3 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-/* 4 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/config");
-
-/***/ }),
-/* 5 */
+/***/ "./apps/auth-service/src/app.module.ts":
+/*!*********************************************!*\
+  !*** ./apps/auth-service/src/app.module.ts ***!
+  \*********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -38,16 +17,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
-const common_1 = __webpack_require__(3);
-const config_1 = __webpack_require__(4);
-const jwt_1 = __webpack_require__(6);
-const passport_1 = __webpack_require__(7);
-const auth_controller_1 = __webpack_require__(8);
-const auth_service_1 = __webpack_require__(9);
-const prisma_service_1 = __webpack_require__(12);
-const jwt_strategy_1 = __webpack_require__(19);
-const local_strategy_1 = __webpack_require__(21);
-const common_2 = __webpack_require__(14);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
+const passport_1 = __webpack_require__(/*! @nestjs/passport */ "@nestjs/passport");
+const auth_controller_1 = __webpack_require__(/*! ./auth/auth.controller */ "./apps/auth-service/src/auth/auth.controller.ts");
+const auth_service_1 = __webpack_require__(/*! ./auth/auth.service */ "./apps/auth-service/src/auth/auth.service.ts");
+const prisma_service_1 = __webpack_require__(/*! ./prisma/prisma.service */ "./apps/auth-service/src/prisma/prisma.service.ts");
+const jwt_strategy_1 = __webpack_require__(/*! ./auth/strategies/jwt.strategy */ "./apps/auth-service/src/auth/strategies/jwt.strategy.ts");
+const local_strategy_1 = __webpack_require__(/*! ./auth/strategies/local.strategy */ "./apps/auth-service/src/auth/strategies/local.strategy.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -74,19 +53,11 @@ exports.AppModule = AppModule = __decorate([
 
 
 /***/ }),
-/* 6 */
-/***/ ((module) => {
 
-module.exports = require("@nestjs/jwt");
-
-/***/ }),
-/* 7 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/passport");
-
-/***/ }),
-/* 8 */
+/***/ "./apps/auth-service/src/auth/auth.controller.ts":
+/*!*******************************************************!*\
+  !*** ./apps/auth-service/src/auth/auth.controller.ts ***!
+  \*******************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -106,13 +77,13 @@ var AuthController_1;
 var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthController = void 0;
-const common_1 = __webpack_require__(3);
-const microservices_1 = __webpack_require__(2);
-const auth_service_1 = __webpack_require__(9);
-const common_2 = __webpack_require__(14);
-const dto_1 = __webpack_require__(15);
-const auth_1 = __webpack_require__(17);
-const grpc_js_1 = __webpack_require__(18);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const auth_service_1 = __webpack_require__(/*! ./auth.service */ "./apps/auth-service/src/auth/auth.service.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const dto_1 = __webpack_require__(/*! ./dto */ "./apps/auth-service/src/auth/dto/index.ts");
+const auth_1 = __webpack_require__(/*! @app/proto/auth */ "./generated/auth.ts");
+const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
 let AuthController = AuthController_1 = class AuthController {
     constructor(authService) {
         this.authService = authService;
@@ -333,7 +304,11 @@ exports.AuthController = AuthController = AuthController_1 = __decorate([
 
 
 /***/ }),
-/* 9 */
+
+/***/ "./apps/auth-service/src/auth/auth.service.ts":
+/*!****************************************************!*\
+  !*** ./apps/auth-service/src/auth/auth.service.ts ***!
+  \****************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -383,12 +358,12 @@ var AuthService_1;
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthService = void 0;
-const common_1 = __webpack_require__(3);
-const jwt_1 = __webpack_require__(6);
-const config_1 = __webpack_require__(4);
-const bcrypt = __importStar(__webpack_require__(10));
-const google_auth_library_1 = __webpack_require__(11);
-const prisma_service_1 = __webpack_require__(12);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const bcrypt = __importStar(__webpack_require__(/*! bcrypt */ "bcrypt"));
+const google_auth_library_1 = __webpack_require__(/*! google-auth-library */ "google-auth-library");
+const prisma_service_1 = __webpack_require__(/*! ../prisma/prisma.service */ "./apps/auth-service/src/prisma/prisma.service.ts");
 let AuthService = AuthService_1 = class AuthService {
     constructor(prisma, jwtService, configService) {
         this.prisma = prisma;
@@ -860,60 +835,11 @@ exports.AuthService = AuthService = AuthService_1 = __decorate([
 
 
 /***/ }),
-/* 10 */
-/***/ ((module) => {
 
-module.exports = require("bcrypt");
-
-/***/ }),
-/* 11 */
-/***/ ((module) => {
-
-module.exports = require("google-auth-library");
-
-/***/ }),
-/* 12 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrismaService = void 0;
-const common_1 = __webpack_require__(3);
-const client_auth_1 = __webpack_require__(13);
-let PrismaService = class PrismaService extends client_auth_1.PrismaClient {
-    async onModuleInit() {
-        await this.$connect();
-    }
-    async onModuleDestroy() {
-        await this.$disconnect();
-    }
-};
-exports.PrismaService = PrismaService;
-exports.PrismaService = PrismaService = __decorate([
-    (0, common_1.Injectable)()
-], PrismaService);
-
-
-/***/ }),
-/* 13 */
-/***/ ((module) => {
-
-module.exports = require(".prisma/client-auth");
-
-/***/ }),
-/* 14 */
-/***/ ((module) => {
-
-module.exports = require("@app/common");
-
-/***/ }),
-/* 15 */
+/***/ "./apps/auth-service/src/auth/dto/index.ts":
+/*!*************************************************!*\
+  !*** ./apps/auth-service/src/auth/dto/index.ts ***!
+  \*************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -928,7 +854,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GoogleAuthDto = exports.RefreshTokenDto = exports.LoginDto = exports.RegisterDto = void 0;
-const class_validator_1 = __webpack_require__(16);
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
 class RegisterDto {
 }
 exports.RegisterDto = RegisterDto;
@@ -993,30 +919,11 @@ __decorate([
 
 
 /***/ }),
-/* 16 */
-/***/ ((module) => {
 
-module.exports = require("class-validator");
-
-/***/ }),
-/* 17 */
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AUTHSERVICE_SERVICE_NAME = exports.AUTH_PACKAGE_NAME = void 0;
-exports.AUTH_PACKAGE_NAME = 'auth';
-exports.AUTHSERVICE_SERVICE_NAME = 'AuthService';
-
-
-/***/ }),
-/* 18 */
-/***/ ((module) => {
-
-module.exports = require("@grpc/grpc-js");
-
-/***/ }),
-/* 19 */
+/***/ "./apps/auth-service/src/auth/strategies/jwt.strategy.ts":
+/*!***************************************************************!*\
+  !*** ./apps/auth-service/src/auth/strategies/jwt.strategy.ts ***!
+  \***************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1032,11 +939,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.JwtStrategy = void 0;
-const common_1 = __webpack_require__(3);
-const passport_1 = __webpack_require__(7);
-const passport_jwt_1 = __webpack_require__(20);
-const config_1 = __webpack_require__(4);
-const prisma_service_1 = __webpack_require__(12);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const passport_1 = __webpack_require__(/*! @nestjs/passport */ "@nestjs/passport");
+const passport_jwt_1 = __webpack_require__(/*! passport-jwt */ "passport-jwt");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const prisma_service_1 = __webpack_require__(/*! ../../prisma/prisma.service */ "./apps/auth-service/src/prisma/prisma.service.ts");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     constructor(configService, prisma) {
         super({
@@ -1077,13 +984,11 @@ exports.JwtStrategy = JwtStrategy = __decorate([
 
 
 /***/ }),
-/* 20 */
-/***/ ((module) => {
 
-module.exports = require("passport-jwt");
-
-/***/ }),
-/* 21 */
+/***/ "./apps/auth-service/src/auth/strategies/local.strategy.ts":
+/*!*****************************************************************!*\
+  !*** ./apps/auth-service/src/auth/strategies/local.strategy.ts ***!
+  \*****************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1132,11 +1037,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LocalStrategy = void 0;
-const common_1 = __webpack_require__(3);
-const passport_1 = __webpack_require__(7);
-const passport_local_1 = __webpack_require__(22);
-const bcrypt = __importStar(__webpack_require__(10));
-const prisma_service_1 = __webpack_require__(12);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const passport_1 = __webpack_require__(/*! @nestjs/passport */ "@nestjs/passport");
+const passport_local_1 = __webpack_require__(/*! passport-local */ "passport-local");
+const bcrypt = __importStar(__webpack_require__(/*! bcrypt */ "bcrypt"));
+const prisma_service_1 = __webpack_require__(/*! ../../prisma/prisma.service */ "./apps/auth-service/src/prisma/prisma.service.ts");
 let LocalStrategy = class LocalStrategy extends (0, passport_1.PassportStrategy)(passport_local_1.Strategy) {
     constructor(prisma) {
         super({
@@ -1176,19 +1081,206 @@ exports.LocalStrategy = LocalStrategy = __decorate([
 
 
 /***/ }),
-/* 22 */
+
+/***/ "./apps/auth-service/src/prisma/prisma.service.ts":
+/*!********************************************************!*\
+  !*** ./apps/auth-service/src/prisma/prisma.service.ts ***!
+  \********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PrismaService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const client_auth_1 = __webpack_require__(/*! .prisma/client-auth */ ".prisma/client-auth");
+let PrismaService = class PrismaService extends client_auth_1.PrismaClient {
+    async onModuleInit() {
+        await this.$connect();
+    }
+    async onModuleDestroy() {
+        await this.$disconnect();
+    }
+};
+exports.PrismaService = PrismaService;
+exports.PrismaService = PrismaService = __decorate([
+    (0, common_1.Injectable)()
+], PrismaService);
+
+
+/***/ }),
+
+/***/ "./generated/auth.ts":
+/*!***************************!*\
+  !*** ./generated/auth.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AUTHSERVICE_SERVICE_NAME = exports.AUTH_PACKAGE_NAME = void 0;
+exports.AUTH_PACKAGE_NAME = 'auth';
+exports.AUTHSERVICE_SERVICE_NAME = 'AuthService';
+
+
+/***/ }),
+
+/***/ ".prisma/client-auth":
+/*!**************************************!*\
+  !*** external ".prisma/client-auth" ***!
+  \**************************************/
+/***/ ((module) => {
+
+module.exports = require(".prisma/client-auth");
+
+/***/ }),
+
+/***/ "@app/common":
+/*!******************************!*\
+  !*** external "@app/common" ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = require("@app/common");
+
+/***/ }),
+
+/***/ "@grpc/grpc-js":
+/*!********************************!*\
+  !*** external "@grpc/grpc-js" ***!
+  \********************************/
+/***/ ((module) => {
+
+module.exports = require("@grpc/grpc-js");
+
+/***/ }),
+
+/***/ "@nestjs/common":
+/*!*********************************!*\
+  !*** external "@nestjs/common" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/common");
+
+/***/ }),
+
+/***/ "@nestjs/config":
+/*!*********************************!*\
+  !*** external "@nestjs/config" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/config");
+
+/***/ }),
+
+/***/ "@nestjs/core":
+/*!*******************************!*\
+  !*** external "@nestjs/core" ***!
+  \*******************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/core");
+
+/***/ }),
+
+/***/ "@nestjs/jwt":
+/*!******************************!*\
+  !*** external "@nestjs/jwt" ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/jwt");
+
+/***/ }),
+
+/***/ "@nestjs/microservices":
+/*!****************************************!*\
+  !*** external "@nestjs/microservices" ***!
+  \****************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/microservices");
+
+/***/ }),
+
+/***/ "@nestjs/passport":
+/*!***********************************!*\
+  !*** external "@nestjs/passport" ***!
+  \***********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/passport");
+
+/***/ }),
+
+/***/ "bcrypt":
+/*!*************************!*\
+  !*** external "bcrypt" ***!
+  \*************************/
+/***/ ((module) => {
+
+module.exports = require("bcrypt");
+
+/***/ }),
+
+/***/ "class-validator":
+/*!**********************************!*\
+  !*** external "class-validator" ***!
+  \**********************************/
+/***/ ((module) => {
+
+module.exports = require("class-validator");
+
+/***/ }),
+
+/***/ "google-auth-library":
+/*!**************************************!*\
+  !*** external "google-auth-library" ***!
+  \**************************************/
+/***/ ((module) => {
+
+module.exports = require("google-auth-library");
+
+/***/ }),
+
+/***/ "passport-jwt":
+/*!*******************************!*\
+  !*** external "passport-jwt" ***!
+  \*******************************/
+/***/ ((module) => {
+
+module.exports = require("passport-jwt");
+
+/***/ }),
+
+/***/ "passport-local":
+/*!*********************************!*\
+  !*** external "passport-local" ***!
+  \*********************************/
 /***/ ((module) => {
 
 module.exports = require("passport-local");
 
 /***/ }),
-/* 23 */
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
 /***/ ((module) => {
 
 module.exports = require("path");
 
 /***/ })
-/******/ 	]);
+
+/******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -1219,14 +1311,17 @@ var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
+/*!***************************************!*\
+  !*** ./apps/auth-service/src/main.ts ***!
+  \***************************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(1);
-const microservices_1 = __webpack_require__(2);
-const common_1 = __webpack_require__(3);
-const config_1 = __webpack_require__(4);
-const app_module_1 = __webpack_require__(5);
-const path_1 = __webpack_require__(23);
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const app_module_1 = __webpack_require__(/*! ./app.module */ "./apps/auth-service/src/app.module.ts");
+const path_1 = __webpack_require__(/*! path */ "path");
 async function bootstrap() {
     const logger = new common_1.Logger('AuthService');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
