@@ -1,0 +1,168 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  HttpException,
+  HttpStatus,
+  Inject,
+  OnModuleInit,
+} from '@nestjs/common';
+import { ClientGrpc } from '@nestjs/microservices';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { lastValueFrom } from 'rxjs';
+import { SERVICES, CurrentUser, JwtAuthGuard } from '@app/common';
+import {
+  SubscriptionService,
+  SUBSCRIPTIONSERVICE_SERVICE_NAME,
+} from '@app/proto/subscription';
+
+@ApiTags('subscriptions')
+@Controller('subscriptions')
+export class SubscriptionController implements OnModuleInit {
+  private subscriptionService: SubscriptionService;
+
+  constructor(
+    @Inject(SERVICES.SUBSCRIPTION_SERVICE)
+    private readonly client: ClientGrpc,
+  ) {}
+
+  onModuleInit() {
+    this.subscriptionService = this.client.getService<SubscriptionService>(
+      SUBSCRIPTIONSERVICE_SERVICE_NAME,
+    );
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user subscription status' })
+  async getSubscription(@CurrentUser('userId') userId: string) {
+    try {
+      const result = await lastValueFrom(
+        this.subscriptionService.GetSubscription({ userId }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get subscription',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('upgrade')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upgrade to premium subscription' })
+  async upgradeToPremium(
+    @CurrentUser('userId') userId: string,
+    @Body() body: { paymentId?: string },
+  ) {
+    try {
+      const result = await lastValueFrom(
+        this.subscriptionService.UpgradeToPremium({
+          userId,
+          paymentId: body.paymentId,
+        }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to upgrade subscription',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('cancel')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cancel subscription' })
+  async cancelSubscription(@CurrentUser('userId') userId: string) {
+    try {
+      const result = await lastValueFrom(
+        this.subscriptionService.CancelPremium({ userId }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to cancel subscription',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('payments')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a payment' })
+  async createPayment(
+    @CurrentUser('userId') userId: string,
+    @Body() body: { amount: number; currency: string; method: string },
+  ) {
+    try {
+      const result = await lastValueFrom(
+        this.subscriptionService.CreatePayment({
+          userId,
+          amount: body.amount,
+          currency: body.currency,
+          method: body.method,
+        }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to create payment',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get('payments')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get payment history' })
+  async getPaymentHistory(@CurrentUser('userId') userId: string) {
+    try {
+      const result = await lastValueFrom(
+        this.subscriptionService.GetPaymentHistory({ userId }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get payment history',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch('payments/:id/status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update payment status' })
+  async updatePaymentStatus(
+    @CurrentUser('userId') userId: string,
+    @Param('id') paymentId: string,
+    @Body() body: { status: string },
+  ) {
+    try {
+      const result = await lastValueFrom(
+        this.subscriptionService.UpdatePaymentStatus({
+          userId,
+          paymentId,
+          status: body.status,
+        }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to update payment status',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+}

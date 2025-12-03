@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("SUBSCRIPTION_DATABASE_URL")
 }
 
 model Subscription {
@@ -15,7 +15,6 @@ model Subscription {
   paymentId    String?
   premiumSince DateTime?
   expiresAt    DateTime?
-  
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -25,18 +24,17 @@ model Subscription {
 }
 
 model Payment {
-  id               String        @id @default(uuid())
-  userId           String
-  subscriptionId   String?
-  amount           Decimal       @db.Decimal(10, 2)
-  currency         String        @default("USD")
-  status           PaymentStatus @default(PENDING)
-  paymentMethod    String
-  transactionId    String?       @unique
-  stripePaymentId  String?       @unique
-  
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id              String        @id @default(uuid())
+  userId          String
+  subscriptionId  String?
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("USD")
+  status          PaymentStatus @default(PENDING)
+  paymentMethod   String
+  transactionId   String?       @unique
+  stripePaymentId String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([userId])
   @@index([status])

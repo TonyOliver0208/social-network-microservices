@@ -1,0 +1,148 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  HttpException,
+  HttpStatus,
+  Inject,
+  OnModuleInit,
+} from '@nestjs/common';
+import { ClientGrpc } from '@nestjs/microservices';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { lastValueFrom } from 'rxjs';
+import { SERVICES, CurrentUser, JwtAuthGuard } from '@app/common';
+import { DesignService, DESIGNSERVICE_SERVICE_NAME } from '@app/proto/design';
+
+@ApiTags('designs')
+@Controller('designs')
+export class DesignController implements OnModuleInit {
+  private designService: DesignService;
+
+  constructor(
+    @Inject(SERVICES.DESIGN_SERVICE)
+    private readonly client: ClientGrpc,
+  ) {}
+
+  onModuleInit() {
+    this.designService = this.client.getService<DesignService>(DESIGNSERVICE_SERVICE_NAME);
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all user designs' })
+  async getUserDesigns(@CurrentUser('userId') userId: string) {
+    try {
+      const result = await lastValueFrom(
+        this.designService.GetUserDesigns({ userId }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get designs',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get design by ID' })
+  async getDesignById(
+    @CurrentUser('userId') userId: string,
+    @Param('id') designId: string,
+  ) {
+    try {
+      const result = await lastValueFrom(
+        this.designService.GetDesignById({ userId, designId }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Design not found',
+        error.status || HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new design' })
+  async createDesign(
+    @CurrentUser('userId') userId: string,
+    @Body() body: { name: string; thumbnailUrl?: string; designData: string },
+  ) {
+    try {
+      const result = await lastValueFrom(
+        this.designService.CreateDesign({
+          userId,
+          name: body.name,
+          thumbnailUrl: body.thumbnailUrl || '',
+          designData: body.designData,
+        }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to create design',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Put(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a design' })
+  async updateDesign(
+    @CurrentUser('userId') userId: string,
+    @Param('id') designId: string,
+    @Body() body: { name?: string; thumbnailUrl?: string; designData?: string },
+  ) {
+    try {
+      const result = await lastValueFrom(
+        this.designService.UpdateDesign({
+          userId,
+          designId,
+          name: body.name,
+          thumbnailUrl: body.thumbnailUrl,
+          designData: body.designData,
+        }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to update design',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a design' })
+  async deleteDesign(
+    @CurrentUser('userId') userId: string,
+    @Param('id') designId: string,
+  ) {
+    try {
+      const result = await lastValueFrom(
+        this.designService.DeleteDesign({ userId, designId }),
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to delete design',
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+}

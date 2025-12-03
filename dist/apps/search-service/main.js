@@ -1,32 +1,11 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ([
-/* 0 */,
-/* 1 */
-/***/ ((module) => {
+/******/ 	var __webpack_modules__ = ({
 
-module.exports = require("@nestjs/core");
-
-/***/ }),
-/* 2 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/microservices");
-
-/***/ }),
-/* 3 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-/* 4 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/config");
-
-/***/ }),
-/* 5 */
+/***/ "./apps/search-service/src/app.module.ts":
+/*!***********************************************!*\
+  !*** ./apps/search-service/src/app.module.ts ***!
+  \***********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -38,10 +17,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
-const common_1 = __webpack_require__(3);
-const config_1 = __webpack_require__(4);
-const mongoose_1 = __webpack_require__(6);
-const search_module_1 = __webpack_require__(7);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const search_module_1 = __webpack_require__(/*! ./search/search.module */ "./apps/search-service/src/search/search.module.ts");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -65,13 +44,11 @@ exports.AppModule = AppModule = __decorate([
 
 
 /***/ }),
-/* 6 */
-/***/ ((module) => {
 
-module.exports = require("@nestjs/mongoose");
-
-/***/ }),
-/* 7 */
+/***/ "./apps/search-service/src/search/dto/index.ts":
+/*!*****************************************************!*\
+  !*** ./apps/search-service/src/search/dto/index.ts ***!
+  \*****************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -81,34 +58,257 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SearchModule = void 0;
-const common_1 = __webpack_require__(3);
-const mongoose_1 = __webpack_require__(6);
-const search_controller_1 = __webpack_require__(8);
-const search_service_1 = __webpack_require__(9);
-const post_index_schema_1 = __webpack_require__(11);
-const user_index_schema_1 = __webpack_require__(12);
-let SearchModule = class SearchModule {
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-exports.SearchModule = SearchModule;
-exports.SearchModule = SearchModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            mongoose_1.MongooseModule.forFeature([
-                { name: post_index_schema_1.PostIndex.name, schema: post_index_schema_1.PostIndexSchema },
-                { name: user_index_schema_1.UserIndex.name, schema: user_index_schema_1.UserIndexSchema },
-            ]),
-        ],
-        controllers: [search_controller_1.SearchController],
-        providers: [search_service_1.SearchService],
-        exports: [search_service_1.SearchService],
-    })
-], SearchModule);
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.IndexUserDto = exports.IndexPostDto = exports.SearchQueryDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class SearchQueryDto {
+    constructor() {
+        this.page = 1;
+        this.limit = 20;
+    }
+}
+exports.SearchQueryDto = SearchQueryDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SearchQueryDto.prototype, "query", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], SearchQueryDto.prototype, "page", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], SearchQueryDto.prototype, "limit", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(['PUBLIC', 'FRIENDS']),
+    __metadata("design:type", String)
+], SearchQueryDto.prototype, "privacy", void 0);
+class IndexPostDto {
+}
+exports.IndexPostDto = IndexPostDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], IndexPostDto.prototype, "postId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], IndexPostDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], IndexPostDto.prototype, "content", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], IndexPostDto.prototype, "tags", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], IndexPostDto.prototype, "mediaUrls", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], IndexPostDto.prototype, "privacy", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], IndexPostDto.prototype, "postedAt", void 0);
+class IndexUserDto {
+}
+exports.IndexUserDto = IndexUserDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], IndexUserDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], IndexUserDto.prototype, "username", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], IndexUserDto.prototype, "fullName", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], IndexUserDto.prototype, "bio", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], IndexUserDto.prototype, "avatar", void 0);
 
 
 /***/ }),
-/* 8 */
+
+/***/ "./apps/search-service/src/search/schemas/post-index.schema.ts":
+/*!*********************************************************************!*\
+  !*** ./apps/search-service/src/search/schemas/post-index.schema.ts ***!
+  \*********************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PostIndexSchema = exports.PostIndex = void 0;
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+let PostIndex = class PostIndex {
+};
+exports.PostIndex = PostIndex;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true }),
+    __metadata("design:type", String)
+], PostIndex.prototype, "postId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, index: true }),
+    __metadata("design:type", String)
+], PostIndex.prototype, "userId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, text: true }),
+    __metadata("design:type", String)
+], PostIndex.prototype, "content", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [String], default: [] }),
+    __metadata("design:type", Array)
+], PostIndex.prototype, "tags", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [String], default: [] }),
+    __metadata("design:type", Array)
+], PostIndex.prototype, "mediaUrls", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ enum: ['PUBLIC', 'FRIENDS', 'PRIVATE'], default: 'PUBLIC', index: true }),
+    __metadata("design:type", String)
+], PostIndex.prototype, "privacy", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], PostIndex.prototype, "likesCount", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], PostIndex.prototype, "commentsCount", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date, index: true }),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], PostIndex.prototype, "postedAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: true }),
+    __metadata("design:type", Boolean)
+], PostIndex.prototype, "isActive", void 0);
+exports.PostIndex = PostIndex = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], PostIndex);
+exports.PostIndexSchema = mongoose_1.SchemaFactory.createForClass(PostIndex);
+exports.PostIndexSchema.index({ content: 'text', tags: 'text' });
+exports.PostIndexSchema.index({ userId: 1, postedAt: -1 });
+exports.PostIndexSchema.index({ privacy: 1, postedAt: -1 });
+
+
+/***/ }),
+
+/***/ "./apps/search-service/src/search/schemas/user-index.schema.ts":
+/*!*********************************************************************!*\
+  !*** ./apps/search-service/src/search/schemas/user-index.schema.ts ***!
+  \*********************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserIndexSchema = exports.UserIndex = void 0;
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+let UserIndex = class UserIndex {
+};
+exports.UserIndex = UserIndex;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, unique: true }),
+    __metadata("design:type", String)
+], UserIndex.prototype, "userId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, index: true, text: true }),
+    __metadata("design:type", String)
+], UserIndex.prototype, "username", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ text: true }),
+    __metadata("design:type", String)
+], UserIndex.prototype, "fullName", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ text: true }),
+    __metadata("design:type", String)
+], UserIndex.prototype, "bio", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], UserIndex.prototype, "avatar", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], UserIndex.prototype, "followersCount", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], UserIndex.prototype, "followingCount", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], UserIndex.prototype, "postsCount", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: false }),
+    __metadata("design:type", Boolean)
+], UserIndex.prototype, "isVerified", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: true }),
+    __metadata("design:type", Boolean)
+], UserIndex.prototype, "isActive", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Date }),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], UserIndex.prototype, "lastActive", void 0);
+exports.UserIndex = UserIndex = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], UserIndex);
+exports.UserIndexSchema = mongoose_1.SchemaFactory.createForClass(UserIndex);
+exports.UserIndexSchema.index({ username: 'text', fullName: 'text', bio: 'text' });
+exports.UserIndexSchema.index({ isActive: 1, lastActive: -1 });
+
+
+/***/ }),
+
+/***/ "./apps/search-service/src/search/search.controller.ts":
+/*!*************************************************************!*\
+  !*** ./apps/search-service/src/search/search.controller.ts ***!
+  \*************************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -128,13 +328,13 @@ var SearchController_1;
 var _a, _b, _c, _d, _e, _f, _g;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SearchController = void 0;
-const common_1 = __webpack_require__(3);
-const microservices_1 = __webpack_require__(2);
-const search_service_1 = __webpack_require__(9);
-const common_2 = __webpack_require__(13);
-const dto_1 = __webpack_require__(14);
-const search_1 = __webpack_require__(16);
-const grpc_js_1 = __webpack_require__(17);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const search_service_1 = __webpack_require__(/*! ./search.service */ "./apps/search-service/src/search/search.service.ts");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+const dto_1 = __webpack_require__(/*! ./dto */ "./apps/search-service/src/search/dto/index.ts");
+const search_1 = __webpack_require__(/*! @app/proto/search */ "./generated/search.ts");
+const grpc_js_1 = __webpack_require__(/*! @grpc/grpc-js */ "@grpc/grpc-js");
 let SearchController = SearchController_1 = class SearchController {
     constructor(searchService) {
         this.searchService = searchService;
@@ -293,7 +493,52 @@ exports.SearchController = SearchController = SearchController_1 = __decorate([
 
 
 /***/ }),
-/* 9 */
+
+/***/ "./apps/search-service/src/search/search.module.ts":
+/*!*********************************************************!*\
+  !*** ./apps/search-service/src/search/search.module.ts ***!
+  \*********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SearchModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const search_controller_1 = __webpack_require__(/*! ./search.controller */ "./apps/search-service/src/search/search.controller.ts");
+const search_service_1 = __webpack_require__(/*! ./search.service */ "./apps/search-service/src/search/search.service.ts");
+const post_index_schema_1 = __webpack_require__(/*! ./schemas/post-index.schema */ "./apps/search-service/src/search/schemas/post-index.schema.ts");
+const user_index_schema_1 = __webpack_require__(/*! ./schemas/user-index.schema */ "./apps/search-service/src/search/schemas/user-index.schema.ts");
+let SearchModule = class SearchModule {
+};
+exports.SearchModule = SearchModule;
+exports.SearchModule = SearchModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            mongoose_1.MongooseModule.forFeature([
+                { name: post_index_schema_1.PostIndex.name, schema: post_index_schema_1.PostIndexSchema },
+                { name: user_index_schema_1.UserIndex.name, schema: user_index_schema_1.UserIndexSchema },
+            ]),
+        ],
+        controllers: [search_controller_1.SearchController],
+        providers: [search_service_1.SearchService],
+        exports: [search_service_1.SearchService],
+    })
+], SearchModule);
+
+
+/***/ }),
+
+/***/ "./apps/search-service/src/search/search.service.ts":
+/*!**********************************************************!*\
+  !*** ./apps/search-service/src/search/search.service.ts ***!
+  \**********************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -313,11 +558,11 @@ var SearchService_1;
 var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SearchService = void 0;
-const common_1 = __webpack_require__(3);
-const mongoose_1 = __webpack_require__(6);
-const mongoose_2 = __webpack_require__(10);
-const post_index_schema_1 = __webpack_require__(11);
-const user_index_schema_1 = __webpack_require__(12);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
+const mongoose_2 = __webpack_require__(/*! mongoose */ "mongoose");
+const post_index_schema_1 = __webpack_require__(/*! ./schemas/post-index.schema */ "./apps/search-service/src/search/schemas/post-index.schema.ts");
+const user_index_schema_1 = __webpack_require__(/*! ./schemas/user-index.schema */ "./apps/search-service/src/search/schemas/user-index.schema.ts");
 let SearchService = SearchService_1 = class SearchService {
     constructor(postIndexModel, userIndexModel) {
         this.postIndexModel = postIndexModel;
@@ -488,273 +733,11 @@ exports.SearchService = SearchService = SearchService_1 = __decorate([
 
 
 /***/ }),
-/* 10 */
-/***/ ((module) => {
 
-module.exports = require("mongoose");
-
-/***/ }),
-/* 11 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PostIndexSchema = exports.PostIndex = void 0;
-const mongoose_1 = __webpack_require__(6);
-let PostIndex = class PostIndex {
-};
-exports.PostIndex = PostIndex;
-__decorate([
-    (0, mongoose_1.Prop)({ required: true, unique: true }),
-    __metadata("design:type", String)
-], PostIndex.prototype, "postId", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: true, index: true }),
-    __metadata("design:type", String)
-], PostIndex.prototype, "userId", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: true, text: true }),
-    __metadata("design:type", String)
-], PostIndex.prototype, "content", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ type: [String], default: [] }),
-    __metadata("design:type", Array)
-], PostIndex.prototype, "tags", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ type: [String], default: [] }),
-    __metadata("design:type", Array)
-], PostIndex.prototype, "mediaUrls", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ enum: ['PUBLIC', 'FRIENDS', 'PRIVATE'], default: 'PUBLIC', index: true }),
-    __metadata("design:type", String)
-], PostIndex.prototype, "privacy", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ default: 0 }),
-    __metadata("design:type", Number)
-], PostIndex.prototype, "likesCount", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ default: 0 }),
-    __metadata("design:type", Number)
-], PostIndex.prototype, "commentsCount", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ type: Date, index: true }),
-    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], PostIndex.prototype, "postedAt", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ default: true }),
-    __metadata("design:type", Boolean)
-], PostIndex.prototype, "isActive", void 0);
-exports.PostIndex = PostIndex = __decorate([
-    (0, mongoose_1.Schema)({ timestamps: true })
-], PostIndex);
-exports.PostIndexSchema = mongoose_1.SchemaFactory.createForClass(PostIndex);
-exports.PostIndexSchema.index({ content: 'text', tags: 'text' });
-exports.PostIndexSchema.index({ userId: 1, postedAt: -1 });
-exports.PostIndexSchema.index({ privacy: 1, postedAt: -1 });
-
-
-/***/ }),
-/* 12 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserIndexSchema = exports.UserIndex = void 0;
-const mongoose_1 = __webpack_require__(6);
-let UserIndex = class UserIndex {
-};
-exports.UserIndex = UserIndex;
-__decorate([
-    (0, mongoose_1.Prop)({ required: true, unique: true }),
-    __metadata("design:type", String)
-], UserIndex.prototype, "userId", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: true, index: true, text: true }),
-    __metadata("design:type", String)
-], UserIndex.prototype, "username", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ text: true }),
-    __metadata("design:type", String)
-], UserIndex.prototype, "fullName", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ text: true }),
-    __metadata("design:type", String)
-], UserIndex.prototype, "bio", void 0);
-__decorate([
-    (0, mongoose_1.Prop)(),
-    __metadata("design:type", String)
-], UserIndex.prototype, "avatar", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ default: 0 }),
-    __metadata("design:type", Number)
-], UserIndex.prototype, "followersCount", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ default: 0 }),
-    __metadata("design:type", Number)
-], UserIndex.prototype, "followingCount", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ default: 0 }),
-    __metadata("design:type", Number)
-], UserIndex.prototype, "postsCount", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ default: false }),
-    __metadata("design:type", Boolean)
-], UserIndex.prototype, "isVerified", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ default: true }),
-    __metadata("design:type", Boolean)
-], UserIndex.prototype, "isActive", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ type: Date }),
-    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], UserIndex.prototype, "lastActive", void 0);
-exports.UserIndex = UserIndex = __decorate([
-    (0, mongoose_1.Schema)({ timestamps: true })
-], UserIndex);
-exports.UserIndexSchema = mongoose_1.SchemaFactory.createForClass(UserIndex);
-exports.UserIndexSchema.index({ username: 'text', fullName: 'text', bio: 'text' });
-exports.UserIndexSchema.index({ isActive: 1, lastActive: -1 });
-
-
-/***/ }),
-/* 13 */
-/***/ ((module) => {
-
-module.exports = require("@app/common");
-
-/***/ }),
-/* 14 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.IndexUserDto = exports.IndexPostDto = exports.SearchQueryDto = void 0;
-const class_validator_1 = __webpack_require__(15);
-class SearchQueryDto {
-    constructor() {
-        this.page = 1;
-        this.limit = 20;
-    }
-}
-exports.SearchQueryDto = SearchQueryDto;
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SearchQueryDto.prototype, "query", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(1),
-    __metadata("design:type", Number)
-], SearchQueryDto.prototype, "page", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(1),
-    __metadata("design:type", Number)
-], SearchQueryDto.prototype, "limit", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(['PUBLIC', 'FRIENDS']),
-    __metadata("design:type", String)
-], SearchQueryDto.prototype, "privacy", void 0);
-class IndexPostDto {
-}
-exports.IndexPostDto = IndexPostDto;
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], IndexPostDto.prototype, "postId", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], IndexPostDto.prototype, "userId", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], IndexPostDto.prototype, "content", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Array)
-], IndexPostDto.prototype, "tags", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", Array)
-], IndexPostDto.prototype, "mediaUrls", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], IndexPostDto.prototype, "privacy", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
-], IndexPostDto.prototype, "postedAt", void 0);
-class IndexUserDto {
-}
-exports.IndexUserDto = IndexUserDto;
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], IndexUserDto.prototype, "userId", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], IndexUserDto.prototype, "username", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], IndexUserDto.prototype, "fullName", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], IndexUserDto.prototype, "bio", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], IndexUserDto.prototype, "avatar", void 0);
-
-
-/***/ }),
-/* 15 */
-/***/ ((module) => {
-
-module.exports = require("class-validator");
-
-/***/ }),
-/* 16 */
+/***/ "./generated/search.ts":
+/*!*****************************!*\
+  !*** ./generated/search.ts ***!
+  \*****************************/
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -765,19 +748,108 @@ exports.SEARCHSERVICE_SERVICE_NAME = 'SearchService';
 
 
 /***/ }),
-/* 17 */
+
+/***/ "@app/common":
+/*!******************************!*\
+  !*** external "@app/common" ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = require("@app/common");
+
+/***/ }),
+
+/***/ "@grpc/grpc-js":
+/*!********************************!*\
+  !*** external "@grpc/grpc-js" ***!
+  \********************************/
 /***/ ((module) => {
 
 module.exports = require("@grpc/grpc-js");
 
 /***/ }),
-/* 18 */
+
+/***/ "@nestjs/common":
+/*!*********************************!*\
+  !*** external "@nestjs/common" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/common");
+
+/***/ }),
+
+/***/ "@nestjs/config":
+/*!*********************************!*\
+  !*** external "@nestjs/config" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/config");
+
+/***/ }),
+
+/***/ "@nestjs/core":
+/*!*******************************!*\
+  !*** external "@nestjs/core" ***!
+  \*******************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/core");
+
+/***/ }),
+
+/***/ "@nestjs/microservices":
+/*!****************************************!*\
+  !*** external "@nestjs/microservices" ***!
+  \****************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/microservices");
+
+/***/ }),
+
+/***/ "@nestjs/mongoose":
+/*!***********************************!*\
+  !*** external "@nestjs/mongoose" ***!
+  \***********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/mongoose");
+
+/***/ }),
+
+/***/ "class-validator":
+/*!**********************************!*\
+  !*** external "class-validator" ***!
+  \**********************************/
+/***/ ((module) => {
+
+module.exports = require("class-validator");
+
+/***/ }),
+
+/***/ "mongoose":
+/*!***************************!*\
+  !*** external "mongoose" ***!
+  \***************************/
+/***/ ((module) => {
+
+module.exports = require("mongoose");
+
+/***/ }),
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
 /***/ ((module) => {
 
 module.exports = require("path");
 
 /***/ })
-/******/ 	]);
+
+/******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -808,14 +880,17 @@ var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
+/*!*****************************************!*\
+  !*** ./apps/search-service/src/main.ts ***!
+  \*****************************************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(1);
-const microservices_1 = __webpack_require__(2);
-const common_1 = __webpack_require__(3);
-const config_1 = __webpack_require__(4);
-const app_module_1 = __webpack_require__(5);
-const path_1 = __webpack_require__(18);
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const app_module_1 = __webpack_require__(/*! ./app.module */ "./apps/search-service/src/app.module.ts");
+const path_1 = __webpack_require__(/*! path */ "path");
 async function bootstrap() {
     const logger = new common_1.Logger('SearchService');
     const app = await core_1.NestFactory.create(app_module_1.AppModule);

@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package subscription;
+
+service SubscriptionService {
+  rpc GetSubscription(GetSubscriptionRequest) returns (SubscriptionResponse);
+  rpc UpgradeToPremium(UpgradeToPremiumRequest) returns (SubscriptionResponse);
+  rpc CancelPremium(CancelPremiumRequest) returns (SubscriptionResponse);
+  rpc CreatePayment(CreatePaymentRequest) returns (PaymentResponse);
+  rpc GetPaymentHistory(GetPaymentHistoryRequest) returns (PaymentHistoryResponse);
+  rpc UpdatePaymentStatus(UpdatePaymentStatusRequest) returns (PaymentResponse);
+}
+
+message GetSubscriptionRequest {
+  string userId = 1;
+}
+
+message UpgradeToPremiumRequest {
+  string userId = 1;
+  optional string paymentId = 2;
+}
+
+message CancelPremiumRequest {
+  string userId = 1;
+}
+
+message CreatePaymentRequest {
+  string userId = 1;
+  double amount = 2;
+  string currency = 3;
+  string method = 4;
+}
+
+message GetPaymentHistoryRequest {
+  string userId = 1;
+}
+
+message UpdatePaymentStatusRequest {
+  string userId = 1;
+  string paymentId = 2;
+  string status = 3;
+}
+
+message Subscription {
+  string id = 1;
+  string userId = 2;
+  string tier = 3;
+  string status = 4;
+  optional string startDate = 5;
+  optional string endDate = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
+}
+
+message Payment {
+  string id = 1;
+  string userId = 2;
+  double amount = 3;
+  string currency = 4;
+  string method = 5;
+  string status = 6;
+  optional string transactionId = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+}
+
+message SubscriptionResponse {
+  bool success = 1;
+  optional Subscription data = 2;
+  optional string message = 3;
+}
+
+message PaymentResponse {
+  bool success = 1;
+  optional Payment data = 2;
+  optional string message = 3;
+}
+
+message PaymentHistoryResponse {
+  bool success = 1;
+  repeated Payment data = 2;
+  optional string message = 3;
+}

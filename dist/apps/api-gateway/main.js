@@ -26,6 +26,8 @@ const user_module_1 = __webpack_require__(/*! ./user/user.module */ "./apps/api-
 const post_module_1 = __webpack_require__(/*! ./post/post.module */ "./apps/api-gateway/src/post/post.module.ts");
 const media_module_1 = __webpack_require__(/*! ./media/media.module */ "./apps/api-gateway/src/media/media.module.ts");
 const search_module_1 = __webpack_require__(/*! ./search/search.module */ "./apps/api-gateway/src/search/search.module.ts");
+const design_module_1 = __webpack_require__(/*! ./design/design.module */ "./apps/api-gateway/src/design/design.module.ts");
+const subscription_module_1 = __webpack_require__(/*! ./subscription/subscription.module */ "./apps/api-gateway/src/subscription/subscription.module.ts");
 const health_controller_1 = __webpack_require__(/*! ./health/health.controller */ "./apps/api-gateway/src/health/health.controller.ts");
 let AppModule = class AppModule {
     configure(consumer) {
@@ -55,6 +57,8 @@ exports.AppModule = AppModule = __decorate([
             post_module_1.PostModule,
             media_module_1.MediaModule,
             search_module_1.SearchModule,
+            design_module_1.DesignModule,
+            subscription_module_1.SubscriptionModule,
         ],
         controllers: [health_controller_1.HealthController],
     })
@@ -439,6 +443,153 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], GoogleAuthDto.prototype, "tokenType", void 0);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/design/design.controller.ts":
+/*!**********************************************************!*\
+  !*** ./apps/api-gateway/src/design/design.controller.ts ***!
+  \**********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c, _d, _e, _f;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DesignController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const axios_1 = __webpack_require__(/*! @nestjs/axios */ "@nestjs/axios");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const express_1 = __webpack_require__(/*! express */ "express");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+let DesignController = class DesignController {
+    constructor(httpService, configService) {
+        this.httpService = httpService;
+        this.configService = configService;
+        this.designServiceUrl = this.configService.get('DESIGN_SERVICE_URL', 'http://localhost:50056');
+    }
+    async proxyRequestWithPath(req, res) {
+        try {
+            const basePath = '/api/v1/designs';
+            const additionalPath = req.originalUrl.substring(basePath.length) || '';
+            const targetUrl = `${this.designServiceUrl}/designs${additionalPath}`;
+            const userId = req.user?.userId;
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.request({
+                method: req.method,
+                url: targetUrl,
+                data: req.body,
+                params: {
+                    ...req.query,
+                    ...(userId && { userId }),
+                },
+                headers: {
+                    ...req.headers,
+                    host: undefined,
+                },
+            }));
+            res.status(response.status).json(response.data);
+        }
+        catch (error) {
+            const status = error.response?.status || 500;
+            const message = error.response?.data || { message: 'Internal server error' };
+            res.status(status).json(message);
+        }
+    }
+    async proxyRequest(req, res) {
+        try {
+            const targetUrl = `${this.designServiceUrl}/designs`;
+            const userId = req.user?.userId;
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.request({
+                method: req.method,
+                url: targetUrl,
+                data: req.body,
+                params: {
+                    ...req.query,
+                    ...(userId && { userId }),
+                },
+                headers: {
+                    ...req.headers,
+                    host: undefined,
+                },
+            }));
+            res.status(response.status).json(response.data);
+        }
+        catch (error) {
+            const status = error.response?.status || 500;
+            const message = error.response?.data || { message: 'Internal server error' };
+            res.status(status).json(message);
+        }
+    }
+};
+exports.DesignController = DesignController;
+__decorate([
+    (0, common_1.All)('*'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_c = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _c : Object, typeof (_d = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _d : Object]),
+    __metadata("design:returntype", Promise)
+], DesignController.prototype, "proxyRequestWithPath", null);
+__decorate([
+    (0, common_1.All)(),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_e = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _e : Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
+    __metadata("design:returntype", Promise)
+], DesignController.prototype, "proxyRequest", null);
+exports.DesignController = DesignController = __decorate([
+    (0, swagger_1.ApiTags)('designs'),
+    (0, common_1.Controller)('designs'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof axios_1.HttpService !== "undefined" && axios_1.HttpService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])
+], DesignController);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/design/design.module.ts":
+/*!******************************************************!*\
+  !*** ./apps/api-gateway/src/design/design.module.ts ***!
+  \******************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DesignModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const axios_1 = __webpack_require__(/*! @nestjs/axios */ "@nestjs/axios");
+const design_controller_1 = __webpack_require__(/*! ./design.controller */ "./apps/api-gateway/src/design/design.controller.ts");
+let DesignModule = class DesignModule {
+};
+exports.DesignModule = DesignModule;
+exports.DesignModule = DesignModule = __decorate([
+    (0, common_1.Module)({
+        imports: [axios_1.HttpModule],
+        controllers: [design_controller_1.DesignController],
+    })
+], DesignModule);
 
 
 /***/ }),
@@ -1672,6 +1823,173 @@ exports.SearchModule = SearchModule = __decorate([
 
 /***/ }),
 
+/***/ "./apps/api-gateway/src/subscription/subscription.controller.ts":
+/*!**********************************************************************!*\
+  !*** ./apps/api-gateway/src/subscription/subscription.controller.ts ***!
+  \**********************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c, _d, _e, _f;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SubscriptionController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const axios_1 = __webpack_require__(/*! @nestjs/axios */ "@nestjs/axios");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const express_1 = __webpack_require__(/*! express */ "express");
+const rxjs_1 = __webpack_require__(/*! rxjs */ "rxjs");
+const common_2 = __webpack_require__(/*! @app/common */ "@app/common");
+let SubscriptionController = class SubscriptionController {
+    constructor(httpService, configService) {
+        this.httpService = httpService;
+        this.configService = configService;
+        this.subscriptionServiceUrl = this.configService.get('SUBSCRIPTION_SERVICE_URL', 'http://localhost:50057');
+    }
+    async proxyRequestWithPath(req, res) {
+        try {
+            const basePath = '/api/v1/subscriptions';
+            const additionalPath = req.originalUrl.substring(basePath.length) || '';
+            const targetUrl = `${this.subscriptionServiceUrl}/subscriptions${additionalPath}`;
+            const userId = req.user?.userId;
+            console.log('[Gateway] Proxying subscription request:', {
+                method: req.method,
+                targetUrl,
+                userId,
+                hasBody: !!req.body,
+                queryParams: req.query,
+            });
+            const shouldSendBody = ['POST', 'PUT', 'PATCH'].includes(req.method) &&
+                req.body &&
+                Object.keys(req.body).length > 0;
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.request({
+                method: req.method,
+                url: targetUrl,
+                data: shouldSendBody ? req.body : undefined,
+                params: {
+                    ...req.query,
+                    ...(userId && { userId }),
+                },
+                headers: {
+                    ...req.headers,
+                    host: undefined,
+                },
+            }));
+            console.log('[Gateway] Subscription response received:', {
+                status: response.status,
+                data: response.data,
+            });
+            res.status(response.status).json(response.data);
+        }
+        catch (error) {
+            console.error('[Gateway] Subscription proxy error:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status,
+                stack: error.stack,
+            });
+            const status = error.response?.status || 500;
+            const message = error.response?.data || { message: 'Internal server error' };
+            res.status(status).json(message);
+        }
+    }
+    async proxyRequest(req, res) {
+        try {
+            const targetUrl = `${this.subscriptionServiceUrl}/subscriptions`;
+            const userId = req.user?.userId;
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.request({
+                method: req.method,
+                url: targetUrl,
+                data: req.body,
+                params: {
+                    ...req.query,
+                    ...(userId && { userId }),
+                },
+                headers: {
+                    ...req.headers,
+                    host: undefined,
+                },
+            }));
+            res.status(response.status).json(response.data);
+        }
+        catch (error) {
+            const status = error.response?.status || 500;
+            const message = error.response?.data || { message: 'Internal server error' };
+            res.status(status).json(message);
+        }
+    }
+};
+exports.SubscriptionController = SubscriptionController;
+__decorate([
+    (0, common_1.All)('*'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_c = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _c : Object, typeof (_d = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _d : Object]),
+    __metadata("design:returntype", Promise)
+], SubscriptionController.prototype, "proxyRequestWithPath", null);
+__decorate([
+    (0, common_1.All)(),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_e = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _e : Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
+    __metadata("design:returntype", Promise)
+], SubscriptionController.prototype, "proxyRequest", null);
+exports.SubscriptionController = SubscriptionController = __decorate([
+    (0, swagger_1.ApiTags)('subscriptions'),
+    (0, common_1.Controller)('subscriptions'),
+    (0, common_1.UseGuards)(common_2.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof axios_1.HttpService !== "undefined" && axios_1.HttpService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])
+], SubscriptionController);
+
+
+/***/ }),
+
+/***/ "./apps/api-gateway/src/subscription/subscription.module.ts":
+/*!******************************************************************!*\
+  !*** ./apps/api-gateway/src/subscription/subscription.module.ts ***!
+  \******************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SubscriptionModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const axios_1 = __webpack_require__(/*! @nestjs/axios */ "@nestjs/axios");
+const subscription_controller_1 = __webpack_require__(/*! ./subscription.controller */ "./apps/api-gateway/src/subscription/subscription.controller.ts");
+let SubscriptionModule = class SubscriptionModule {
+};
+exports.SubscriptionModule = SubscriptionModule;
+exports.SubscriptionModule = SubscriptionModule = __decorate([
+    (0, common_1.Module)({
+        imports: [axios_1.HttpModule],
+        controllers: [subscription_controller_1.SubscriptionController],
+    })
+], SubscriptionModule);
+
+
+/***/ }),
+
 /***/ "./apps/api-gateway/src/user/dto/index.ts":
 /*!************************************************!*\
   !*** ./apps/api-gateway/src/user/dto/index.ts ***!
@@ -2062,6 +2380,16 @@ module.exports = require("@app/common");
 
 /***/ }),
 
+/***/ "@nestjs/axios":
+/*!********************************!*\
+  !*** external "@nestjs/axios" ***!
+  \********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/axios");
+
+/***/ }),
+
 /***/ "@nestjs/common":
 /*!*********************************!*\
   !*** external "@nestjs/common" ***!
@@ -2149,6 +2477,16 @@ module.exports = require("class-validator");
 /***/ ((module) => {
 
 module.exports = require("compression");
+
+/***/ }),
+
+/***/ "express":
+/*!**************************!*\
+  !*** external "express" ***!
+  \**************************/
+/***/ ((module) => {
+
+module.exports = require("express");
 
 /***/ }),
 

@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package design;
+
+service DesignService {
+  rpc GetUserDesigns(GetUserDesignsRequest) returns (DesignsResponse);
+  rpc GetDesignById(GetDesignByIdRequest) returns (DesignResponse);
+  rpc CreateDesign(CreateDesignRequest) returns (DesignResponse);
+  rpc UpdateDesign(UpdateDesignRequest) returns (DesignResponse);
+  rpc DeleteDesign(DeleteDesignRequest) returns (DeleteResponse);
+}
+
+message GetUserDesignsRequest {
+  string userId = 1;
+}
+
+message GetDesignByIdRequest {
+  string userId = 1;
+  string designId = 2;
+}
+
+message CreateDesignRequest {
+  string userId = 1;
+  string name = 2;
+  string thumbnailUrl = 3;
+  string designData = 4; // JSON string
+}
+
+message UpdateDesignRequest {
+  string userId = 1;
+  string designId = 2;
+  optional string name = 3;
+  optional string thumbnailUrl = 4;
+  optional string designData = 5; // JSON string
+}
+
+message DeleteDesignRequest {
+  string userId = 1;
+  string designId = 2;
+}
+
+message Design {
+  string id = 1;
+  string userId = 2;
+  string name = 3;
+  string thumbnailUrl = 4;
+  string designData = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+message DesignsResponse {
+  bool success = 1;
+  repeated Design data = 2;
+  optional string message = 3;
+}
+
+message DesignResponse {
+  bool success = 1;
+  optional Design data = 2;
+  optional string message = 3;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}

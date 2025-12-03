@@ -7,6 +7,8 @@ import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { MediaModule } from './media/media.module';
 import { SearchModule } from './search/search.module';
+import { DesignModule } from './design/design.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -27,6 +29,8 @@ import { HealthController } from './health/health.controller';
     PostModule,
     MediaModule,
     SearchModule,
+    DesignModule,
+    SubscriptionModule,
   ],
   controllers: [HealthController],
 })
