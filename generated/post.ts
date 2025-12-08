@@ -150,6 +150,11 @@ export interface GetPopularTagsRequest {
   limit?: number;
 }
 
+export interface GetHotPostsRequest {
+  limit?: number;
+  userId?: string;
+}
+
 export interface TagsListResponse {
   tags?: TagResponse[];
   total?: number;
@@ -332,6 +337,7 @@ export interface PostService {
   GetPopularTags(request: GetPopularTagsRequest): Observable<TagsListResponse>;
   GetPostsByTag(request: GetPostsByTagRequest): Observable<PostsListResponse>;
   CreateTag(request: CreateTagRequest): Observable<TagResponse>;
+  GetHotPosts(request: GetHotPostsRequest): Observable<PostsListResponse>;
   VoteQuestion(request: VoteQuestionRequest): Observable<VoteQuestionResponse>;
   GetQuestionVotes(request: GetQuestionVotesRequest): Observable<QuestionVotesResponse>;
   FavoriteQuestion(request: FavoriteQuestionRequest): Observable<FavoriteQuestionResponse>;

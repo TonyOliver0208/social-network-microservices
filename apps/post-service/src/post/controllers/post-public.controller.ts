@@ -71,6 +71,16 @@ export class PostPublicController {
     }
   }
 
+  @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetHotPosts')
+  async getHotPosts(data: { limit: number; userId?: string }) {
+    try {
+      this.logger.log(`Getting hot posts: limit ${data.limit}`);
+      return await this.postLogic.getHotPosts(data.limit || 5, data.userId);
+    } catch (error) {
+      throw this.handleException(error);
+    }
+  }
+
   @GrpcMethod(POSTSERVICE_SERVICE_NAME, 'GetPostsByTag')
   async getPostsByTag(data: { tagName: string; page: number; limit: number }) {
     try {

@@ -12,6 +12,7 @@ import {
   HttpStatus,
   Inject,
   OnModuleInit,
+  Req,
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
@@ -143,6 +144,26 @@ export class PostController implements OnModuleInit {
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get popular tags',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('hot')
+  @ApiOperation({ summary: 'Get hot posts (most upvoted in last 7 days)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getHotPosts(@Query('limit') limit?: number, @Req() req?: any) {
+    try {
+      const userId = req?.user?.userId;
+      return await lastValueFrom(
+        this.postService.GetHotPosts({
+          limit: limit || 5,
+          userId,
+        }),
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get hot posts',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

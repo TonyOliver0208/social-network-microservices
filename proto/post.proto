@@ -21,6 +21,9 @@ service PostService {
   rpc GetPostsByTag (GetPostsByTagRequest) returns (PostsListResponse);
   rpc CreateTag (CreateTagRequest) returns (TagResponse);
   
+  // Hot posts operations
+  rpc GetHotPosts (GetHotPostsRequest) returns (PostsListResponse);
+  
   // Question voting operations
   rpc VoteQuestion (VoteQuestionRequest) returns (VoteQuestionResponse);
   rpc GetQuestionVotes (GetQuestionVotesRequest) returns (QuestionVotesResponse);
@@ -182,6 +185,11 @@ message GetTagsRequest {
 
 message GetPopularTagsRequest {
   int32 limit = 1;
+}
+
+message GetHotPostsRequest {
+  int32 limit = 1;
+  optional string userId = 2;
 }
 
 message TagsListResponse {

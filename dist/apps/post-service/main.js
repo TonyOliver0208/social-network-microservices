@@ -610,6 +610,15 @@ let PostPublicController = PostPublicController_1 = class PostPublicController {
             throw this.handleException(error);
         }
     }
+    async getHotPosts(data) {
+        try {
+            this.logger.log(`Getting hot posts: limit ${data.limit}`);
+            return await this.postLogic.getHotPosts(data.limit || 5, data.userId);
+        }
+        catch (error) {
+            throw this.handleException(error);
+        }
+    }
     async getPostsByTag(data) {
         try {
             this.logger.log(`Getting posts by tag: ${data.tagName}`);
@@ -713,6 +722,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], PostPublicController.prototype, "getPopularTags", null);
+__decorate([
+    (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'GetHotPosts'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PostPublicController.prototype, "getHotPosts", null);
 __decorate([
     (0, microservices_1.GrpcMethod)(post_1.POSTSERVICE_SERVICE_NAME, 'GetPostsByTag'),
     __metadata("design:type", Function),
@@ -1665,6 +1680,60 @@ let PostLogicService = PostLogicService_1 = class PostLogicService {
             page,
             limit,
         };
+    }
+    async getHotPosts(limit = 5, userId) {
+        const cacheKey = userId ? `hot_posts:${limit}:user:${userId}` : `hot_posts:${limit}`;
+        const cached = await this.cacheManager.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const posts = await this.prismaClient.post.findMany({
+            where: {
+                createdAt: {
+                    gte: sevenDaysAgo,
+                },
+            },
+            take: limit,
+            include: {
+                _count: {
+                    select: {
+                        likes: true,
+                        comments: true,
+                        answers: true,
+                    },
+                },
+                postTags: {
+                    include: {
+                        tag: true,
+                    },
+                },
+                questionVotes: true,
+                favoriteQuestions: userId ? {
+                    where: { userId },
+                } : false,
+            },
+            orderBy: [
+                {
+                    questionVotes: {
+                        _count: 'desc',
+                    },
+                },
+                {
+                    createdAt: 'desc',
+                },
+            ],
+        });
+        const formattedPosts = await Promise.all(posts.map(post => this.viewService.formatPostResponse(post, userId)));
+        const result = {
+            posts: formattedPosts,
+            total: formattedPosts.length,
+            page: 1,
+            limit,
+        };
+        await this.cacheManager.set(cacheKey, result, common_2.CACHE_TTL.SHORT);
+        return result;
     }
     async handleUserDeleted(userId) {
         const posts = await this.prisma.post.findMany({

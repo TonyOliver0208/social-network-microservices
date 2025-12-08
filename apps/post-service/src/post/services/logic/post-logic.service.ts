@@ -262,6 +262,70 @@ export class PostLogicService {
     };
   }
 
+  async getHotPosts(limit: number = 5, userId?: string) {
+    const cacheKey = userId ? `hot_posts:${limit}:user:${userId}` : `hot_posts:${limit}`;
+    const cached = await this.cacheManager.get(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    // Get posts with the highest vote count (upvotes - downvotes) from the last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const posts = await this.prismaClient.post.findMany({
+      where: {
+        createdAt: {
+          gte: sevenDaysAgo,
+        },
+      },
+      take: limit,
+      include: {
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+            answers: true,
+          },
+        },
+        postTags: {
+          include: {
+            tag: true,
+          },
+        },
+        questionVotes: true,
+        favoriteQuestions: userId ? {
+          where: { userId },
+        } : false,
+      },
+      orderBy: [
+        {
+          questionVotes: {
+            _count: 'desc',
+          },
+        },
+        {
+          createdAt: 'desc',
+        },
+      ],
+    }) as any[];
+
+    const formattedPosts = await Promise.all(
+      posts.map(post => this.viewService.formatPostResponse(post, userId))
+    );
+
+    const result = {
+      posts: formattedPosts,
+      total: formattedPosts.length,
+      page: 1,
+      limit,
+    };
+
+    await this.cacheManager.set(cacheKey, result, CACHE_TTL.SHORT);
+    return result;
+  }
+
   async handleUserDeleted(userId: string) {
     const posts = await this.prisma.post.findMany({
       where: { authorId: userId },

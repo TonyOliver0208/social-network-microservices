@@ -1074,6 +1074,18 @@ let PostController = class PostController {
             throw new common_1.HttpException(error.message || 'Failed to get popular tags', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    async getHotPosts(limit, req) {
+        try {
+            const userId = req?.user?.userId;
+            return await (0, rxjs_1.lastValueFrom)(this.postService.GetHotPosts({
+                limit: limit || 5,
+                userId,
+            }));
+        }
+        catch (error) {
+            throw new common_1.HttpException(error.message || 'Failed to get hot posts', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     async getPostsByTag(tagName, page, limit) {
         try {
             return await (0, rxjs_1.lastValueFrom)(this.postService.GetPostsByTag({
@@ -1378,6 +1390,16 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], PostController.prototype, "getPopularTags", null);
+__decorate([
+    (0, common_1.Get)('hot'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get hot posts (most upvoted in last 7 days)' }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    __param(0, (0, common_1.Query)('limit')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", Promise)
+], PostController.prototype, "getHotPosts", null);
 __decorate([
     (0, common_1.Get)('tags/:tagName'),
     (0, swagger_1.ApiOperation)({ summary: 'Get posts by tag' }),
